@@ -56,7 +56,6 @@ class EpochProgressCallback(keras.callbacks.Callback):
         print(f"Epoch {epoch + 1} completed!", end="\r")
 
 # multihead relative positional attention
-
 class MyAttention(layers.Layer):
     def __init__(self, depth: int, num_heads: int, max_relative_position: int, **kwargs):
         super().__init__(**kwargs)
@@ -65,50 +64,59 @@ class MyAttention(layers.Layer):
         self.d_model = depth * num_heads
         self.max_relative_position = max_relative_position
         
-        self.embedding_table = layers.Embedding(2 * max_relative_position + 1, self.depth)
+        self.relative_embedding = layers.Embedding(2 * max_relative_position + 1, self.depth)
+        
         self.query_dense = layers.Dense(self.d_model)
         self.key_dense = layers.Dense(self.d_model)
         self.value_dense = layers.Dense(self.d_model)
+        
         self.output_dense = layers.Dense(self.d_model)
         self.softmax = layers.Softmax(axis=-1)
 
     def split_heads(self, x, batch_size):
-        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
-        return tf.transpose(x, perm=[0, 2, 1, 3])  # batch, num_heads, seq_length, depth
-
-    def combine_heads(self, x, batch_size):
-        x = tf.transpose(x, perm=[0, 2, 1, 3])
-        return tf.reshape(x, (batch_size, -1, self.d_model))  # batch, seq_length, d_model
+        return tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
 
     def call(self, inputs):
         x = inputs  # batch_size, seq_length, d_model
         batch_size = tf.shape(x)[0]
         seq_length = tf.shape(x)[1]
 
-        # Compute relative positions
-        positions = tf.range(seq_length)
-        relative_positions = positions[:, None] - positions[None, :]
-        clipped_positions = tf.clip_by_value(relative_positions, -self.max_relative_position, self.max_relative_position)
-        relative_position_indices = clipped_positions + self.max_relative_position
+        # Generate relative positions
+        range_vec = tf.range(seq_length)
+        relative_positions = tf.clip_by_value(
+            range_vec[:, None] - range_vec[None, :], 
+            -self.max_relative_position, self.max_relative_position
+        )
+        relative_indices = relative_positions + self.max_relative_position  
 
-        relative_embeddings = self.embedding_table(relative_position_indices)  # seq_length, seq_length, depth
-        relative_embeddings = tf.expand_dims(relative_embeddings, axis=0)  # 1, seq_length, seq_length, depth
+        relative_embeddings = self.relative_embedding(relative_indices)  # seq_length, seq_length, depth
 
-        Q = self.split_heads(self.query_dense(x), batch_size)  # batch, num_heads, seq_length, depth
-        K = self.split_heads(self.key_dense(x), batch_size)
-        V = self.split_heads(self.value_dense(x), batch_size)
+        Q = self.query_dense(x)  # batch_size, seq_length, d_model
+        K = self.key_dense(x)
+        V = self.value_dense(x)
 
-        # Scale attention scores
+        Q = self.split_heads(Q, batch_size)  # batch, seq, num_heads, depth
+        K = self.split_heads(K, batch_size)
+        V = self.split_heads(V, batch_size)
+
+        # batch_size, num_heads, seq_length, depth
+        Q = tf.transpose(Q, [0, 2, 1, 3])
+        K = tf.transpose(K, [0, 2, 1, 3])
+        V = tf.transpose(V, [0, 2, 1, 3])
+
         scaling_factor = tf.math.sqrt(tf.cast(self.depth, tf.float32))
-        content_scores = tf.matmul(Q, K, transpose_b=True) / scaling_factor  # batch, num_heads, seq_length, seq_length
+        content_scores = tf.matmul(Q, K, transpose_b=True) / scaling_factor  # batch, num_heads, seq, seq
 
-        relative_scores = tf.einsum('bhqd,bqkd->bhqk', Q, relative_embeddings) / scaling_factor
+        rel_scores = tf.einsum('bhqd,qkd->bhqk', Q, relative_embeddings) / scaling_factor
 
-        combined_scores = content_scores + relative_scores
-        attention_weights = self.softmax(combined_scores)  # batch, num_heads, seq_length, seq_length
+        combined_scores = content_scores + rel_scores
 
-        attention_output = tf.matmul(attention_weights, V)  # batch, num_heads, seq_length, depth
-        attention_output = self.combine_heads(attention_output, batch_size)  # batch, seq_length, d_model
+        attention_weights = self.softmax(combined_scores)  # batch, num_heads, seq, seq
+
+        attention_output = tf.matmul(attention_weights, V)  # batch, num_heads, seq, depth
+
+        attention_output = tf.transpose(attention_output, [0, 2, 1, 3])
+        attention_output = tf.reshape(attention_output, (batch_size, seq_length, self.d_model))
 
         output = self.output_dense(attention_output)
         return output
