@@ -1,10 +1,10 @@
 from os import path
 import pyedflib
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.signal import resample
 
-scaler = StandardScaler()
+scaler = MinMaxScaler()
 max_len = 0
 records = [f"ucddb{i:0{3}d}" for i in range(2, 29) if i not in [4, 16]]
 AHIs = []
@@ -53,4 +53,4 @@ for i in range(len(records)):
 
 print("\nMax sequence lenght:", max_len)
 AHIs = np.array(AHIs)
-print("Mean AHI:", np.mean(AHIs), "Standard variance AHI:", np.std(AHIs) ,"Max AHI:", np.max(AHIs), "Min AHI:", np.min(AHIs))
+print("Mean AHI:", np.mean(AHIs), "Median AHI:", np.median(AHIs),  "Standard variance AHI:", np.std(AHIs) ,"Max AHI:", np.max(AHIs), "Min AHI:", np.min(AHIs))

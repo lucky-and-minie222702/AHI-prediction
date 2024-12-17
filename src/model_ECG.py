@@ -17,6 +17,7 @@ def create_model_ECG():
             down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
+        x = layers.Dropout(rate=0.2)(x)
 
     for _ in range(4):
         x = ResNetBlock(
@@ -26,6 +27,7 @@ def create_model_ECG():
             down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
+        x = layers.Dropout(rate=0.2)(x)
     
     x = MyMultiHeadRelativeAttention(num_heads=32, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
     
@@ -36,6 +38,7 @@ def create_model_ECG():
         down_sample = True,
     )
     x = SEBlock(reduction_ratio=4)(x)
+    x = layers.Dropout(rate=0.2)(x)
     
     for _ in range(3):
         x = ResNetBlock(
@@ -44,9 +47,11 @@ def create_model_ECG():
             filters = 256,
         )
         x = SEBlock(reduction_ratio=4)(x)
+        x = layers.Dropout(rate=0.2)(x)
     
     x = layers.GlobalAvgPool1D()(x)
-    out = layers.Dense(3, activation="softmax")(x)
+    x = layers.Dropout(rate=0.5)(x)
+    out = layers.Dense(2, activation="softmax")(x)
     
     model = Model(
         inputs = inp, 
@@ -88,6 +93,11 @@ lr_scheduler = cbk.ReduceLROnPlateau(
     patience = 5,
 )
 
+def add_baseline_wander(ecg_signal, frequency: float = 0.05, amplitude: float = 0.05, sampling_rate: int = 64):
+    t = np.arange(len(ecg_signal)) / sampling_rate
+    baseline = amplitude * np.sin(2 * np.pi * frequency * t)
+    return ecg_signal + baseline
+
 maxlen = 13880
 
 sequences = []
@@ -98,7 +108,22 @@ for i in range(1, 26):
     AHIs.append(round(float(open(path.join("patients", f"patients_{i}_AHI.txt"), "r").readline())))
 
 sequences = np.array(pad_sequences(sequences, maxlen=maxlen, value=0, padding="post"))
-AHIs = to_categorical(np.array([map_AHI(n) for n in AHIs]), num_classes=3)
+med = np.median(np.array(AHIs))
+AHIs = to_categorical(np.array([0 if n <= med else 1 for n in AHIs]), num_classes=2)
+
+sequences = np.vstack([
+    sequences, sequences + np.random.normal(0.0, 0.003, sequences.shape)
+])
+sequences = np.vstack([
+    sequences, add_baseline_wander(sequences)
+])
+
+AHIs = np.vstack([
+    AHIs, AHIs
+])
+AHIs = np.vstack([
+    AHIs, AHIs
+])
 
 X_train, X_test, y_train, y_test = train_test_split(sequences, AHIs, test_size=0.2,random_state=np.random.randint(22022009))
 print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
