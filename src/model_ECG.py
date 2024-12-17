@@ -3,9 +3,18 @@ from model_functions import *
 def create_model_ECG():
     segment_input = layers.Input(shape=(640, 1))
     segment_norm = layers.Normalization()(segment_input)
-    segment_conv = ResNetBlock(1, segment_norm, 32, True)
-    segment_conv = ResNetBlock(1, segment_conv, 32, True)
-    segment_conv = ResNetBlock(1, segment_conv, 32, True)
+    segment_conv = ResNetBlock(1, segment_norm, 64, True)
+    segment_conv = ResNetBlock(1, segment_conv, 64, True)
+    segment_conv = ResNetBlock(1, segment_conv, 64, True)
+    
+    segment_conv = SEBlock(reduction_ratio=4)(segment_conv)
+    
+    segment_conv = ResNetBlock(1, segment_norm, 128, True)
+    segment_conv = ResNetBlock(1, segment_conv, 128)
+    segment_conv = ResNetBlock(1, segment_conv, 128)
+    
+    segment_conv = SEBlock(reduction_ratio=4)(segment_conv)
+    
     segment_output = layers.LSTM(64)(segment_conv)
     segment_model = Model(segment_input, segment_output)
     
@@ -13,9 +22,17 @@ def create_model_ECG():
     segment_outputs = layers.TimeDistributed(segment_model)(ECG_inp)
     aggregated_output1 = layers.GlobalAvgPool1D()(segment_outputs)
     conv = layers.Reshape((list(aggregated_output1.shape[1::]) + [1]))(aggregated_output1)
+    
     conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64, True)
+    
+    conv = SEBlock(reduction_ratio=4)(conv)
+    
+    conv = ResNetBlock(1, conv, 128, True)
+    conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
+    
     att = SEBlock(reduction_ratio=4)(conv)
     aggregated_output2 = layers.GlobalAvgPool1D()(att)
     final_output = layers.Dense(3, activation = "softmax")(aggregated_output2)
