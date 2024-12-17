@@ -5,9 +5,8 @@ def create_model_ECG():
     inp = layers.Input(shape=(None, 1))
     
     # downsample
-    x = layers.Conv1D(filters=64, kernel_size=3)(inp)
+    x = layers.Conv1D(filters=64, kernel_size=1)(inp)
     x = layers.BatchNormalization()(x)
-    x = layers.AvgPool1D(pool_size=2)(x)
     x = layers.LeakyReLU(negative_slope=0.3)(x)
     
     for _ in range(3):
@@ -44,7 +43,6 @@ def create_model_ECG():
             dimension = 1,
             inp = x,
             filters = 512,
-            down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
     
