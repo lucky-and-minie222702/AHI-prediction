@@ -6,7 +6,7 @@ def create_model_ECG():
     segment_conv = ResNetBlock(1, segment_norm, 64, True)
     segment_conv = ResNetBlock(1, segment_conv, 64, True)
     segment_conv = ResNetBlock(1, segment_conv, 64, True)
-    segment_att = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=320)(segment_conv)
+    segment_att = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=32)(segment_conv)
     segment_model = Model(segment_input, segment_att)
     
     ECG_inp = layers.Input(shape=(None, None, 1))
