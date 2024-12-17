@@ -3,7 +3,7 @@ from model_functions import *
 def create_model_ECG():
     # sleep time steps, 1
     inp = layers.Input(shape=(None, 1))
-    x = MyAttention(num_heads=32, depth=32, max_relative_position=640)(inp)  # max relative postion = 5s (128hz)
+    x = MyAttention(num_heads=16, depth=16, max_relative_position=640)(inp)  # max relative postion = 5s (128hz)
     
     x = layers.Conv1D(filters=64, kernel_size=3)(x)
     x = ResNetBlock(1, x, 64)
