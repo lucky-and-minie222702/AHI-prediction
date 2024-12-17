@@ -90,7 +90,10 @@ save_path = path.join("res", "model_ECG.weights.h5")
 model = create_model_ECG("ECG")[0]
 model.compile(
     optimizer = "Adam",
-    loss = "binary_crossentropy",
+    loss = {
+        "stage": "binary_crossentropy",
+        "ah": "binary_crossentropy"
+    },
     metrics = {
         "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
         "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
@@ -163,7 +166,10 @@ print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
 
 hist = model.fit(
     X_train,
-    [y_stage_train, y_ah_train],
+    {
+        "stage": y_stage_train, 
+        "ah": y_ah_train
+    },
     epochs = max_epochs,
     batch_size = batch_size,
     validation_split = 0.2, 
@@ -175,7 +181,7 @@ hist = model.fit(
     ]
 )
 
-scores = model.evaluate(X_test, [y_stage_test, y_ah_test], batch_size=batch_size, verbose=False)[1::]
+scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_size=batch_size, verbose=False)
 
 print("\nTEST RESULT\n")
 
@@ -185,9 +191,11 @@ print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}\n")
 print(f"Total epochs: {len(cb_timer.logs)}\n", file=f)
-for threshold in range(1, 10):
-    print(f"Threshold 0.{threshold}: {scores[threshold-1]}")
-    print(f"Threshold 0.{threshold}: {scores[threshold-1]}", file=f)
+
+for metric, value in zip(model.metrics_names, scores):
+    print(f"metric:", value)
+    print(f"metric:", value, file=f)
+
 f.close()
 
 for key, value in hist.history.items():
