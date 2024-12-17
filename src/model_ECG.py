@@ -33,6 +33,7 @@ model.compile(
     metrics = ["accuracy"]
 )
 model.summary()
+model.save(save_path)
 
 name = sys.argv[sys.argv.index("id")+1]
 
