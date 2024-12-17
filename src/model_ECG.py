@@ -27,7 +27,7 @@ def create_model_ECG():
             down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
-        
+
     for _ in range(3):
         x = ResNetBlock(
             dimension = 1,
@@ -101,7 +101,7 @@ for i in range(1, 26):
     AHIs.append(round(float(open(path.join("patients", f"patients_{i}_AHI.txt"), "r").readline())))
 
 sequences = np.array(pad_sequences(sequences, maxlen=maxlen, value=0, padding="post"))
-AHIs = np.array([map_AHI(n) for n in AHIs])
+AHIs = to_categorical(np.array([map_AHI(n) for n in AHIs]), num_classes=3)
 
 X_train, X_test, y_train, y_test = train_test_split(sequences, AHIs, test_size=0.2,random_state=np.random.randint(22022009))
 print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
