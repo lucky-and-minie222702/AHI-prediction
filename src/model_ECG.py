@@ -40,7 +40,7 @@ model.summary()
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 256
+batch_size = 64
 
 # callbacks
 early_stopping_epoch = 50
