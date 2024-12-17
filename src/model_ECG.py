@@ -50,7 +50,7 @@ def create_model_ECG(name: str):
 
     stage_flat = layers.GlobalAvgPool1D()(stage_att)
     stage_flat = layers.Flatten()(stage_flat)
-    stage_out = layers.Dense(1, activation="sigmoid")(stage_flat)
+    stage_out = layers.Dense(1, activation="sigmoid", name="stage")(stage_flat)
     
     
     # for apnea hyponea detecting
@@ -74,7 +74,7 @@ def create_model_ECG(name: str):
 
     ah_flat = layers.GlobalAvgPool1D()(ah_att)
     ah_flat = layers.Flatten()(ah_flat)
-    ah_out = layers.Dense(1, activation="sigmoid")(ah_flat)
+    ah_out = layers.Dense(1, activation="sigmoid", name="ah")(ah_flat)
 
     
     model = Model(
@@ -91,9 +91,10 @@ model = create_model_ECG("ECG")[0]
 model.compile(
     optimizer = "Adam",
     loss = "binary_crossentropy",
-    metrics = [
-        metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)
-    ],
+    metrics = {
+        "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+        "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    }
 )
 
 name = sys.argv[sys.argv.index("id")+1]
