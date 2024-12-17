@@ -3,9 +3,9 @@ from model_functions import *
 def create_model_ECG():
     # sleep time steps, 1
     inp = layers.Input(shape=(None, 1))
-    x = MyAttention(num_heads=64, depth=64, max_relative_position=640)(inp) # max relative postion = 5s (128hz), num_heads = max_len (duration)
+    # x = MyAttention(num_heads=64, depth=64, max_relative_position=640)(inp) # max relative postion = 5s (128hz), num_heads = max_len (duration)
     
-    x = layers.Conv1D(filters=64, kernel_size=3)(x)
+    x = layers.Conv1D(filters=64, kernel_size=3)(inp)
     x = ResNetBlock(1, x, 64)
     x = ResNetBlock(1, x, 64)
     
