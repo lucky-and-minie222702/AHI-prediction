@@ -5,6 +5,7 @@ def create_model_ECG():
     segment_norm = layers.Normalization()(segment_input)
     segment_conv = ResNetBlock(1, segment_norm, 64, True)
     segment_conv = ResNetBlock(1, segment_conv, 64, True)
+    segment_conv = ResNetBlock(1, segment_conv, 64, True)
     segment_att = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=320)(segment_conv)
     segment_model = Model(segment_input, segment_att)
     
@@ -12,6 +13,7 @@ def create_model_ECG():
     segment_outputs = layers.TimeDistributed(segment_model)(ECG_inp)
     aggregated_output1 = layers.GlobalAvgPool2D()(segment_outputs)
     conv = layers.Reshape((list(aggregated_output1.shape[1::]) + [1]))(aggregated_output1)
+    conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64, True)
     att = SEBlock(reduction_ratio=4)(conv)
