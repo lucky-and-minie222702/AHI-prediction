@@ -38,6 +38,14 @@ def create_model_ECG():
     
     x = MyMultiHeadRelativeAttention(num_heads=64, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
     
+    x = ResNetBlock(
+        dimension = 1,
+        inp = x,
+        filters = 512,
+        down_sample = True,
+    )
+    x = SEBlock(reduction_ratio=4)(x)
+    
     for _ in range(3):
         x = ResNetBlock(
             dimension = 1,
