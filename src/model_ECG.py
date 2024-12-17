@@ -16,6 +16,7 @@ def create_model_ECG():
             dimension = 1,
             inp = x,
             filters = 64,
+            down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
         x = layers.Dropout(rate=0.2)(x)
@@ -27,11 +28,21 @@ def create_model_ECG():
             dimension = 1,
             inp = x,
             filters = 128,
+            down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
         x = layers.Dropout(rate=0.2)(x)
         
     x = MyOneHeadRelativeAttention(d_model=256, max_relative_position=320)(x)
+    
+    for _ in range(3):
+        x = ResNetBlock(
+            dimension = 1,
+            inp = x,
+            filters = 256,
+        )
+        x = SEBlock(reduction_ratio=4)(x)
+        x = layers.Dropout(rate=0.2)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     out = layers.Dense(2, activation="softmax")(x)
