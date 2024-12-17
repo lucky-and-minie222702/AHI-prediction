@@ -53,4 +53,4 @@ for i in range(len(records)):
 
 print("\nMax sequence lenght:", max_len)
 AHIs = np.array(AHIs)
-print("Mean AHI:", np.mean(AHIs), "Median AHI:", np.median(AHIs),  "Standard variance AHI:", np.std(AHIs) ,"Max AHI:", np.max(AHIs), "Min AHI:", np.min(AHIs))
+print("Mean AHI:", np.mean(AHIs), "Median AHI:", np.median(AHIs),  "Standard deviation AHI:", np.std(AHIs) ,"Max AHI:", np.max(AHIs), "Min AHI:", np.min(AHIs))
