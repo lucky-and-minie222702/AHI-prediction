@@ -16,7 +16,7 @@ def create_model_ECG():
     
     x = SEBlock(reduction_ratio=6)(x)
     
-    x = MyAttention(num_heads=128, depth=128, max_relative_position=1280)(x)
+    x = MyAttention(num_heads=64, depth=64, max_relative_position=640)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     out = layers.Dense(1)(x)
