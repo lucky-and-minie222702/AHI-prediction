@@ -19,7 +19,6 @@ def create_model_ECG():
     x = SEBlock(reduction_ratio=6)(x)
     
     x = MyOneHeadRelativeAttention(d_model = 128, max_relative_position=640)(x)
-    x = MyOneHeadRelativeAttention(d_model = 256, max_relative_position=640)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     out = layers.Dense(1)(x)
