@@ -10,7 +10,7 @@ def create_model_ECG():
     x = layers.AvgPool1D(pool_size=2)(x)
     x = layers.LeakyReLU(negative_slope=0.3)(x)
     
-    for _ in range(4):
+    for _ in range(3):
         x = ResNetBlock(
             dimension = 1,
             inp = x,
@@ -19,7 +19,7 @@ def create_model_ECG():
         )
         x = SEBlock(reduction_ratio=4)(x)
 
-    for _ in range(4):
+    for _ in range(3):
         x = ResNetBlock(
             dimension = 1,
             inp = x,
@@ -27,11 +27,29 @@ def create_model_ECG():
             down_sample = True,
         )
         x = SEBlock(reduction_ratio=4)(x)
+        
+    for _ in range(3):
+        x = ResNetBlock(
+            dimension = 1,
+            inp = x,
+            filters = 256,
+            down_sample = True,
+        )
+        x = SEBlock(reduction_ratio=4)(x)
     
-    x = MyMultiHeadRelativeAttention(num_heads=16, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
+    x = MyMultiHeadRelativeAttention(num_heads=64, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
+    
+    for _ in range(3):
+        x = ResNetBlock(
+            dimension = 1,
+            inp = x,
+            filters = 512,
+            down_sample = True,
+        )
+        x = SEBlock(reduction_ratio=4)(x)
     
     x = layers.GlobalAvgPool1D()(x)
-    out = layers.Dense(1)(x)
+    out = layers.Dense(3, activation="softmax")(x)
     
     model = Model(
         inputs = inp, 
@@ -44,8 +62,8 @@ save_path = path.join("res", "model_ECG.weights.h5")
 model = create_model_ECG()
 model.compile(
     optimizer = "adam",
-    loss = "mse",
-    metrics = ["mae", metrics.RootMeanSquaredError(name="rmse")]
+    loss = "categorical_crossentropy",
+    metrics = ["accuracy"]
 )
 model.summary()
 
@@ -76,16 +94,16 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 maxlen = 13880
 
 sequences = []
-AHI = []
+AHIs = []
 
 for i in range(1, 26):
     sequences.append(np.load(path.join("patients", f"patients_{i}_ECG.npy")))
-    AHI.append(float(open(path.join("patients", f"patients_{i}_AHI.txt"), "r").readline()))
+    AHIs.append(round(float(open(path.join("patients", f"patients_{i}_AHI.txt"), "r").readline())))
 
 sequences = np.array(pad_sequences(sequences, maxlen=maxlen, value=0, padding="post"))
-AHI = np.array(AHI)
+AHIs = np.array([map_AHI(n) for n in AHIs])
 
-X_train, X_test, y_train, y_test = train_test_split(sequences, AHI, test_size=0.2,random_state=np.random.randint(22022009))
+X_train, X_test, y_train, y_test = train_test_split(sequences, AHIs, test_size=0.2,random_state=np.random.randint(22022009))
 print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
 
 hist = model.fit(
@@ -107,8 +125,10 @@ scores = model.evaluate(X_test, y_test, batch_size=batch_size)
 print("\nTEST RESULT\n")
 
 f = open(path.join("history", f"{name}_logs.txt"), "w")
-print(f"MSE: {scores[0]}, MAE: {scores[1]}, RMSE: {scores[2]}")
-print(f"MSE: {scores[0]}, MAE: {scores[1]}, RMSE: {scores[2]}", file=f)
+print(f"Loss: {scores[0]}, Metrics: {scores[1]}")
+print(f"Loss: {scores[0]}, Metrics: {scores[1]}", file=f)
+print(model.metrics_names)
+print(model.metrics_names, file=f)
 print(f"Total epochs: {len(cb_timer.logs)}")
 print(f"Total epochs: {len(cb_timer.logs)}", file=f)
 t = sum(cb_timer.logs)

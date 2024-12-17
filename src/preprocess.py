@@ -7,6 +7,7 @@ from scipy.signal import resample
 scaler = StandardScaler()
 max_len = 0
 records = [f"ucddb{i:0{3}d}" for i in range(2, 29) if i not in [4, 16]]
+AHIs = []
 
 for i in range(len(records)):
     print(f"Preprocessing patient {i+1}:")
@@ -47,5 +48,9 @@ for i in range(len(records)):
     f = open(path.join("patients", f"patients_{i+1}_AHI.txt"), "w")
     print(AHI, file=f)
     f.close()
+    
+    AHIs.append(AHI)
 
-print("Max sequence lenght:", max_len)
+print("\nMax sequence lenght:", max_len)
+AHIs = np.array(AHIs)
+print("Mean AHI:", np.mean(AHIs), "Standard variance AHI:", np.std(AHIs) ,"Max AHI:", np.max(AHIs), "Min AHI:", np.min(AHIs))

@@ -249,3 +249,11 @@ def show_params(model: Model, name: str):
     params = model.count_params()
     print(" | Total params :", "{:,}".format(params).replace(",", " "))
     print(" | Size         :", convert_bytes(params * 4))
+    
+def map_AHI(x):
+    if x < 15:
+        return 0
+    elif 15 <= x <= 30:
+        return 1
+    else:
+        return 2
