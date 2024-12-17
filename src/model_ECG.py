@@ -5,7 +5,7 @@ def create_model_ECG():
     inp = layers.Input(shape=(None, 1))
     
     # downsample
-    x = layers.Conv1D(filters=64, kernel_size=5)(inp)
+    x = layers.Conv1D(filters=64, kernel_size=3)(inp)
     x = layers.BatchNormalization()(x)
     x = layers.AvgPool1D(pool_size=2)(x)
     x = layers.LeakyReLU(negative_slope=0.3)(x)
@@ -16,12 +16,11 @@ def create_model_ECG():
             inp = x,
             filters = 64,
             down_sample = True,
-            pool = layers.AvgPool1D(pool_size=2)
         )
         x = SEBlock(reduction_ratio=4)(x)
 
     
-    x = MyMultiHeadRelativeAttention(num_heads=16, depth=32, max_relative_position=640)(x) # max relative postion = 5s (128hz),
+    x = MyMultiHeadRelativeAttention(num_heads=16, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
     
     x = layers.GlobalAvgPool1D()(x)
     out = layers.Dense(1)(x)
@@ -96,6 +95,8 @@ hist = model.fit(
 )
 
 scores = model.evaluate(X_test, y_test, batch_size=batch_size)
+
+print("\nTEST RESULT\n")
 
 f = open(path.join("history", f"{name}_logs.txt"), "w")
 print(f"MSE: {scores[0]}, MAE: {scores[1]}, RMSE: {scores[2]}")
