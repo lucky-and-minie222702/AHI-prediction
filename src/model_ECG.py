@@ -9,6 +9,8 @@ def create_model_ECG():
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(negative_slope=0.3)(x)
     
+    x = MyOneHeadRelativeAttention(d_model=64, max_relative_position=640)(x)
+    
     for _ in range(3):
         x = ResNetBlock(
             dimension = 1,
@@ -30,17 +32,6 @@ def create_model_ECG():
         x = layers.Dropout(rate=0.2)(x)
         
     x = MyOneHeadRelativeAttention(d_model=256, max_relative_position=640)(x)
-    
-    for _ in range(3):
-        x = ResNetBlock(
-            dimension = 1,
-            inp = x,
-            filters = 256,
-        )
-        x = SEBlock(reduction_ratio=4)(x)
-        x = layers.Dropout(rate=0.2)(x)
-        
-    x = MyOneHeadRelativeAttention(d_model=512, max_relative_position=640)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     out = layers.Dense(2, activation="softmax")(x)
