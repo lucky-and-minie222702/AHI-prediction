@@ -127,7 +127,6 @@ annotations = []
 stages = []
 
 for i in range(1, 26):
-    print(f"Loading patient {i}", end="\r")
     seq = np.load(path.join("patients", f"patients_{i}_ECG.npy"))
     ann = np.load(path.join("patients", f"patients_{i}_anns.npy"))
     stage = np.load(path.join("patients", f"patients_{i}_stages.npy"))
@@ -140,7 +139,7 @@ sequences = np.array(sequences)
 annotations = np.array(annotations)
 
 sequences = np.vstack(
-    [sequences, sequences + np.random.normal(0, 0.003, sequences.shape, [add_baseline_wander(seq, frequency=0.05, amplitude=0.05, sampling_rate=100) for seq in sequences])]
+    [sequences, sequences + np.random.normal(0, 0.003, sequences.shape), add_baseline_wander(sequences, frequency=0.05, amplitude=0.05, sampling_rate=100)]
 )
 annotations = np.concatenate(
     [annotations, annotations, annotations]
@@ -153,8 +152,8 @@ indices = np.arange(len(sequences))
 train_indices, test_indices = train_test_split(indices, test_size=0.2,random_state=np.random.randint(22022009))
 
 X_train = sequences[train_indices]
-y_stage_train = stages[test_indices]
-y_ah_train = annotations[test_indices]
+y_stage_train = stages[train_indices]
+y_ah_train = annotations[train_indices]
 X_test = sequences[test_indices]
 y_stage_test = stages[test_indices]
 y_ah_test = annotations[test_indices]
