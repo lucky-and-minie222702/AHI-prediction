@@ -1,52 +1,26 @@
 from model_functions import *
 
 def create_model_ECG():
-    # sleep time steps, 1
-    inp = layers.Input(shape=(None, 1))
-
-    x = layers.Conv1D(filters=64, kernel_size=1)(inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU(negative_slope=0.3)(x)
+    segment_input = layers.Input(shape=(640, 1))
+    segment_norm = layers.Normalization()(segment_input)
+    segment_conv = ResNetBlock(1, segment_norm, 64, True)
+    segment_conv = ResNetBlock(1, segment_conv, 64, True)
+    segment_output = layers.LSTM(64)(segment_conv)
+    segment_model = Model(segment_input, segment_output)
     
-    for _ in range(3):
-        x = ResNetBlock(
-            dimension = 1,
-            inp = x,
-            filters = 64,
-            down_sample = True,
-        )
-        x = SEBlock(reduction_ratio=4)(x)
-        x = layers.Dropout(rate=0.2)(x)
-
-    x = MyOneHeadRelativeAttention(d_model=128, max_relative_position=320)(x)
-
-    for _ in range(3):
-        x = ResNetBlock(
-            dimension = 1,
-            inp = x,
-            filters = 128,
-            down_sample = True,
-        )
-        x = SEBlock(reduction_ratio=4)(x)
-        x = layers.Dropout(rate=0.2)(x)
-        
-    x = MyOneHeadRelativeAttention(d_model=256, max_relative_position=320)(x)
+    ECG_inp = layers.Input(shape=(None, None, 1))
+    segmen_outputs = layers.TimeDistributed(segment_model)(ECG_inp)
+    aggregated_output1 = layers.GlobalAvgPool1D()(segmen_outputs)
+    conv = layers.Reshape((list(aggregated_output1.shape[1::]) + [1]))(aggregated_output1)
+    conv = ResNetBlock(1, conv, 64, True)
+    conv = ResNetBlock(1, conv, 64, True)
+    aggregated_output2 = layers.GlobalAvgPool1D()(conv)
+    final_output = layers.Dense(3, activation = "softmax")(aggregated_output2)
     
-    for _ in range(3):
-        x = ResNetBlock(
-            dimension = 1,
-            inp = x,
-            filters = 256,
-        )
-        x = SEBlock(reduction_ratio=4)(x)
-        x = layers.Dropout(rate=0.2)(x)
-    
-    x = layers.GlobalAvgPool1D()(x)
-    out = layers.Dense(2, activation="softmax")(x)
     
     model = Model(
-        inputs = inp, 
-        outputs = out
+        inputs = ECG_inp, 
+        outputs = final_output,
     )
     
     return model
@@ -84,14 +58,6 @@ lr_scheduler = cbk.ReduceLROnPlateau(
     patience = 5,
 )
 
-def add_baseline_wander(ecg_signal, frequency: float = 0.05, amplitude: float = 0.05, sampling_rate: int = 64):
-    res = []
-    for p in ecg_signal:
-        t = np.arange(len(p)) / sampling_rate
-        baseline = amplitude * np.sin(2 * np.pi * frequency * t)
-        res.append(t + baseline)
-    return np.array(res)
-
 maxlen = 13880
 
 sequences = []
@@ -103,8 +69,9 @@ for i in range(1, 26):
 
 sequences = np.array(pad_sequences(sequences, maxlen=maxlen, value=0, padding="post"))
 med = np.median(np.array(AHIs))
-AHIs = to_categorical(np.array([0 if n <= med else 1 for n in AHIs]), num_classes=2)
+AHIs = to_categorical(np.array([map_AHI(n) for n in AHIs]), num_classes=3)
 
+# Augmentation
 sequences = np.vstack([
     sequences, sequences + np.random.normal(0.0, 0.003, sequences.shape)
 ])
@@ -119,7 +86,9 @@ AHIs = np.vstack([
     AHIs, AHIs
 ])
 
-X_train, X_test, y_train, y_test = train_test_split(sequences, AHIs, test_size=0.2,random_state=np.random.randint(22022009))
+segments = divide_signal(sequences, 640)
+
+X_train, X_test, y_train, y_test = train_test_split(segments, AHIs, test_size=0.2,random_state=np.random.randint(22022009))
 print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
 
 hist = model.fit(

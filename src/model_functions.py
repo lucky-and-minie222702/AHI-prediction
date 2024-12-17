@@ -248,7 +248,8 @@ def show_params(model: Model, name: str):
     params = model.count_params()
     print(" | Total params :", "{:,}".format(params).replace(",", " "))
     print(" | Size         :", convert_bytes(params * 4))
-    
+
+	
 def map_AHI(x):
     if x < 15:
         return 0
@@ -256,3 +257,31 @@ def map_AHI(x):
         return 1
     else:
         return 2
+
+def add_baseline_wander(ecg_signal, frequency: float = 0.05, amplitude: float = 0.05, sampling_rate: int = 64):
+    res = []
+    for p in ecg_signal:
+        t = np.arange(len(p)) / sampling_rate
+        baseline = amplitude * np.sin(2 * np.pi * frequency * t)
+        res.append(t + baseline)
+    return np.array(res)
+
+def divide_signal(signals, win_size, step_size=None):
+    res = []
+    for signal in signals:
+        signal = np.array(signal)
+        if step_size is None:
+            # non-overlap
+            step_size = win_size  
+        
+        num_segments = (len(signal) - win_size) // step_size + 1
+        segments = []
+
+        for i in range(0, num_segments * step_size, step_size):
+            segment = signal[i:i + win_size]
+            if len(segment) == win_size: 
+                segments.append(segment)
+
+        res.append(segments)
+        
+    return np.array(res)
