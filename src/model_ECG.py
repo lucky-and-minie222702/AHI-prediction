@@ -3,13 +3,10 @@ from model_functions import *
 def create_model_ECG():
     # sleep time steps, 1
     inp = layers.Input(shape=(None, 1))
-    
-    # downsample
+
     x = layers.Conv1D(filters=64, kernel_size=1)(inp)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(negative_slope=0.3)(x)
-    
-    x = MyOneHeadRelativeAttention(d_model=64, max_relative_position=320)(x)
     
     for _ in range(3):
         x = ResNetBlock(
