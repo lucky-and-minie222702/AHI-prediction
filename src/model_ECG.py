@@ -3,18 +3,13 @@ from model_functions import *
 def create_model_ECG():
     # sleep time steps, 1
     inp = layers.Input(shape=(None, 1))
-    x = MyAttention(num_heads=1, depth=8, max_relative_position=640)(inp)  # max relative postion = 5s (128hz)
+    x = MyAttention(num_heads=16, depth=32, max_relative_position=640)(inp)  # max relative postion = 5s (128hz)
     
     x = layers.Conv1D(filters=64, kernel_size=3)(x)
     x = ResNetBlock(1, x, 64)
     x = ResNetBlock(1, x, 64)
     
     x = SEBlock(reduction_ratio=4)(x)
-    
-    x = ResNetBlock(1, x, 128, True)
-    x = ResNetBlock(1, x, 128)
-    
-    x = SEBlock(reduction_ratio=6)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     out = layers.Dense(1)(x)
