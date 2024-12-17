@@ -103,7 +103,7 @@ model.compile(
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 32
+batch_size = 16
 
 # callbacks
 early_stopping_epoch = 50
