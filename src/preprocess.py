@@ -2,6 +2,7 @@ from os import path
 import pyedflib
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from scipy.signal import resample
 
 scaler = StandardScaler()
 max_len = 0
@@ -10,7 +11,7 @@ records = [f"ucddb{i:0{3}d}" for i in range(2, 29) if i not in [4, 16]]
 for i in range(len(records)):
     print(f"Preprocessing patient {i+1}:")
     edf_file = pyedflib.EdfReader(path.join("database", f"{records[i]}.rec"))
-    max_len = max(max_len, edf_file.file_duration)
+    max_len = max(max_len, edf_file.file_duration // 2)
     
     try:
         channels = ["ECG", "SpO2"]
@@ -18,7 +19,10 @@ for i in range(len(records)):
         
         for channel in channels:
             idx = edf_file.getSignalLabels().index(channel)
-            signals[channel] = edf_file.readSignal(idx)
+            sig = edf_file.readSignal(idx)
+            if channels == "ECG":
+                sig = resample(sig, len(sig) // 2)
+            signals[channel] = sig
             
         for key, value in signals.items():
             value = scaler.fit_transform(value.reshape(-1, 1)).flatten()

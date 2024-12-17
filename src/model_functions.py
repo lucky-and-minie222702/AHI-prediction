@@ -137,7 +137,7 @@ class MyOneHeadRelativeAttention(layers.Layer):
 
     def call(self, inputs):
         x = inputs
-        batch_size, seq_length, _ = tf.shape(x)[0], tf.shape(x)[1], tf.shape(x)[2]
+        seq_length = tf.shape(x)[1]
         positions = tf.range(seq_length)
         relative_positions = positions[:, None] - positions[None, :]
         clipped_positions = tf.clip_by_value(relative_positions, -self.max_relative_position, self.max_relative_position)
@@ -159,7 +159,7 @@ class MyOneHeadRelativeAttention(layers.Layer):
         return output
 
 
-def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, kernel_size: list[int] = [3], layers_activation = layers.Activation("relu")):
+def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, pool = None, kernel_size: list[int] = [3], layers_activation = layers.LeakyReLU(negative_slope=0.3)):
     if dimension == 1:
         Conv = layers.Conv1D
     elif dimension == 2:
@@ -180,6 +180,10 @@ def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, ke
         shortcut = layers.BatchNormalization()(shortcut)
     
     x = layers.Add()([x, shortcut]) # residual connection
+    
+    if pool is not None:
+        x = pool(x)
+    
     x = layers_activation(x)
     return x
 
