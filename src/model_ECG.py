@@ -1,0 +1,110 @@
+from model_functions import *
+
+def create_model_ECG():
+    # sleep time steps, 1
+    inp = layers.Input(shape=(None, 1))
+    x = MyAttention(num_heads=64, depth=64, max_relative_position=640)(inp) # max relative postion = 5s (128hz), num_heads = max_len (duration)
+    
+    x = layers.Conv1D(filters=64, kernel_size=3)(x)
+    x = ResNetBlock(1, x, 64)
+    x = ResNetBlock(1, x, 64)
+    
+    x = SEBlock(reduction_ratio=4)(x)
+    
+    x = ResNetBlock(1, x, 128, True)
+    x = ResNetBlock(1, x, 128)
+    
+    x = SEBlock(reduction_ratio=6)(x)
+    
+    x = MyAttention(num_heads=128, depth=128, max_relative_position=1280)(x)
+    
+    x = layers.GlobalAvgPool1D()(x)
+    out = layers.Dense(1)(x)
+    
+    model = Model(
+        inputs = inp, 
+        outputs = out
+    )
+    
+    return model
+
+save_path = path.join("res", "model_ECG.weights.h5")
+model = create_model_ECG()
+model.compile(
+    optimizer = "adam",
+    loss = "mse",
+    metrics = ["mae", "rmse"]
+)
+model.summary()
+
+name = sys.argv[sys.argv.index("id")+1]
+
+max_epochs = 200
+batch_size = 256
+
+# callbacks
+early_stopping_epoch = 50
+cb_early_stopping = cbk.EarlyStopping(
+    restore_best_weights = True,
+    start_from_epoch = early_stopping_epoch,
+    patience = 3,
+)
+cb_checkpoint = cbk.ModelCheckpoint(
+    save_path, 
+    save_best_only=True,
+    save_weights_only=True,
+)
+cb_timer = TimingCallback()
+lr_scheduler = cbk.ReduceLROnPlateau(
+    factor = 0.5,
+    min_lr = 0.000001,
+    patience = 5,
+)
+
+maxlen = 27760
+
+sequences = []
+AHI = []
+
+for i in range(1, 26):
+    sequences.append(np.load(path.join("patients", f"patients_{i}_ECG.npy")))
+    AHI.append(float(open(path.join("patients", f"patients_{i}_AHI.txt"), "r").readline()))
+
+sequences = np.array(pad_sequences(sequences, maxlen=maxlen, value=0, padding="post"))
+AHI = np.array(AHI)
+print(sequences.shape, AHI.shape)
+
+X_train, X_test, y_train, y_test = train_test_split(sequences, AHI, test_size=0.2,random_state=np.random.randint(22022009))
+
+hist = model.fit(
+    X_train,
+    y_train,
+    epochs = max_epochs,
+    batch_size = batch_size,
+    validation_split = 0.2, 
+    callbacks = [
+        cb_timer,
+        cb_early_stopping,
+        cb_checkpoint,
+        lr_scheduler
+    ]
+)
+
+scores = model.evaluate(X_test, y_test, batch_size=batch_size)
+
+f = open(path.join("history", f"{name}_logs.txt"), "w")
+print(f"MSE: {scores[0]}, MAE: {scores[1]}")
+print(f"MSE: {scores[0]}, MAE: {scores[1]}", file=f)
+print(f"Total epochs: {len(cb_timer.logs)}")
+print(f"Total epochs: {len(cb_timer.logs)}", file=f)
+t = sum(cb_timer.logs)
+print(f"Total training time: {convert_seconds(t)}")
+print(f"Total training time: {convert_seconds(t)}", file=f)
+f.close()
+
+for key, value in hist.history.items():
+    data = np.array(value)
+    his_path = path.join("history", f"{name}_{key}_ECG")
+    np.save(his_path, data)
+
+print("Saving history done!")
