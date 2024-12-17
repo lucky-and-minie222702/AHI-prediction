@@ -94,9 +94,12 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 )
 
 def add_baseline_wander(ecg_signal, frequency: float = 0.05, amplitude: float = 0.05, sampling_rate: int = 64):
-    t = np.arange(len(ecg_signal)) / sampling_rate
-    baseline = amplitude * np.sin(2 * np.pi * frequency * t)
-    return ecg_signal + baseline
+    res = []
+    for p in ecg_signal:
+        t = np.arange(len(p)) / sampling_rate
+        baseline = amplitude * np.sin(2 * np.pi * frequency * t)
+        res.append(t + baseline)
+    return np.array(res)
 
 maxlen = 13880
 
