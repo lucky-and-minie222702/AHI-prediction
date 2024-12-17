@@ -33,7 +33,6 @@ model.compile(
     metrics = ["accuracy"]
 )
 model.summary()
-model.save(save_path)
 
 name = sys.argv[sys.argv.index("id")+1]
 
@@ -49,8 +48,8 @@ cb_early_stopping = cbk.EarlyStopping(
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     save_path, 
-    save_best_only=True,
-    save_weights_only=True,
+    save_best_only = True,
+    save_weights_only = True,
 )
 cb_timer = TimingCallback()
 lr_scheduler = cbk.ReduceLROnPlateau(
