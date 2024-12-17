@@ -9,7 +9,7 @@ def create_model_ECG():
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(negative_slope=0.3)(x)
     
-    for _ in range(3):
+    for _ in range(4):
         x = ResNetBlock(
             dimension = 1,
             inp = x,
@@ -18,7 +18,7 @@ def create_model_ECG():
         )
         x = SEBlock(reduction_ratio=4)(x)
 
-    for _ in range(3):
+    for _ in range(4):
         x = ResNetBlock(
             dimension = 1,
             inp = x,
@@ -27,21 +27,12 @@ def create_model_ECG():
         )
         x = SEBlock(reduction_ratio=4)(x)
     
-    x = MyMultiHeadRelativeAttention(num_heads=16, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
-    
-    for _ in range(3):
-        x = ResNetBlock(
-            dimension = 1,
-            inp = x,
-            filters = 256,
-            down_sample = True,
-        )
-        x = SEBlock(reduction_ratio=4)(x)
+    x = MyMultiHeadRelativeAttention(num_heads=32, depth=64, max_relative_position=640)(x) # max relative postion = 5s (128hz),
     
     x = ResNetBlock(
         dimension = 1,
         inp = x,
-        filters = 512,
+        filters = 256,
         down_sample = True,
     )
     x = SEBlock(reduction_ratio=4)(x)
@@ -50,7 +41,7 @@ def create_model_ECG():
         x = ResNetBlock(
             dimension = 1,
             inp = x,
-            filters = 512,
+            filters = 256,
         )
         x = SEBlock(reduction_ratio=4)(x)
     
