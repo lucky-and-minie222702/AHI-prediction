@@ -38,7 +38,7 @@ model = create_model_ECG()
 model.compile(
     optimizer = "adam",
     loss = "mse",
-    metrics = ["mae", metrics.RootMeanSquaredError()]
+    metrics = ["mae", metrics.RootMeanSquaredError(name="rmse")]
 )
 model.summary()
 
@@ -66,7 +66,7 @@ lr_scheduler = cbk.ReduceLROnPlateau(
     patience = 5,
 )
 
-maxlen = 27760
+maxlen = 13880
 
 sequences = []
 AHI = []
