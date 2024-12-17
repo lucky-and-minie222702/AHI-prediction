@@ -3,10 +3,10 @@ from model_functions import *
 def create_model_ECG():
     segment_input = layers.Input(shape=(640, 1))
     segment_norm = layers.Normalization()(segment_input)
-    segment_conv = ResNetBlock(1, segment_norm, 64, True)
-    segment_conv = ResNetBlock(1, segment_conv, 64, True)
-    segment_conv = ResNetBlock(1, segment_conv, 64, True)
-    segment_att = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=32)(segment_conv)
+    segment_conv = ResNetBlock(1, segment_norm, 32, True)
+    segment_conv = ResNetBlock(1, segment_conv, 32, True)
+    segment_conv = ResNetBlock(1, segment_conv, 32, True)
+    segment_att = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=8)(segment_conv)
     segment_model = Model(segment_input, segment_att)
     
     ECG_inp = layers.Input(shape=(None, None, 1))
