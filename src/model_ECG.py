@@ -10,7 +10,7 @@ def create_model_ECG():
     
     ECG_inp = layers.Input(shape=(None, None, 1))
     segment_outputs = layers.TimeDistributed(segment_model)(ECG_inp)
-    aggregated_output1 = layers.GlobalAvgPool1D()(segment_outputs)
+    aggregated_output1 = layers.GlobalAvgPool2D()(segment_outputs)
     conv = layers.Reshape((list(aggregated_output1.shape[1::]) + [1]))(aggregated_output1)
     conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64, True)
