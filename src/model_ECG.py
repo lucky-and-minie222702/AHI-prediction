@@ -33,7 +33,7 @@ model = create_model_ECG()
 model.compile(
     optimizer = "adam",
     loss = "mse",
-    metrics = ["mae", "rmse"]
+    metrics = ["mae", metrics.RootMeanSquaredError()]
 )
 model.summary()
 
@@ -72,9 +72,9 @@ for i in range(1, 26):
 
 sequences = np.array(pad_sequences(sequences, maxlen=maxlen, value=0, padding="post"))
 AHI = np.array(AHI)
-print(sequences.shape, AHI.shape)
 
 X_train, X_test, y_train, y_test = train_test_split(sequences, AHI, test_size=0.2,random_state=np.random.randint(22022009))
+print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
 
 hist = model.fit(
     X_train,
@@ -93,8 +93,8 @@ hist = model.fit(
 scores = model.evaluate(X_test, y_test, batch_size=batch_size)
 
 f = open(path.join("history", f"{name}_logs.txt"), "w")
-print(f"MSE: {scores[0]}, MAE: {scores[1]}")
-print(f"MSE: {scores[0]}, MAE: {scores[1]}", file=f)
+print(f"MSE: {scores[0]}, MAE: {scores[1]}, RMSE: {scores[2]}")
+print(f"MSE: {scores[0]}, MAE: {scores[1]}, RMSE: {scores[2]}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}")
 print(f"Total epochs: {len(cb_timer.logs)}", file=f)
 t = sum(cb_timer.logs)
