@@ -140,3 +140,11 @@ def show_params(model: Model, name: str):
     params = model.count_params()
     print(" | Total params :", "{:,}".format(params).replace(",", " "))
     print(" | Size         :", convert_bytes(params * 4))
+
+def weighted_binary_crossentropy(weights: dict | list[int]):
+    def loss_fn(y_true: int, y_pred: float):
+        # prevent 0
+        y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
+        bce = - (weights[1] * y_true * K.log(y_pred) + weights[0] * (1 - y_true) * K.log(1 - y_pred))
+        return K.mean(bce)
+    return loss_fn

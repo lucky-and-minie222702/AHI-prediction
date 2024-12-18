@@ -94,21 +94,10 @@ def create_model_ECG(name: str):
 
 save_path = path.join("res", "model_ECG.weights.h5")
 model = create_model_ECG("ECG")[0]
-model.compile(
-    optimizer = "Adam",
-    loss = {
-        "stage": "binary_crossentropy",
-        "ah": "binary_crossentropy"
-    },
-    metrics = {
-        "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-        "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-    }
-)
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 16
+batch_size = 256
 
 # callbacks
 early_stopping_epoch = 50
@@ -154,6 +143,22 @@ sample_weights_dict = {
     "stage": sample_weights_stage,
     "ah": sample_weights_ah,
 }
+
+model.compile(
+    optimizer = "Adam",
+    loss = {
+        "stage": weighted_binary_crossentropy(
+            weights = class_weights_stage
+        ),
+        "ah": weighted_binary_crossentropy(
+            weights = class_weights_ah
+        ),
+    },
+    metrics = {
+        "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+        "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    }
+)
 
 print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
 
