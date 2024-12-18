@@ -22,7 +22,7 @@ for i in range(len(records)):
         sleep_stages = list(map(int, open(path.join("database", f"{records[i]}_stage.txt")).readlines()))
         total_time = len(sleep_stages)
         sleep_time = (total_time - sleep_stages.count(0)) * 30  # in seconds
-        print("| Sleep time:", f"{sleep_time} seconds", f" {(sleep_time / 3600):.2f} hours")
+        print(" | Sleep time:", f"{sleep_time} seconds", f" {(sleep_time / 3600):.2f} hours")
         
         for channel in channels:
             idx = edf_file.getSignalLabels().index(channel)
@@ -36,6 +36,7 @@ for i in range(len(records)):
                 sig = sig[:total_time*30*8:]
                 sig = resample(sig, 3 * len(sig) // 8)  # down from 8 to 3 hz
                 sig = sig[:len(sig) // 30 * 30:]  # convert to 10 seconds divisible
+                sig /= 100  # from 0 -> 1
                 max_SpO2_len = max(max_SpO2_len, len(sig))
             signals[channel] = sig
             
@@ -44,15 +45,15 @@ for i in range(len(records)):
             np.save(path.join("patients", f"patients_{i+1}_{key}"), value)
 
         print(f"Succeed in preprocessing patient {i+1}")
-    except Exception:
+    except Exception: 
         print(f"Fail to preprocess patient {i+1}")
     
     edf_file.close()
     
     apnea_hyponea_count = len(open(path.join("database", f"{records[i]}_respevt.txt"), "r").readlines()) - 4 # -4 labelling and outline lines
-    print("| Hyponea apnea count:", apnea_hyponea_count)
+    print(" | Hyponea apnea count:", apnea_hyponea_count)
     AHI = apnea_hyponea_count / (sleep_time / 3600)
-    print("| => AHI:", AHI)
+    print(" | => AHI:", AHI)
     
     f = open(path.join("patients", f"patients_{i+1}_AHI.txt"), "w")
     print(AHI, file=f)

@@ -50,7 +50,7 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, pool = None, kernel_size: list[int] = [3], layers_activation = layers.LeakyReLU(negative_slope=0.3)):
+def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, pool = None, kernel_size: list[int] = [3], layers_activation = layers.Activation("relu")):
     if dimension == 1:
         Conv = layers.Conv1D
     elif dimension == 2:
@@ -60,14 +60,14 @@ def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, po
 
     shortcut = inp
     strides = [2, 1] if down_sample else [1, 1]
-    x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[0], padding="same")(inp)
+    x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[0], kernel_regularizer=reg.L2(), padding="same")(inp)
     x = layers.BatchNormalization()(x)
     x = layers_activation(x)
-    x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[1], padding="same")(x)
+    x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[1], kernel_regularizer=reg.L2(), padding="same")(x)
     x = layers.BatchNormalization()(x)
     
     if down_sample:
-        shortcut = Conv(filters=filters, kernel_size=kernel_size, strides=2, padding="same")(shortcut)
+        shortcut = Conv(filters=filters, kernel_size=kernel_size, strides=2, kernel_regularizer=reg.L2(), padding="same")(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
     
     x = layers.Add()([x, shortcut]) # residual connection

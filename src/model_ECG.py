@@ -1,50 +1,54 @@
 from model_functions import *
 from data_functions import *
+from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG(name: str):    
     # 1000, 1 - 10 seconds
     inp = layers.Input(shape=(None, 1))
     conv = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=32, kernel_size=3, kernel_regularizer=reg.L2(), padding="same")(conv)
+    conv = layers.Conv1D(filters=32, kernel_size=1, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
+    conv = ResNetBlock(1, conv, 32, True)
+    conv = ResNetBlock(1, conv, 32, True)
+    conv = ResNetBlock(1, conv, 32, True)
+    
     conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64)
+    conv = layers.Dropout(rate=0.2)(conv)
     conv = ResNetBlock(1, conv, 64)
     
     conv = SEBlock(reduction_ratio=2)(conv)
     
     conv = ResNetBlock(1, conv, 128, True)
     conv = ResNetBlock(1, conv, 128)
+    conv = layers.Dropout(rate=0.2)(conv)
     conv = ResNetBlock(1, conv, 128)
     
     conv = SEBlock(reduction_ratio=4)(conv)
     
-    conv = ResNetBlock(1, conv, 256, True)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    
-    conv = SEBlock(reduction_ratio=6)(conv)
-    
     
     # for stage detecting
-    stage_conv = ResNetBlock(1, conv, 512, True)
+    stage_conv = ResNetBlock(1, conv, 256, True)
+    stage_conv = ResNetBlock(1, stage_conv, 256)
+    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
+    stage_conv = ResNetBlock(1, stage_conv, 256)
+    
+    stage_conv = SEBlock(reduction_ratio=6)(stage_conv)
+    
+    stage_conv = ResNetBlock(1, stage_conv, 512, True)
     stage_conv = ResNetBlock(1, stage_conv, 512)
+    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 512)
     
-    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
+    stage_att = SEBlock(reduction_ratio=8)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 1024, True)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
+    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
-    
-    stage_conv = SEBlock(reduction_ratio=10)(stage_conv)
-    
-    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
     
     stage_att = SEBlock(reduction_ratio=10)(stage_conv)
 
@@ -54,28 +58,30 @@ def create_model_ECG(name: str):
     
     
     # for apnea hyponea detecting
-    ah_conv = ResNetBlock(1, conv, 512, True)
+    ah_conv = ResNetBlock(1, conv, 256, True)
+    ah_conv = ResNetBlock(1, ah_conv, 256)
+    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
+    ah_conv = ResNetBlock(1, ah_conv, 256)
+    
+    ah_conv = SEBlock(reduction_ratio=6)(ah_conv)
+    
+    ah_conv = ResNetBlock(1, ah_conv, 512, True)
     ah_conv = ResNetBlock(1, ah_conv, 512)
+    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 512)
     
-    ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
+    ah_att = SEBlock(reduction_ratio=8)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 1024, True)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
+    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
-    
-    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    
-    ah_att = SEBlock(reduction_ratio=10)(ah_conv)
+    ah_att = SEBlock(reduction_ratio=8)(ah_conv)
 
     ah_flat = layers.GlobalAvgPool1D()(ah_att)
     ah_flat = layers.Flatten()(ah_flat)
     ah_out = layers.Dense(1, activation="sigmoid", name="ah")(ah_flat)
-
     
     model = Model(
         inputs = inp,
@@ -99,7 +105,6 @@ model.compile(
         "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     }
 )
-
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
@@ -124,36 +129,11 @@ lr_scheduler = cbk.ReduceLROnPlateau(
     patience = 5,
 )
 
-maxlen = 13880
-
-sequences = []
-annotations = []
-stages = []
-
-for i in range(1, 26):
-    seq = np.load(path.join("patients", f"patients_{i}_ECG.npy"))
-    ann = np.load(path.join("patients", f"patients_{i}_anns.npy"))
-    stage = np.load(path.join("patients", f"patients_{i}_stages.npy"))
-    
-    sequences += np.split(seq, len(seq) // 1000)
-    annotations.extend(ann.tolist())
-    stages.extend(stage.tolist())
-
-sequences = np.array(sequences)
-annotations = np.array(annotations)
-
-sequences = np.vstack(
-    [sequences, sequences + np.random.normal(0, 0.003, sequences.shape), add_baseline_wander(sequences, frequency=0.05, amplitude=0.05, sampling_rate=100)]
-)
-annotations = np.concatenate(
-    [annotations, annotations, annotations]
-)
-stages = np.concatenate(
-    [stages, stages, stages]
-)
-
-indices = np.arange(len(sequences))
-train_indices, test_indices = train_test_split(indices, test_size=0.2,random_state=np.random.randint(22022009))
+sequences = np.load(path.join("patients", "merged_ECG.npy"))
+annotations  = np.load(path.join("patients", "merged_anns.npy"))
+stages = np.load(path.join("patients", "merged_stages.npy"))
+train_indices = np.load(path.join("patients", "train_indices.npy"))
+test_indices = np.load(path.join("patients", "test_indices.npy"))
 
 X_train = sequences[train_indices]
 y_stage_train = stages[train_indices]
@@ -161,6 +141,19 @@ y_ah_train = annotations[train_indices]
 X_test = sequences[test_indices]
 y_stage_test = stages[test_indices]
 y_ah_test = annotations[test_indices]
+
+class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_train), y=y_stage_train)
+class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_train), y=y_ah_train)
+
+print(class_weights_stage)
+
+sample_weights_stage = np.array([class_weights_stage[int(label)] for label in y_stage_train])
+sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_train])
+
+sample_weights_dict = {
+    "stage": sample_weights_stage,
+    "ah": sample_weights_ah,
+}
 
 print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
 
@@ -173,6 +166,7 @@ hist = model.fit(
     epochs = max_epochs,
     batch_size = batch_size,
     validation_split = 0.2, 
+    sample_weight = sample_weights_dict,
     callbacks = [
         cb_timer,
         cb_early_stopping,
@@ -185,16 +179,16 @@ scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_
 
 print("\nTEST RESULT\n")
 
-f = open(path.join("history", f"{name}_logs.txt"), "w")
+f = open(path.join("history", f"{name}_logs_ECG.txt"), "w")
 t = sum(cb_timer.logs)
 print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}\n")
 print(f"Total epochs: {len(cb_timer.logs)}\n", file=f)
 
-for metric, value in zip(model.metrics_names, scores):
-    print(f"metric:", value)
-    print(f"metric:", value, file=f)
+for metric, value in zip(list(hist.history.keys()), scores):
+    print(f"{metric}:", value)
+    print(f"{metric}:", value, file=f)
 
 f.close()
 
