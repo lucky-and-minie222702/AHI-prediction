@@ -86,11 +86,11 @@ def create_model_ECG(name: str):
     
     ah_conv = SEBlock(reduction_ratio=10)(ah_conv)
     
-    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
     
-    # ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
+    ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
 
     ah_flat = layers.GlobalMaxPool1D()(ah_conv)
     ah_flat = layers.Flatten()(ah_flat)
@@ -147,6 +147,7 @@ y_stage_test = stages[test_indices]
 y_ah_test = annotations[test_indices]
 
 if "balance" in sys.argv:
+    # Train set
     stage_balance = weighting_data(y_stage_train, 1.0)
     ah_balance = weighting_data(y_ah_train, 1.0)
     combined_balance  = np.concatenate([
@@ -158,6 +159,19 @@ if "balance" in sys.argv:
     X_train = X_train[combined_balance]
     y_stage_train = y_stage_train[combined_balance]
     y_ah_train = y_ah_train[combined_balance]
+    
+    # Test set
+    stage_balance = weighting_data(y_stage_test, 1.0)
+    ah_balance = weighting_data(y_ah_test, 1.0)
+    combined_balance  = np.concatenate([
+        # stage_balance, 
+        ah_balance,
+    ])
+    combined_balance = np.unique(combined_balance)
+
+    X_test = X_test[combined_balance]
+    y_stage_test = y_stage_test[combined_balance]
+    y_ah_test = y_ah_test[combined_balance]
 
 class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_train), y=y_stage_train)
 class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_train), y=y_ah_train)
