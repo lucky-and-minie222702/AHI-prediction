@@ -52,16 +52,15 @@ def divide_signal(signals, win_size, step_size=None):
         
     return np.array(res)
 
-def weighting_data(data, major_weight: float = 1.0) -> np.ndarray:
-    
+def weighting_data(data: np.ndarray, major_weight: float = 1.0) -> np.ndarray:  
     count0 = np.count_nonzero(data == 0)
     count1 = len(data) - count0
     minority = [count0, count1].index(min(count0, count1))
     majority = [count0, count1].index(max(count0, count1))
     
-    minority_data = np.where(data == minority)
-    majority_data = np.where(data == majority)
+    minority_data = np.where(data == minority)[0]
+    majority_data = np.where(data == majority)[0]
     
     return np.random.permutation(np.concatenate([
-        minority_data, majority_data[:len(minority_data) * major_weight:]
+        minority_data, majority_data[:int(len(minority_data) * major_weight):]
     ]))
