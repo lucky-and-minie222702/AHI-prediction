@@ -146,6 +146,11 @@ X_test = sequences[test_indices]
 y_stage_test = stages[test_indices]
 y_ah_test = annotations[test_indices]
 
+stage_balance = weighting_data(y_stage_train, 1.0)
+ah_balance = weighting_data(y_ah_train, 1.0)
+print(stage_balance, ah_balance)
+exit()
+
 class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_train), y=y_stage_train)
 class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_train), y=y_ah_train)
 
