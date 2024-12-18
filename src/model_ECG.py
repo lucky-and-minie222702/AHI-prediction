@@ -112,7 +112,7 @@ model = create_model_ECG("ECG")[0]
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 128
+batch_size = 64
 
 # callbacks
 early_stopping_epoch = 50
