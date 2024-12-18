@@ -157,6 +157,9 @@ sample_weights_dict = {
     "ah": sample_weights_ah,
 }
 
+print(np.unique(y_stage_train, return_counts=True))
+print(np.unique(y_ah_train, return_counts=True))
+
 model.compile(
     optimizer = "Adam",
     loss = {
@@ -193,7 +196,7 @@ hist = model.fit(
     ]
 )
 
-scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_size=batch_size, verbose=False)
+scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_size=batch_size, sample_weight=sample_weights_dict)
 
 print("\nTEST RESULT\n")
 
