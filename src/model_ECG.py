@@ -48,9 +48,9 @@ def create_model_ECG(name: str):
     stage_conv = ResNetBlock(1, stage_conv, 2048)
     stage_conv = ResNetBlock(1, stage_conv, 2048)
     
-    stage_att = SEBlock(reduction_ratio=12)(stage_conv)
+    stage_conv = SEBlock(reduction_ratio=12)(stage_conv)
 
-    stage_flat = layers.GlobalAvgPool1D()(stage_att)
+    stage_flat = layers.GlobalAvgPool1D()(stage_conv)
     stage_flat = layers.Flatten()(stage_flat)
     stage_out = layers.Dense(1, activation="sigmoid", name="stage")(stage_flat)
     
@@ -74,25 +74,25 @@ def create_model_ECG(name: str):
     
     ah_conv = SEBlock(reduction_ratio=6)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 512, True)
-    ah_conv = ResNetBlock(1, ah_conv, 512)
-    ah_conv = ResNetBlock(1, ah_conv, 512)
+    # ah_conv = ResNetBlock(1, ah_conv, 512, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 512)
+    # ah_conv = ResNetBlock(1, ah_conv, 512)
     
-    ah_att = SEBlock(reduction_ratio=8)(ah_conv)
+    # ah_att = SEBlock(reduction_ratio=8)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 1024, True)
-    ah_conv = ResNetBlock(1, ah_conv, 1024)
-    ah_conv = ResNetBlock(1, ah_conv, 1024)
+    # ah_conv = ResNetBlock(1, ah_conv, 1024, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 1024)
+    # ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    ah_att = SEBlock(reduction_ratio=10)(ah_conv)
+    # ah_att = SEBlock(reduction_ratio=10)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
     
-    ah_att = SEBlock(reduction_ratio=12)(ah_conv)
+    # ah_att = SEBlock(reduction_ratio=12)(ah_conv)
 
-    ah_flat = layers.GlobalAvgPool1D()(ah_att)
+    ah_flat = layers.GlobalAvgPool1D()(ah_conv)
     ah_flat = layers.Flatten()(ah_flat)
     ah_out = layers.Dense(1, activation="sigmoid", name="ah")(ah_flat)
     
