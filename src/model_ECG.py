@@ -8,15 +8,10 @@ def create_model_ECG(name: str):
     conv = layers.Normalization()(inp)
     
     # down sample
-    conv = layers.Conv1D(filters=8, kernel_size=7, kernel_regularizer=reg.L2())(conv)
+    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=16, kernel_size=5, kernel_regularizer=reg.L2())(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=32, kernel_size=3, kernel_regularizer=reg.L2())(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
     
     # for stage detecting 
@@ -118,7 +113,7 @@ model = create_model_ECG("ECG")[0]
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 16
+batch_size = 32
 
 # callbacks
 early_stopping_epoch = 50
