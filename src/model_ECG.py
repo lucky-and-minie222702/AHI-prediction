@@ -52,6 +52,13 @@ def create_model_ECG(name: str):
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     
     stage_att = SEBlock(reduction_ratio=10)(stage_conv)
+    
+    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
+    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    
+    stage_att = SEBlock(reduction_ratio=12)(stage_conv)
 
     stage_flat = layers.GlobalAvgPool1D()(stage_att)
     stage_flat = layers.Flatten()(stage_flat)
@@ -92,7 +99,14 @@ def create_model_ECG(name: str):
     ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    ah_att = SEBlock(reduction_ratio=8)(ah_conv)
+    ah_att = SEBlock(reduction_ratio=10)(ah_conv)
+    
+    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    
+    ah_att = SEBlock(reduction_ratio=12)(ah_conv)
 
     ah_flat = layers.GlobalAvgPool1D()(ah_att)
     ah_flat = layers.Flatten()(ah_flat)
@@ -101,9 +115,11 @@ def create_model_ECG(name: str):
     model = Model(
         inputs = inp,
         outputs = [stage_out, ah_out],
+        name = name
     )
 
-    show_params(model, name)
+    # show_params(model, name)
+    model.summary()
         
     return model, stage_flat, ah_flat
 
@@ -112,7 +128,7 @@ model = create_model_ECG("ECG")[0]
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 8
+batch_size = 16
 
 # callbacks
 early_stopping_epoch = 50
