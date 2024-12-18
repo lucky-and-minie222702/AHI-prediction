@@ -10,7 +10,7 @@ def create_model_ECG(name: str):
     # down sample
     conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
+    conv = layers.Activation("tanh")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
     
     # for stage detecting 
