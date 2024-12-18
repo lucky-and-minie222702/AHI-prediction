@@ -170,7 +170,7 @@ model.compile(
     }
 )
 
-print(f"Train size: {X_train.shape[0]} - Test size: {X_test.shape[0]}")
+print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 
 hist = model.fit(
     X_train,
@@ -190,9 +190,9 @@ hist = model.fit(
     ]
 )
 
-scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_size=batch_size, sample_weight=sample_weights_dict)
+scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_size=batch_size, return_dict=True)
 
-print("\nTEST RESULT\n")
+print("\nSUMMARY\n")
 
 f = open(path.join("history", f"{name}_logs_ECG.txt"), "w")
 t = sum(cb_timer.logs)
@@ -200,6 +200,13 @@ print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}\n")
 print(f"Total epochs: {len(cb_timer.logs)}\n", file=f)
+
+print("\nTEST RESULT\n")
+print("\nTEST RESULT\n", file=f)
+
+for metric, score in scores.items():
+    print(f"{metric}: {score}")
+    print(f"{metric}: {score}", file=f)
 
 f.close()
 
