@@ -52,7 +52,7 @@ def divide_signal(signals, win_size, step_size=None):
         
     return np.array(res)
 
-def weighting_data(data: np.ndarray, major_weight: float = 1.0) -> np.ndarray:  
+def balancing_data(data: np.ndarray, major_weight: float = 1.0) -> np.ndarray:  
     count0 = np.count_nonzero(data == 0)
     count1 = len(data) - count0
     minority = [count0, count1].index(min(count0, count1))

@@ -148,8 +148,8 @@ y_ah_test = annotations[test_indices]
 
 if "balance" in sys.argv:
     # Train set
-    stage_balance = weighting_data(y_stage_train, 1.0)
-    ah_balance = weighting_data(y_ah_train, 1.0)
+    stage_balance = balancing_data(y_stage_train, 1.2)
+    ah_balance = balancing_data(y_ah_train, 1.2)
     combined_balance  = np.concatenate([
         # stage_balance, 
         ah_balance,
@@ -161,8 +161,8 @@ if "balance" in sys.argv:
     y_ah_train = y_ah_train[combined_balance]
     
     # Test set
-    stage_balance = weighting_data(y_stage_test, 1.0)
-    ah_balance = weighting_data(y_ah_test, 1.0)
+    stage_balance = balancing_data(y_stage_test, 1.2)
+    ah_balance = balancing_data(y_ah_test, 1.2)
     combined_balance  = np.concatenate([
         # stage_balance, 
         ah_balance,
@@ -172,6 +172,9 @@ if "balance" in sys.argv:
     X_test = X_test[combined_balance]
     y_stage_test = y_stage_test[combined_balance]
     y_ah_test = y_ah_test[combined_balance]
+    
+print(f"Train set: [0] - {np.count_nonzero(y_stage_train == 0)} - {np.count_nonzero(y_ah_train == 0)}  |  [1] - {np.count_nonzero(y_stage_train == 1)} - {np.count_nonzero(y_ah_train == 1)}")
+print(f"Test set: [0] - {np.count_nonzero(y_stage_test == 0)} - {np.count_nonzero(y_ah_test == 0)}  |  [1] - {np.count_nonzero(y_stage_test == 1)} - {np.count_nonzero(y_ah_test == 1)}")
 
 class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_train), y=y_stage_train)
 class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_train), y=y_ah_train)
