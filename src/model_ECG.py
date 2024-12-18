@@ -11,27 +11,28 @@ def create_model_ECG(name: str):
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
+    # down sample
     conv = ResNetBlock(1, conv, 32, True)
     conv = ResNetBlock(1, conv, 32, True)
     conv = ResNetBlock(1, conv, 32, True)
     
-    conv = ResNetBlock(1, conv, 64, True)
-    conv = ResNetBlock(1, conv, 64)
-    conv = layers.Dropout(rate=0.2)(conv)
-    conv = ResNetBlock(1, conv, 64)
     
-    conv = SEBlock(reduction_ratio=2)(conv)
+    # for stage detecting 
+    conv_stage = ResNetBlock(1, conv, 64, True)
+    conv_stage = ResNetBlock(1, conv_stage, 64)
+    conv_stage = layers.Dropout(rate=0.2)(conv_stage)
+    conv_stage = ResNetBlock(1, conv_stage, 64)
     
-    conv = ResNetBlock(1, conv, 128, True)
-    conv = ResNetBlock(1, conv, 128)
-    conv = layers.Dropout(rate=0.2)(conv)
-    conv = ResNetBlock(1, conv, 128)
+    conv_stage = SEBlock(reduction_ratio=2)(conv_stage)
     
-    conv = SEBlock(reduction_ratio=4)(conv)
+    conv_stage = ResNetBlock(1, conv_stage, 128, True)
+    conv_stage = ResNetBlock(1, conv_stage, 128)
+    conv_stage = layers.Dropout(rate=0.2)(conv_stage)
+    conv_stage = ResNetBlock(1, conv_stage, 128)
     
+    conv_stage = SEBlock(reduction_ratio=4)(conv_stage)
     
-    # for stage detecting
-    stage_conv = ResNetBlock(1, conv, 256, True)
+    stage_conv = ResNetBlock(1, stage_conv, 256, True)
     stage_conv = ResNetBlock(1, stage_conv, 256)
     stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 256)
@@ -58,7 +59,21 @@ def create_model_ECG(name: str):
     
     
     # for apnea hyponea detecting
-    ah_conv = ResNetBlock(1, conv, 256, True)
+    conv_ah = ResNetBlock(1, conv, 64, True)
+    conv_ah = ResNetBlock(1, conv_ah, 64)
+    conv_ah = layers.Dropout(rate=0.2)(conv_ah)
+    conv_ah = ResNetBlock(1, conv_ah, 64)
+    
+    conv_ah = SEBlock(reduction_ratio=2)(conv_ah)
+    
+    conv_ah = ResNetBlock(1, conv_ah, 128, True)
+    conv_ah = ResNetBlock(1, conv_ah, 128)
+    conv_ah = layers.Dropout(rate=0.2)(conv_ah)
+    conv_ah = ResNetBlock(1, conv_ah, 128)
+    
+    conv_ah = SEBlock(reduction_ratio=4)(conv_ah)
+
+    ah_conv = ResNetBlock(1, conv_ah, 256, True)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 256)
