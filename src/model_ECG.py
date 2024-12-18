@@ -74,21 +74,21 @@ def create_model_ECG(name: str):
     
     ah_conv = SEBlock(reduction_ratio=6)(ah_conv)
     
-    # ah_conv = ResNetBlock(1, ah_conv, 512, True)
-    # ah_conv = ResNetBlock(1, ah_conv, 512)
-    # ah_conv = ResNetBlock(1, ah_conv, 512)
+    ah_conv = ResNetBlock(1, ah_conv, 512, True)
+    ah_conv = ResNetBlock(1, ah_conv, 512)
+    ah_conv = ResNetBlock(1, ah_conv, 512)
     
-    # ah_att = SEBlock(reduction_ratio=8)(ah_conv)
+    ah_att = SEBlock(reduction_ratio=8)(ah_conv)
     
-    # ah_conv = ResNetBlock(1, ah_conv, 1024, True)
-    # ah_conv = ResNetBlock(1, ah_conv, 1024)
-    # ah_conv = ResNetBlock(1, ah_conv, 1024)
+    ah_conv = ResNetBlock(1, ah_conv, 1024, True)
+    ah_conv = ResNetBlock(1, ah_conv, 1024)
+    ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    # ah_att = SEBlock(reduction_ratio=10)(ah_conv)
+    ah_att = SEBlock(reduction_ratio=10)(ah_conv)
     
     # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
     # ah_conv = ResNetBlock(1, ah_conv, 2048)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048
     
     # ah_att = SEBlock(reduction_ratio=12)(ah_conv)
 
