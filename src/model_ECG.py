@@ -18,19 +18,19 @@ def create_model_ECG(name: str):
     
     
     # for stage detecting 
-    conv_stage = ResNetBlock(1, conv, 64, True)
-    conv_stage = ResNetBlock(1, conv_stage, 64)
-    conv_stage = layers.Dropout(rate=0.2)(conv_stage)
-    conv_stage = ResNetBlock(1, conv_stage, 64)
+    stage_conv = ResNetBlock(1, conv, 64, True)
+    stage_conv = ResNetBlock(1, stage_conv, 64)
+    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
+    stage_conv = ResNetBlock(1, stage_conv, 64)
     
-    conv_stage = SEBlock(reduction_ratio=2)(conv_stage)
+    stage_conv = SEBlock(reduction_ratio=2)(stage_conv)
     
-    conv_stage = ResNetBlock(1, conv_stage, 128, True)
-    conv_stage = ResNetBlock(1, conv_stage, 128)
-    conv_stage = layers.Dropout(rate=0.2)(conv_stage)
-    conv_stage = ResNetBlock(1, conv_stage, 128)
+    stage_conv = ResNetBlock(1, stage_conv, 128, True)
+    stage_conv = ResNetBlock(1, stage_conv, 128)
+    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
+    stage_conv = ResNetBlock(1, stage_conv, 128)
     
-    conv_stage = SEBlock(reduction_ratio=4)(conv_stage)
+    stage_conv = SEBlock(reduction_ratio=4)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 256, True)
     stage_conv = ResNetBlock(1, stage_conv, 256)
@@ -59,21 +59,21 @@ def create_model_ECG(name: str):
     
     
     # for apnea hyponea detecting
-    conv_ah = ResNetBlock(1, conv, 64, True)
-    conv_ah = ResNetBlock(1, conv_ah, 64)
-    conv_ah = layers.Dropout(rate=0.2)(conv_ah)
-    conv_ah = ResNetBlock(1, conv_ah, 64)
+    ah_conv = ResNetBlock(1, conv, 64, True)
+    ah_conv = ResNetBlock(1, ah_conv, 64)
+    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
+    ah_conv = ResNetBlock(1, ah_conv, 64)
     
-    conv_ah = SEBlock(reduction_ratio=2)(conv_ah)
+    ah_conv = SEBlock(reduction_ratio=2)(ah_conv)
     
-    conv_ah = ResNetBlock(1, conv_ah, 128, True)
-    conv_ah = ResNetBlock(1, conv_ah, 128)
-    conv_ah = layers.Dropout(rate=0.2)(conv_ah)
-    conv_ah = ResNetBlock(1, conv_ah, 128)
+    ah_conv = ResNetBlock(1, ah_conv, 128, True)
+    ah_conv = ResNetBlock(1, ah_conv, 128)
+    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
+    ah_conv = ResNetBlock(1, ah_conv, 128)
     
-    conv_ah = SEBlock(reduction_ratio=4)(conv_ah)
+    ah_conv = SEBlock(reduction_ratio=4)(ah_conv)
 
-    ah_conv = ResNetBlock(1, conv_ah, 256, True)
+    ah_conv = ResNetBlock(1, ah_conv, 256, True)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 256)
@@ -148,8 +148,6 @@ y_ah_test = annotations[test_indices]
 
 class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_train), y=y_stage_train)
 class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_train), y=y_ah_train)
-
-print(class_weights_stage)
 
 sample_weights_stage = np.array([class_weights_stage[int(label)] for label in y_stage_train])
 sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_train])
