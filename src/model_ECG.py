@@ -98,12 +98,15 @@ def create_model_ECG(name: str):
     
     model = Model(
         inputs = inp,
-        outputs = ah_out,
+        outputs = [
+            stage_out,
+            ah_out,
+        ],
         name = name
     )
 
-    # show_params(model, name)
-    model.summary()
+    show_params(model, name)
+    # model.summary()
         
     return model
 
@@ -112,7 +115,7 @@ model = create_model_ECG("ECG")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 256
+batch_size = 128
 
 # callbacks
 early_stopping_epoch = 50
@@ -151,7 +154,7 @@ if "balance" in sys.argv:
     stage_balance = balancing_data(y_stage_train, 1.2)
     ah_balance = balancing_data(y_ah_train, 1.2)
     combined_balance  = np.concatenate([
-        # stage_balance, 
+        stage_balance, 
         ah_balance,
     ])
     combined_balance = np.unique(combined_balance)
@@ -164,7 +167,7 @@ if "balance" in sys.argv:
     stage_balance = balancing_data(y_stage_test, 1.2)
     ah_balance = balancing_data(y_ah_test, 1.2)
     combined_balance  = np.concatenate([
-        # stage_balance, 
+        stage_balance, 
         ah_balance,
     ])
     combined_balance = np.unique(combined_balance)
@@ -172,9 +175,10 @@ if "balance" in sys.argv:
     X_test = X_test[combined_balance]
     y_stage_test = y_stage_test[combined_balance]
     y_ah_test = y_ah_test[combined_balance]
-    
-print(f"Train set: [0] - {np.count_nonzero(y_stage_train == 0)} - {np.count_nonzero(y_ah_train == 0)}  |  [1] - {np.count_nonzero(y_stage_train == 1)} - {np.count_nonzero(y_ah_train == 1)}")
-print(f"Test set: [0] - {np.count_nonzero(y_stage_test == 0)} - {np.count_nonzero(y_ah_test == 0)}  |  [1] - {np.count_nonzero(y_stage_test == 1)} - {np.count_nonzero(y_ah_test == 1)}")
+
+print("Dataset: (Stages - AH)")
+print(f"Train set: [0]: {np.count_nonzero(y_stage_train == 0)} - {np.count_nonzero(y_ah_train == 0)}  |  [1]: {np.count_nonzero(y_stage_train == 1)} - {np.count_nonzero(y_ah_train == 1)}")
+print(f"Test set: [0]: {np.count_nonzero(y_stage_test == 0)} - {np.count_nonzero(y_ah_test == 0)}  |  [1]: {np.count_nonzero(y_stage_test == 1)} - {np.count_nonzero(y_ah_test == 1)}")
 
 class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_train), y=y_stage_train)
 class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_train), y=y_ah_train)
@@ -183,18 +187,18 @@ sample_weights_stage = np.array([class_weights_stage[int(label)] for label in y_
 sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_train])
 
 sample_weights_dict = {
-    # "stage": sample_weights_stage,
+    "stage": sample_weights_stage,
     "ah": sample_weights_ah,
 }
 
 model.compile(
     optimizer = "Adam",
     loss = {
-        # "stage": "binary_crossentropy",
+        "stage": "binary_crossentropy",
         "ah": "binary_crossentropy",
     },
     metrics = {
-        # "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+        "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
         "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     }
 )
@@ -204,7 +208,7 @@ print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 hist = model.fit(
     X_train,
     {
-        # "stage": y_stage_train, 
+        "stage": y_stage_train, 
         "ah": y_ah_train
     },
     epochs = max_epochs,
@@ -226,14 +230,14 @@ sample_weights_stage = np.array([class_weights_stage[int(label)] for label in y_
 sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_test])
 
 sample_weights_dict = {
-    # "stage": sample_weights_stage,
+    "stage": sample_weights_stage,
     "ah": sample_weights_ah,
 }
 
 scores = model.evaluate(
     X_test, 
     {
-        # "stage": y_stage_test, 
+        "stage": y_stage_test, 
         "ah": y_ah_test
     }, 
     sample_weight = sample_weights_dict,
