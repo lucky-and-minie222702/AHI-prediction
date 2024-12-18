@@ -98,7 +98,7 @@ def create_model_ECG(name: str):
     
     model = Model(
         inputs = inp,
-        outputs = [stage_out, ah_out],
+        outputs = ah_out,
         name = name
     )
 
@@ -148,7 +148,10 @@ y_ah_test = annotations[test_indices]
 
 stage_balance = weighting_data(y_stage_train, 1.0)
 ah_balance = weighting_data(y_ah_train, 1.0)
-combined_balance  = np.concatenate([stage_balance, ah_balance])
+combined_balance  = np.concatenate([
+    # stage_balance, 
+    ah_balance,
+])
 combined_balance = np.unique(combined_balance)
 
 X_train = X_train[combined_balance]
@@ -162,18 +165,18 @@ sample_weights_stage = np.array([class_weights_stage[int(label)] for label in y_
 sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_train])
 
 sample_weights_dict = {
-    "stage": sample_weights_stage,
+    # "stage": sample_weights_stage,
     "ah": sample_weights_ah,
 }
 
 model.compile(
     optimizer = "Adam",
     loss = {
-        "stage": "binary_crossentropy",
+        # "stage": "binary_crossentropy",
         "ah": "binary_crossentropy",
     },
     metrics = {
-        "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+        # "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
         "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     }
 )
@@ -183,7 +186,7 @@ print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 hist = model.fit(
     X_train,
     {
-        "stage": y_stage_train, 
+        # "stage": y_stage_train, 
         "ah": y_ah_train
     },
     epochs = max_epochs,
@@ -198,7 +201,15 @@ hist = model.fit(
     ]
 )
 
-scores = model.evaluate(X_test, {"stage": y_stage_test, "ah": y_ah_test}, batch_size=batch_size, return_dict=True)
+scores = model.evaluate(
+    X_test, 
+    {
+        # "stage": y_stage_test, 
+        "ah": y_ah_test
+    }, 
+    batch_size=batch_size, 
+    return_dict=True
+)
 
 print("\nSUMMARY\n")
 
