@@ -7,55 +7,51 @@ def create_model_ECG(name: str):
     inp = layers.Input(shape=(None, 1))
     conv = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=32, kernel_size=1, kernel_regularizer=reg.L2())(conv)
+    # down sample
+    conv = layers.Conv1D(filters=8, kernel_size=7, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    
-    # down sample
-    conv = ResNetBlock(1, conv, 32, True)
-    conv = ResNetBlock(1, conv, 32, True)
-    conv = ResNetBlock(1, conv, 32, True)
+    conv = layers.Conv1D(filters=16, kernel_size=5, kernel_regularizer=reg.L2())(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=32, kernel_size=3, kernel_regularizer=reg.L2())(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
     
     
     # for stage detecting 
     stage_conv = ResNetBlock(1, conv, 64, True)
     stage_conv = ResNetBlock(1, stage_conv, 64)
-    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 64)
     
     stage_conv = SEBlock(reduction_ratio=2)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 128, True)
     stage_conv = ResNetBlock(1, stage_conv, 128)
-    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 128)
     
     stage_conv = SEBlock(reduction_ratio=4)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 256, True)
     stage_conv = ResNetBlock(1, stage_conv, 256)
-    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 256)
     
     stage_conv = SEBlock(reduction_ratio=6)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 512, True)
     stage_conv = ResNetBlock(1, stage_conv, 512)
-    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 512)
     
     stage_att = SEBlock(reduction_ratio=8)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 1024, True)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
-    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     
     stage_att = SEBlock(reduction_ratio=10)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 2048, True)
     stage_conv = ResNetBlock(1, stage_conv, 2048)
-    stage_conv = layers.Dropout(rate=0.2)(stage_conv)
     stage_conv = ResNetBlock(1, stage_conv, 2048)
     
     stage_att = SEBlock(reduction_ratio=12)(stage_conv)
@@ -68,42 +64,36 @@ def create_model_ECG(name: str):
     # for apnea hyponea detecting
     ah_conv = ResNetBlock(1, conv, 64, True)
     ah_conv = ResNetBlock(1, ah_conv, 64)
-    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 64)
     
     ah_conv = SEBlock(reduction_ratio=2)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 128, True)
     ah_conv = ResNetBlock(1, ah_conv, 128)
-    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 128)
     
     ah_conv = SEBlock(reduction_ratio=4)(ah_conv)
 
     ah_conv = ResNetBlock(1, ah_conv, 256, True)
     ah_conv = ResNetBlock(1, ah_conv, 256)
-    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     
     ah_conv = SEBlock(reduction_ratio=6)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 512, True)
     ah_conv = ResNetBlock(1, ah_conv, 512)
-    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 512)
     
     ah_att = SEBlock(reduction_ratio=8)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 1024, True)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
-    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     
     ah_att = SEBlock(reduction_ratio=10)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 2048, True)
     ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = layers.Dropout(rate=0.2)(ah_conv)
     ah_conv = ResNetBlock(1, ah_conv, 2048)
     
     ah_att = SEBlock(reduction_ratio=12)(ah_conv)
