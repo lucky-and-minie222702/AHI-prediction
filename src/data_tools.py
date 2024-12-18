@@ -2,6 +2,9 @@ from data_functions import *
 import sys
 from os import path
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
 
 if sys.argv[1] == "merge":
     stages = []
@@ -26,9 +29,11 @@ if sys.argv[1] == "merge":
     sequences_SpO2 = np.array(seq_SpO2)
     annotations = np.array(annotations)
     stages = np.array(stages)
-    
+
+    sequences_ECG = scaler.fit_transform(sequences_ECG.T).T
+
     sequences_ECG = np.vstack(
-        [sequences_ECG, sequences_ECG + np.random.normal(0, 0.003, sequences_ECG.shape), add_baseline_wander(sequences_ECG, frequency=0.05, amplitude=0.05, sampling_rate=100)]
+        [sequences_ECG, sequences_ECG + np.random.normal(0, 0.015, sequences_ECG.shape), add_baseline_wander(sequences_ECG, frequency=0.05, amplitude=0.05, sampling_rate=100)]
     )
     sequences_SpO2 = np.vstack(
         [sequences_SpO2, sequences_SpO2 + np.random.normal(0, 0.01, sequences_SpO2.shape), sequences_SpO2 + np.random.normal(0, 0.015, sequences_SpO2.shape)]

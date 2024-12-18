@@ -29,7 +29,7 @@ def add_baseline_wander(ecg_signal, frequency: float, amplitude: float, sampling
     for p in ecg_signal:
         t = np.arange(len(p)) / sampling_rate
         baseline = amplitude * np.sin(2 * np.pi * frequency * t)
-        res.append(t + baseline)
+        res.append(p + baseline)
     return np.array(res)
 
 def divide_signal(signals, win_size, step_size=None):

@@ -41,7 +41,7 @@ for i in range(len(records)):
             signals[channel] = sig
             
         for key, value in signals.items():
-            value = scaler.fit_transform(value.reshape(-1, 1)).flatten()
+            # value = scaler.fit_transform(value.reshape(-1, 1)).flatten()
             np.save(path.join("patients", f"patients_{i+1}_{key}"), value)
 
         print(f"Succeed in preprocessing patient {i+1}")
