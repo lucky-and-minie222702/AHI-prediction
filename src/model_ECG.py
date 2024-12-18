@@ -11,7 +11,7 @@ def create_model_ECG(name: str):
     # down sample
     conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("tanh")(conv)
+    conv = layers.Activation("relu")(conv)
     
     # for stage detecting 
     stage_conv = ResNetBlock(1, conv, 64, True)
@@ -86,13 +86,13 @@ def create_model_ECG(name: str):
     
     ah_conv = SEBlock(reduction_ratio=10)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
     
-    ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
+    # ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
 
-    ah_flat = layers.GlobalAvgPool1D()(ah_conv)
+    ah_flat = layers.GlobalMaxPool1D()(ah_conv)
     ah_flat = layers.Flatten()(ah_flat)
     ah_out = layers.Dense(1, activation="sigmoid", name="ah")(ah_flat)
     
@@ -112,7 +112,7 @@ model = create_model_ECG("ECG")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 128
+batch_size = 256
 
 # callbacks
 early_stopping_epoch = 50
@@ -202,14 +202,26 @@ hist = model.fit(
     ]
 )
 
+class_weights_stage = compute_class_weight('balanced', classes=np.unique(y_stage_test), y=y_stage_test)
+class_weights_ah = compute_class_weight('balanced', classes=np.unique(y_ah_test), y=y_ah_train)
+
+sample_weights_stage = np.array([class_weights_stage[int(label)] for label in y_stage_test])
+sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_test])
+
+sample_weights_dict = {
+    # "stage": sample_weights_stage,
+    "ah": sample_weights_ah,
+}
+
 scores = model.evaluate(
     X_test, 
     {
         # "stage": y_stage_test, 
         "ah": y_ah_test
     }, 
-    batch_size=batch_size, 
-    return_dict=True
+    sample_weight = sample_weights_dict,
+    batch_size = batch_size, 
+    return_dict = True
 )
 
 print("\nSUMMARY\n")

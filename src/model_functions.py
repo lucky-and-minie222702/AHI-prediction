@@ -50,7 +50,7 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, pool = None, kernel_size: list[int] = [3], layers_activation = layers.LeakyReLU(negative_slope=0.25)):
+def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, pool = None, kernel_size: list[int] = [3], layers_activation = layers.Activation("relu")):
     if dimension == 1:
         Conv = layers.Conv1D
     elif dimension == 2:
@@ -80,7 +80,7 @@ def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, po
 
 
 class SEBlock(layers.Layer):
-    def __init__(self, reduction_ratio: int = 2, layers_activation = layers.LeakyReLU(negative_slope=0.25), scores_actiation = layers.Activation("sigmoid"), **kwargs):
+    def __init__(self, reduction_ratio: int = 2, layers_activation = layers.Activation("relu"), scores_actiation = layers.Activation("sigmoid"), **kwargs):
         super(SEBlock, self).__init__(**kwargs)
         self.reduction_ratio = reduction_ratio
         self.la = layers_activation
