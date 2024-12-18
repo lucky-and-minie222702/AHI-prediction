@@ -12,7 +12,6 @@ def create_model_ECG(name: str):
     conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("tanh")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
     
     # for stage detecting 
     stage_conv = ResNetBlock(1, conv, 64, True)
@@ -39,17 +38,17 @@ def create_model_ECG(name: str):
     
     stage_att = SEBlock(reduction_ratio=8)(stage_conv)
     
-    stage_conv = ResNetBlock(1, stage_conv, 1024, True)
-    stage_conv = ResNetBlock(1, stage_conv, 1024)
-    stage_conv = ResNetBlock(1, stage_conv, 1024)
+    # stage_conv = ResNetBlock(1, stage_conv, 1024, True)
+    # stage_conv = ResNetBlock(1, stage_conv, 1024)
+    # stage_conv = ResNetBlock(1, stage_conv, 1024)
     
-    stage_att = SEBlock(reduction_ratio=10)(stage_conv)
+    # stage_att = SEBlock(reduction_ratio=10)(stage_conv)
     
-    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
     
-    stage_att = SEBlock(reduction_ratio=12)(stage_conv)
+    # stage_att = SEBlock(reduction_ratio=12)(stage_conv)
 
     stage_flat = layers.GlobalAvgPool1D()(stage_att)
     stage_flat = layers.Flatten()(stage_flat)
@@ -81,17 +80,17 @@ def create_model_ECG(name: str):
     
     ah_att = SEBlock(reduction_ratio=8)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 1024, True)
-    ah_conv = ResNetBlock(1, ah_conv, 1024)
-    ah_conv = ResNetBlock(1, ah_conv, 1024)
+    # ah_conv = ResNetBlock(1, ah_conv, 1024, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 1024)
+    # ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    ah_att = SEBlock(reduction_ratio=10)(ah_conv)
+    # ah_att = SEBlock(reduction_ratio=10)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
     
-    ah_att = SEBlock(reduction_ratio=12)(ah_conv)
+    # ah_att = SEBlock(reduction_ratio=12)(ah_conv)
 
     ah_flat = layers.GlobalAvgPool1D()(ah_att)
     ah_flat = layers.Flatten()(ah_flat)
