@@ -1,6 +1,7 @@
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.utils import resample
 
 def create_model_ECG(name: str):    
     # 1000, 1 - 10 seconds
@@ -105,10 +106,10 @@ def create_model_ECG(name: str):
     # show_params(model, name)
     model.summary()
         
-    return model, stage_flat, ah_flat
+    return model
 
 save_path = path.join("res", "model_ECG.weights.h5")
-model = create_model_ECG("ECG")[0]
+model = create_model_ECG("ECG")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
@@ -157,18 +158,11 @@ sample_weights_dict = {
     "ah": sample_weights_ah,
 }
 
-print(np.unique(y_stage_train, return_counts=True))
-print(np.unique(y_ah_train, return_counts=True))
-
 model.compile(
     optimizer = "Adam",
     loss = {
-        "stage": weighted_binary_crossentropy(
-            weights = class_weights_stage
-        ),
-        "ah": weighted_binary_crossentropy(
-            weights = class_weights_ah
-        ),
+        "stage": "binary_crossentropy",
+        "ah": "binary_crossentropy",
     },
     metrics = {
         "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
@@ -206,10 +200,6 @@ print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}\n")
 print(f"Total epochs: {len(cb_timer.logs)}\n", file=f)
-
-for metric, value in zip(list(hist.history.keys()), scores):
-    print(f"{metric}:", value)
-    print(f"{metric}:", value, file=f)
 
 f.close()
 
