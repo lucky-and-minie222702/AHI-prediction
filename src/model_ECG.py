@@ -36,13 +36,13 @@ def create_model_ECG(name: str):
     stage_conv = ResNetBlock(1, stage_conv, 512)
     stage_conv = ResNetBlock(1, stage_conv, 512)
     
-    stage_att = SEBlock(reduction_ratio=8)(stage_conv)
+    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 1024, True)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     
-    stage_att = SEBlock(reduction_ratio=10)(stage_conv)
+    stage_conv = SEBlock(reduction_ratio=10)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 2048, True)
     stage_conv = ResNetBlock(1, stage_conv, 2048)
@@ -78,19 +78,19 @@ def create_model_ECG(name: str):
     ah_conv = ResNetBlock(1, ah_conv, 512)
     ah_conv = ResNetBlock(1, ah_conv, 512)
     
-    ah_att = SEBlock(reduction_ratio=8)(ah_conv)
+    ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 1024, True)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    ah_att = SEBlock(reduction_ratio=10)(ah_conv)
+    ah_conv = SEBlock(reduction_ratio=10)(ah_conv)
     
-    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048
+    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
     
-    # ah_att = SEBlock(reduction_ratio=12)(ah_conv)
+    ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
 
     ah_flat = layers.GlobalAvgPool1D()(ah_conv)
     ah_flat = layers.Flatten()(ah_flat)
@@ -112,7 +112,7 @@ model = create_model_ECG("ECG")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
-batch_size = 256
+batch_size = 128
 
 # callbacks
 early_stopping_epoch = 50
