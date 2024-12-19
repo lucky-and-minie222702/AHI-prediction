@@ -144,9 +144,12 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 stages = np.load(path.join("patients", "merged_stages.npy"))
-train_indices = np.load(path.join("patients", "train_indices.npy"))
-test_indices = np.load(path.join("patients", "test_indices.npy"))
 
+indices = np.arange(len(annotations))
+train_indices, test_indices = train_test_split(indices, test_size=0.2,random_state=np.random.randint(69696969))
+np.save(path.join("patients", "train_indices_ECG"), train_indices)
+np.save(path.join("patients", "test_indices_ECG"), test_indices)
+    
 X_train = sequences[train_indices]
 y_stage_train = stages[train_indices]
 y_ah_train = annotations[train_indices]

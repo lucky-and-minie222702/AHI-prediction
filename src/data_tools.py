@@ -44,13 +44,8 @@ if sys.argv[1] == "merge":
     stages = np.concatenate(
         [stages, stages, stages]
     )
-    
-    indices = np.arange(len(annotations))
-    train_indices, test_indices = train_test_split(indices, test_size=0.2,random_state=np.random.randint(69696969))
-    
+
     np.save(path.join("patients", "merged_ECG"), sequences_ECG)
     np.save(path.join("patients", "merged_SpO2"), sequences_SpO2)
     np.save(path.join("patients", "merged_anns"), annotations)
     np.save(path.join("patients", "merged_stages"), stages)
-    np.save(path.join("patients", "train_indices"), train_indices)
-    np.save(path.join("patients", "test_indices"), test_indices)
