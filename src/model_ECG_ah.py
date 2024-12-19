@@ -50,6 +50,14 @@ save_path = path.join("res", "model_ECG_ah.weights.h5")
 model = create_model_ECG_ah("ECG_ah")
 name = sys.argv[sys.argv.index("id")+1]
 
+model.compile(
+    optimizer = "Adam",
+    loss =  "binary_crossentropy",
+    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
+    #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+)
+
 max_epochs = 200
 batch_size = 64
 if "batch_size" in sys.argv:
@@ -129,14 +137,6 @@ class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
-model.compile(
-    optimizer = "Adam",
-    loss =  "binary_crossentropy",
-    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-    # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
-    #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-)
-
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
@@ -194,6 +194,8 @@ for i in range(1, 10):
     cm = confusion_matrix(y_test, pred)
     print("Confusion matrix:\n", cm)
     print("Confusion matrix:\n", cm, file=f)
+    print("Precision, recall: ", calc_cm(cm))
+    print("Precision, recall: ", calc_cm(cm), file=f)
 
 f.close()
 

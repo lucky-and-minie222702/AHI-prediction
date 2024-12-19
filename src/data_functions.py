@@ -65,3 +65,13 @@ def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray
     return np.random.permutation(np.concatenate([
         minority_data, majority_data[:int(len(minority_data) * majority_weight):]
     ]))
+  
+def calc_cm(cm: np.ndarray | list):
+    TP = cm[1][1] 
+    FP = cm[0][1]  
+    FN = cm[1][0]
+
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+
+    return precision, recall
