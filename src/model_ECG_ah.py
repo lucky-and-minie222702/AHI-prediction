@@ -145,7 +145,7 @@ hist = model.fit(
     epochs = max_epochs,
     batch_size = batch_size,
     validation_split = 0.2, 
-    class_weight = class_weights,
+    class_weight = class_weight,
     callbacks = [
         cb_timer,
         cb_early_stopping,
@@ -161,7 +161,7 @@ sample_weights = np.array([class_weights[int(label)] for label in y_test])
 scores = model.evaluate(
     X_test, 
     y_test,
-    class_weight = class_weights,
+    class_weight = class_weight,
     batch_size = batch_size, 
     return_dict = True
 )
