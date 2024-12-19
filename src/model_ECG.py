@@ -6,15 +6,14 @@ from sklearn.utils import resample
 def create_model_ECG(name: str):    
     # 1000, 1 - 10 seconds
     inp = layers.Input(shape=(None, 1))
-    conv = layers.Normalization()(inp)
-    
-    # Embed
-    conv = layers.Conv1D(filters=32, kernel_size=1, strides=1)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
+    norm_inp = layers.Normalization()(inp)
     
     # for stage detecting 
-    stage_conv = ResNetBlock(1, conv, 64, True)
+    stage_conv = layers.Conv1D(filters=32, kernel_size=5, strides=1)(norm_inp)
+    stage_conv = layers.BatchNormalization()(stage_conv)
+    stage_conv = layers.Activation("relu")(stage_conv)
+    
+    stage_conv = ResNetBlock(1, stage_conv, 64, True)
     stage_conv = ResNetBlock(1, stage_conv, 64)
     stage_conv = ResNetBlock(1, stage_conv, 64)
     
@@ -43,6 +42,12 @@ def create_model_ECG(name: str):
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     
     stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
+    
+    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    
+    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
 
     stage_flat = layers.GlobalAvgPool1D()(stage_conv)
     stage_flat = layers.Flatten()(stage_flat)
@@ -50,7 +55,11 @@ def create_model_ECG(name: str):
     
     
     # for apnea hyponea detecting
-    ah_conv = ResNetBlock(1, conv, 64, True)
+    ah_conv = layers.Conv1D(filters=32, kernel_size=5, strides=1)(norm_inp)
+    ah_conv = layers.BatchNormalization()(ah_conv)
+    ah_conv = layers.Activation("relu")(ah_conv)
+
+    ah_conv = ResNetBlock(1, ah_conv, 64, True)
     ah_conv = ResNetBlock(1, ah_conv, 64)
     ah_conv = ResNetBlock(1, ah_conv, 64)
     
@@ -77,6 +86,12 @@ def create_model_ECG(name: str):
     ah_conv = ResNetBlock(1, ah_conv, 1024, True)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
+    
+    ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
+    
+    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
     
     ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
 
