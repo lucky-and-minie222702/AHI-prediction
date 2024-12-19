@@ -60,10 +60,11 @@ def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False, bott
     
     strides = 1 + down_sample
     factor = 4 if bottle_neck else 1
+    kernel_size = 1 if bottle_neck else 3
     
     shortcut = x
 
-    x = Conv(filters, 1, strides=strides, padding='same')(x)
+    x = Conv(filters, kernel_size, strides=strides, padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
 
@@ -71,11 +72,11 @@ def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False, bott
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
 
-    x = Conv(filters * factor, 1, strides=1, padding='same')(x)
+    x = Conv(filters * factor, kernel_size, strides=1, padding='same')(x)
     x = layers.BatchNormalization()(x)
 
     if strides != 1 or shortcut.shape[-1] != filters * factor:
-        shortcut = Conv(filters * factor, 1, strides=strides, padding='same')(shortcut)
+        shortcut = Conv(filters * factor, kernel_size, strides=strides, padding='same')(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
