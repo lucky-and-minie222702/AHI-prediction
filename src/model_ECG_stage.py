@@ -52,13 +52,13 @@ def create_model_ECG(name: str):
         name = name
     )
 
-    # show_params(model, name)
-    model.summary()
+    show_params(model, name)
+    # model.summary()
         
     return model
 
-save_path = path.join("res", "model_ECG_ah.weights.h5")
-model = create_model_ECG("ECG_ah")
+save_path = path.join("res", "model_ECG_stages.weights.h5")
+model = create_model_ECG("ECG_stages")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
