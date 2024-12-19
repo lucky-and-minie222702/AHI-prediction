@@ -8,12 +8,11 @@ def create_model_ECG(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=32, kernel_size=7, strides=2)(norm_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=1, strides=1)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64, True)
+    conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
     
     conv = ResNetBlock(1, conv, 128, True)
@@ -93,8 +92,8 @@ y_test = annotations[test_indices]
 
 if "balance" in sys.argv:
     # Train set
-    ah_balance = balancing_data(y_train, 1.5)
-    balance = balancing_data(y_train, 1.5)
+    ah_balance = balancing_data(y_train, 1.0)
+    balance = balancing_data(y_train, 1.0)
     combined_balance  = np.concatenate([
         ah_balance, 
         balance,
@@ -105,8 +104,8 @@ if "balance" in sys.argv:
     y_train = y_train[combined_balance]
     
     # Test set
-    ah_balance = balancing_data(y_test, 1.5)
-    balance = balancing_data(y_test, 1.5)
+    ah_balance = balancing_data(y_test, 1.0)
+    balance = balancing_data(y_test, 1.0)
     combined_balance  = np.concatenate([
         ah_balance, 
         balance,
