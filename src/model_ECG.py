@@ -43,11 +43,11 @@ def create_model_ECG(name: str):
     
     stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
     
-    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
     
-    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
+    # stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
 
     stage_flat = layers.GlobalAvgPool1D()(stage_conv)
     stage_flat = layers.Flatten()(stage_flat)
@@ -89,11 +89,11 @@ def create_model_ECG(name: str):
     
     ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
     
-    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    # ah_conv = ResNetBlock(1, ah_conv, 2048)
     
-    ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
+    # ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
 
     ah_flat = layers.GlobalMaxPool1D()(ah_conv)
     ah_flat = layers.Flatten()(ah_flat)
