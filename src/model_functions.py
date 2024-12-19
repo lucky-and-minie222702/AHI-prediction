@@ -50,38 +50,33 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, inp, filters: int, down_sample: bool = False, pool = None, kernel_size: list[int] = [3], layers_per_block: int = 2, layers_activation = layers.Activation("relu")):
+def ResNetBlock(dimension: int, x, filters: int, strides: int = 1):
     if dimension == 1:
-        Conv = layers.Conv1D
+        Conv = layers.Conv1Ds
     elif dimension == 2:
         Conv = layers.Conv2D
     elif dimension == 3:
         Conv = layers.Conv3D
+    
+    shortcut = x
 
-    shortcut = inp
-    strides = [2, 1] if down_sample else [1, 1]
-    x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[0], padding="same")(inp)
+    x = Conv(filters, (1, 1), strides=strides, padding='same')(x)
     x = layers.BatchNormalization()(x)
-    x = layers_activation(x)
-    x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[1], padding="same")(x)
+    x = layers.Activation('relu')(x)
+
+    x = Conv(filters, (3, 3), strides=1, padding='same')(x)
     x = layers.BatchNormalization()(x)
-    x = layers_activation(x)
+    x = layers.Activation('relu')(x)
 
-    for _ in range(layers_per_block-2):
-        x = Conv(filters=filters, kernel_size=kernel_size, strides=strides[0], padding="same")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers_activation(x)
+    x = Conv(filters * 4, (1, 1), strides=1, padding='same')(x)
+    x = layers.BatchNormalization()(x)
 
-    if down_sample:
-        shortcut = Conv(filters=filters, kernel_size=kernel_size, strides=2, padding="same")(shortcut)
+    if strides != 1 or shortcut.shape[-1] != filters * 4:
+        shortcut = Conv(filters * 4, (1, 1), strides=strides, padding='same')(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
-    
-    x = layers.Add()([x, shortcut]) # residual connection
-    
-    if pool is not None:
-        x = pool(x)
-    
-    x = layers_activation(x)
+
+    x = layers.Add()([x, shortcut])
+    x = layers.Activation('relu')(x)
     return x
 
 
