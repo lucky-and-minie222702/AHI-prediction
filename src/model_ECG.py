@@ -9,7 +9,7 @@ def create_model_ECG(name: str):
     conv = layers.Normalization()(inp)
     
     # Embed
-    conv = layers.Conv1D(filters=64, kernel_size=1, strides=1)(conv)
+    conv = layers.Conv1D(filters=32, kernel_size=1, strides=1)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
