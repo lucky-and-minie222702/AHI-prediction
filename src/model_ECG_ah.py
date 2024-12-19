@@ -13,12 +13,6 @@ def create_model_ECG(name: str):
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 32, True)
-    conv = ResNetBlock(1, conv, 32)
-    conv = ResNetBlock(1, conv, 32)
-    
-    conv = SEBlock(reduction_ratio=2)(conv)
-
     conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
