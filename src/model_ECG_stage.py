@@ -128,7 +128,7 @@ print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonz
 print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-
+class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
 model.compile(
@@ -155,6 +155,7 @@ hist = model.fit(
 )
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
+class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
 scores = model.evaluate(
