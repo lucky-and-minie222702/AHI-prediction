@@ -50,7 +50,7 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False):
+def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False, bottle_neck: bool = True):
     if dimension == 1:
         Conv = layers.Conv1D
     elif dimension == 2:
@@ -59,6 +59,7 @@ def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False):
         Conv = layers.Conv3D
     
     strides = 1 + down_sample
+    factor = 4 if bottle_neck else 1
     
     shortcut = x
 
@@ -70,11 +71,11 @@ def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False):
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
 
-    x = Conv(filters * 4, 1, strides=1, padding='same')(x)
+    x = Conv(filters * factor, 1, strides=1, padding='same')(x)
     x = layers.BatchNormalization()(x)
 
-    if strides != 1 or shortcut.shape[-1] != filters * 4:
-        shortcut = Conv(filters * 4, 1, strides=strides, padding='same')(shortcut)
+    if strides != 1 or shortcut.shape[-1] != filters * factor:
+        shortcut = Conv(filters * factor, 1, strides=strides, padding='same')(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
