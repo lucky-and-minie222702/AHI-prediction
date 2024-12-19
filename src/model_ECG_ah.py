@@ -20,8 +20,12 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 128, True)
     conv = ResNetBlock(1, conv, 128)
     conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
     
     conv = ResNetBlock(1, conv, 256, True)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
     
