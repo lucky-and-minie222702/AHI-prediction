@@ -3,7 +3,7 @@ from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
-def create_model_ECG(name: str):    
+def create_model_ECG_ah(name: str):    
     # 1000, 1 - 10 seconds
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
@@ -15,21 +15,23 @@ def create_model_ECG(name: str):
 
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
+    conv = ResNetBlock(1, conv, 64)
     
     conv = ResNetBlock(1, conv, 128, True)
     conv = ResNetBlock(1, conv, 128)
-
-    conv = ResNetBlock(1, conv, 256, True)
-    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
     
     conv = ResNetBlock(1, conv, 256, True)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
-    
-    conv = ResNetBlock(1, conv, 1024, True)
-    conv = ResNetBlock(1, conv, 1024)
+    conv = ResNetBlock(1, conv, 512)
     
     conv = SEBlock(reduction_ratio=4)(conv)
 
@@ -49,7 +51,7 @@ def create_model_ECG(name: str):
     return model
 
 save_path = path.join("res", "model_ECG_ah.weights.h5")
-model = create_model_ECG("ECG_ah")
+model = create_model_ECG_ah("ECG_ah")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200

@@ -3,7 +3,7 @@ from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
-def create_model_ECG(name: str):    
+def create_model_ECG_stage(name: str):    
     # 1000, 1 - 10 seconds
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
@@ -54,7 +54,7 @@ def create_model_ECG(name: str):
     return model
 
 save_path = path.join("res", "model_ECG_stages.weights.h5")
-model = create_model_ECG("ECG_stages")
+model = create_model_ECG_stage("ECG_stages")
 name = sys.argv[sys.argv.index("id")+1]
 
 max_epochs = 200
