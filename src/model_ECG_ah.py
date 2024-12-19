@@ -37,11 +37,11 @@ def create_model_ECG(name: str):
     
     conv = SEBlock(reduction_ratio=2)(conv)
     
-    # conv = ResNetBlock(1, conv, 1024, True)
-    # conv = ResNetBlock(1, conv, 1024)
-    # conv = ResNetBlock(1, conv, 1024)
+    conv = ResNetBlock(1, conv, 1024, True)
+    conv = ResNetBlock(1, conv, 1024)
+    conv = ResNetBlock(1, conv, 1024)
     
-    # conv = SEBlock(reduction_ratio=2)(conv)
+    conv = SEBlock(reduction_ratio=2)(conv)
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
