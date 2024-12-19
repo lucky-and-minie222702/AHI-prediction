@@ -16,39 +16,23 @@ def create_model_ECG(name: str):
     # for stage detecting 
     stage_conv = ResNetBlock(1, conv, 64, True)
     stage_conv = ResNetBlock(1, stage_conv, 64)
-    stage_conv = ResNetBlock(1, stage_conv, 64)
-    
-    # stage_conv = SEBlock(reduction_ratio=2)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 128, True)
     stage_conv = ResNetBlock(1, stage_conv, 128)
-    stage_conv = ResNetBlock(1, stage_conv, 128)
-    
-    # stage_conv = SEBlock(reduction_ratio=4)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 256, True)
     stage_conv = ResNetBlock(1, stage_conv, 256)
-    stage_conv = ResNetBlock(1, stage_conv, 256)
-    
-    # stage_conv = SEBlock(reduction_ratio=6)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 512, True)
     stage_conv = ResNetBlock(1, stage_conv, 512)
-    stage_conv = ResNetBlock(1, stage_conv, 512)
-    
-    # stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 1024, True)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
-    stage_conv = ResNetBlock(1, stage_conv, 1024)
     
-    # stage_conv = SEBlock(reduction_ratio=10)(stage_conv)
+    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    stage_conv = ResNetBlock(1, stage_conv, 2048)
     
-    # stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    # stage_conv = ResNetBlock(1, stage_conv, 2048)
-    # stage_conv = ResNetBlock(1, stage_conv, 2048)
-    
-    # stage_conv = SEBlock(reduction_ratio=12)(stage_conv)
+    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
 
     stage_flat = layers.GlobalAvgPool1D()(stage_conv)
     stage_flat = layers.Flatten()(stage_flat)
@@ -60,31 +44,21 @@ def create_model_ECG(name: str):
     ah_conv = ResNetBlock(1, ah_conv, 64)
     ah_conv = ResNetBlock(1, ah_conv, 64)
     
-    # ah_conv = SEBlock(reduction_ratio=2)(ah_conv)
-    
     ah_conv = ResNetBlock(1, ah_conv, 128, True)
     ah_conv = ResNetBlock(1, ah_conv, 128)
     ah_conv = ResNetBlock(1, ah_conv, 128)
-    
-    # ah_conv = SEBlock(reduction_ratio=4)(ah_conv)
 
     ah_conv = ResNetBlock(1, ah_conv, 256, True)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     
-    # ah_conv = SEBlock(reduction_ratio=6)(ah_conv)
-    
     ah_conv = ResNetBlock(1, ah_conv, 512, True)
     ah_conv = ResNetBlock(1, ah_conv, 512)
     ah_conv = ResNetBlock(1, ah_conv, 512)
     
-    # ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
-    
     ah_conv = ResNetBlock(1, ah_conv, 1024, True)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
-    
-    # ah_conv = SEBlock(reduction_ratio=10)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 2048, True)
     ah_conv = ResNetBlock(1, ah_conv, 2048)
