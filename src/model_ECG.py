@@ -18,27 +18,31 @@ def create_model_ECG(name: str):
     stage_conv = ResNetBlock(1, stage_conv, 64)
     stage_conv = ResNetBlock(1, stage_conv, 64)
     
+    stage_conv = SEBlock(reduction_ratio=2)(stage_conv)
+    
     stage_conv = ResNetBlock(1, stage_conv, 128, True)
     stage_conv = ResNetBlock(1, stage_conv, 128)
     stage_conv = ResNetBlock(1, stage_conv, 128)
+    
+    stage_conv = SEBlock(reduction_ratio=4)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 256, True)
     stage_conv = ResNetBlock(1, stage_conv, 256)
     stage_conv = ResNetBlock(1, stage_conv, 256)
     
+    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
+    
     stage_conv = ResNetBlock(1, stage_conv, 512, True)
     stage_conv = ResNetBlock(1, stage_conv, 512)
     stage_conv = ResNetBlock(1, stage_conv, 512)
+    
+    stage_conv = SEBlock(reduction_ratio=16)(stage_conv)
     
     stage_conv = ResNetBlock(1, stage_conv, 1024, True)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
     
-    # stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    # stage_conv = ResNetBlock(1, stage_conv, 2048)
-    # stage_conv = ResNetBlock(1, stage_conv, 2048)
-    
-    stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
+    stage_conv = SEBlock(reduction_ratio=32)(stage_conv)
 
     stage_flat = layers.GlobalAvgPool1D()(stage_conv)
     stage_flat = layers.Flatten()(stage_flat)
@@ -50,27 +54,31 @@ def create_model_ECG(name: str):
     ah_conv = ResNetBlock(1, ah_conv, 64)
     ah_conv = ResNetBlock(1, ah_conv, 64)
     
+    ah_conv = SEBlock(reduction_ratio=2)(ah_conv)
+    
     ah_conv = ResNetBlock(1, ah_conv, 128, True)
     ah_conv = ResNetBlock(1, ah_conv, 128)
     ah_conv = ResNetBlock(1, ah_conv, 128)
+
+    ah_conv = SEBlock(reduction_ratio=4)(ah_conv)
 
     ah_conv = ResNetBlock(1, ah_conv, 256, True)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     ah_conv = ResNetBlock(1, ah_conv, 256)
     
+    ah_conv = SEBlock(reduction_ratio=8)(ah_conv)
+    
     ah_conv = ResNetBlock(1, ah_conv, 512, True)
     ah_conv = ResNetBlock(1, ah_conv, 512)
     ah_conv = ResNetBlock(1, ah_conv, 512)
+    
+    ah_conv = SEBlock(reduction_ratio=16)(ah_conv)
     
     ah_conv = ResNetBlock(1, ah_conv, 1024, True)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     ah_conv = ResNetBlock(1, ah_conv, 1024)
     
-    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    ah_conv = ResNetBlock(1, ah_conv, 2048)
-    
-    # ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
+    ah_conv = SEBlock(reduction_ratio=32)(ah_conv)
 
     ah_flat = layers.GlobalMaxPool1D()(ah_conv)
     ah_flat = layers.Flatten()(ah_flat)
@@ -80,7 +88,7 @@ def create_model_ECG(name: str):
         inputs = inp,
         outputs = [
             stage_out,
-            # ah_out,
+            ah_out,
         ],
         name = name
     )
@@ -100,7 +108,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 50
+early_stopping_epoch = 30
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
@@ -137,7 +145,7 @@ if "balance" in sys.argv:
     ah_balance = balancing_data(y_ah_train, 1.0)
     combined_balance  = np.concatenate([
         stage_balance, 
-        # ah_balance,
+        ah_balance,
     ])
     combined_balance = np.unique(combined_balance)
 
@@ -150,7 +158,7 @@ if "balance" in sys.argv:
     ah_balance = balancing_data(y_ah_test, 1.0)
     combined_balance  = np.concatenate([
         stage_balance, 
-        # ah_balance,
+        ah_balance,
     ])
     combined_balance = np.unique(combined_balance)
 
@@ -170,18 +178,18 @@ sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_tra
 
 sample_weights_dict = {
     "stage": sample_weights_stage,
-    # "ah": sample_weights_ah,
+    "ah": sample_weights_ah,
 }
 
 model.compile(
     optimizer = "Adam",
     loss = {
         "stage": "binary_crossentropy",
-        # "ah": "binary_crossentropy",
+        "ah": "binary_crossentropy",
     },
     metrics = {
         "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-        # "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+        "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     }
 )
 
@@ -191,7 +199,7 @@ hist = model.fit(
     X_train,
     {
         "stage": y_stage_train, 
-        # "ah": y_ah_train
+        "ah": y_ah_train
     },
     epochs = max_epochs,
     batch_size = batch_size,
@@ -213,14 +221,14 @@ sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_tes
 
 sample_weights_dict = {
     "stage": sample_weights_stage,
-    # "ah": sample_weights_ah,
+    "ah": sample_weights_ah,
 }
 
 scores = model.evaluate(
     X_test, 
     {
         "stage": y_stage_test, 
-        # "ah": y_ah_test
+        "ah": y_ah_test
     }, 
     sample_weight = sample_weights_dict,
     batch_size = batch_size, 
