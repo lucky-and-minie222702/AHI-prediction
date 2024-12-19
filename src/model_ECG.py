@@ -190,7 +190,7 @@ sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_tra
 
 sample_weights_dict = {
     "stage": sample_weights_stage,
-    "ah": sample_weights_ah,
+    # "ah": sample_weights_ah,
 }
 
 model.compile(
