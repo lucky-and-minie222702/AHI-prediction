@@ -8,7 +8,7 @@ def create_model_ECG(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=32, kernel_size=5, strides=1)(norm_inp)
+    conv = layers.Conv1D(filters=32, kernel_size=1, strides=1)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
 
@@ -42,7 +42,7 @@ def create_model_ECG(name: str):
     
     conv = SEBlock(reduction_ratio=8)(conv)
 
-    flat = layers.GlobalMaxPool1D()(conv)
+    flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
@@ -68,6 +68,8 @@ if "batch_size" in sys.argv:
 
 # callbacks
 early_stopping_epoch = 30
+if "ese" in sys.argv:
+    early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
@@ -161,7 +163,7 @@ sample_weights = np.array([class_weights[int(label)] for label in y_test])
 scores = model.evaluate(
     X_test, 
     y_test,
-    class_weight = class_weight,
+    class_weights = class_weight,
     batch_size = batch_size, 
     return_dict = True
 )
