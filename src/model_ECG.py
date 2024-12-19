@@ -38,15 +38,15 @@ def create_model_ECG(name: str):
     
     # stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
     
-    stage_conv = ResNetBlock(1, stage_conv, 1024, True)
-    stage_conv = ResNetBlock(1, stage_conv, 1024)
-    stage_conv = ResNetBlock(1, stage_conv, 1024)
+    # stage_conv = ResNetBlock(1, stage_conv, 1024, True)
+    # stage_conv = ResNetBlock(1, stage_conv, 1024)
+    # stage_conv = ResNetBlock(1, stage_conv, 1024)
     
     # stage_conv = SEBlock(reduction_ratio=10)(stage_conv)
     
-    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
     
     # stage_conv = SEBlock(reduction_ratio=12)(stage_conv)
 
@@ -86,9 +86,9 @@ def create_model_ECG(name: str):
     
     # ah_conv = SEBlock(reduction_ratio=10)(ah_conv)
     
-    # ah_conv = ResNetBlock(1, ah_conv, 2048, True)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048)
-    # ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = ResNetBlock(1, ah_conv, 2048, True)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
+    ah_conv = ResNetBlock(1, ah_conv, 2048)
     
     # ah_conv = SEBlock(reduction_ratio=12)(ah_conv)
 
