@@ -101,7 +101,7 @@ annotations = np.concatenate(
 )
 
 indices = np.arange(len(annotations))
-train_indices, test_indices = train_test_split(indices, test_size=0.2,random_state=np.random.randint(69696969))
+train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
 np.save(path.join("patients", "train_indices_ECG"), train_indices)
 np.save(path.join("patients", "test_indices_ECG"), test_indices)
     
@@ -151,12 +151,14 @@ model.compile(
 
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+
 hist = model.fit(
     X_train,
     y_train,
     epochs = max_epochs,
     batch_size = batch_size,
-    validation_split = 0.2, 
+    validation_data = (X_val, y_val),
     class_weight = class_weight,
     callbacks = [
         cb_timer,
