@@ -153,8 +153,8 @@ y_ah_test = annotations[test_indices]
 
 if "balance" in sys.argv:
     # Train set
-    stage_balance = balancing_data(y_stage_train, 1.2)
-    ah_balance = balancing_data(y_ah_train, 1.2)
+    stage_balance = balancing_data(y_stage_train, 1.0)
+    ah_balance = balancing_data(y_ah_train, 1.0)
     combined_balance  = np.concatenate([
         stage_balance, 
         # ah_balance,
@@ -166,8 +166,8 @@ if "balance" in sys.argv:
     y_ah_train = y_ah_train[combined_balance]
     
     # Test set
-    stage_balance = balancing_data(y_stage_test, 1.2)
-    ah_balance = balancing_data(y_ah_test, 1.2)
+    stage_balance = balancing_data(y_stage_test, 1.0)
+    ah_balance = balancing_data(y_ah_test, 1.0)
     combined_balance  = np.concatenate([
         stage_balance, 
         # ah_balance,
