@@ -115,13 +115,13 @@ class SEBlock(layers.Layer):
    
 
 class TimingCallback(keras.callbacks.Callback):
-    def __init__(self, logs={}):
+    def __init__(self, logs = {}):
         self.logs=[]
 
-    def on_epoch_begin(self, epoch, logs={}):
+    def on_epoch_begin(self, epoch: int, logs = {}):
         self.starttime = timer()
         
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch: int, logs = {}):
         self.logs.append(timer()-self.starttime)
 
  

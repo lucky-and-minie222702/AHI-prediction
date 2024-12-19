@@ -8,10 +8,9 @@ def create_model_ECG_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(norm_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
@@ -32,7 +31,6 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
     conv = ResNetBlock(1, conv, 512)
-    
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
