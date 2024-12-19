@@ -8,7 +8,7 @@ def create_model_ECG(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=32, kernel_size=5, strides=1)(norm_inp)
+    conv = layers.Conv1D(filters=32, kernel_size=1, strides=1)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
 
@@ -28,19 +28,19 @@ def create_model_ECG(name: str):
     conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
     
-    conv = SEBlock(reduction_ratio=4)(conv)
+    conv = SEBlock(reduction_ratio=2)(conv)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
     conv = ResNetBlock(1, conv, 512)
     
-    conv = SEBlock(reduction_ratio=4)(conv)
+    conv = SEBlock(reduction_ratio=2)(conv)
     
     conv = ResNetBlock(1, conv, 1024, True)
     conv = ResNetBlock(1, conv, 1024)
     conv = ResNetBlock(1, conv, 1024)
     
-    conv = SEBlock(reduction_ratio=8)(conv)
+    conv = SEBlock(reduction_ratio=2)(conv)
 
     flat = layers.GlobalMaxPool1D()(conv)
     flat = layers.Flatten()(flat)
@@ -145,7 +145,7 @@ hist = model.fit(
     epochs = max_epochs,
     batch_size = batch_size,
     validation_split = 0.2, 
-    sample_weight = sample_weights,
+    class_weight = class_weights,
     callbacks = [
         cb_timer,
         cb_early_stopping,
@@ -160,7 +160,7 @@ sample_weights = np.array([class_weights[int(label)] for label in y_test])
 scores = model.evaluate(
     X_test, 
     y_test,
-    sample_weight = sample_weights,
+    class_weight = class_weights,
     batch_size = batch_size, 
     return_dict = True
 )
