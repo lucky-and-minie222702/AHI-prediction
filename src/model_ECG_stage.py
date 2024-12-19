@@ -5,6 +5,7 @@ from sklearn.utils import resample
 
 def create_model_ECG_stage(name: str):    
     # 1000, 1 - 10 seconds
+    # 1000, 1 - 10 seconds
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
@@ -13,30 +14,23 @@ def create_model_ECG_stage(name: str):
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64, True)
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
-    
-    conv = SEBlock(reduction_ratio=2)(conv)
+    conv = ResNetBlock(1, conv, 64) 
     
     conv = ResNetBlock(1, conv, 128, True)
     conv = ResNetBlock(1, conv, 128)
     conv = ResNetBlock(1, conv, 128)
-
-    conv = SEBlock(reduction_ratio=2)(conv)
-
+    
     conv = ResNetBlock(1, conv, 256, True)
     conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
-    
-    conv = SEBlock(reduction_ratio=2)(conv)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
     conv = ResNetBlock(1, conv, 512)
     
-    conv = SEBlock(reduction_ratio=2)(conv)
-
+    conv = SEBlock(reduction_ratio=4)(conv)
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
@@ -61,6 +55,10 @@ max_epochs = 200
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
+
+majority_weight = 1.0
+if "mw" in sys.argv:
+    majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
 early_stopping_epoch = 30
@@ -101,8 +99,8 @@ y_test = stages[test_indices]
 
 if "balance" in sys.argv:
     # Train set
-    stage_balance = balancing_data(y_train, 1.0)
-    balance = balancing_data(y_train, 1.0)
+    stage_balance = balancing_data(y_train, majority_weight)
+    balance = balancing_data(y_train, majority_weight)
     combined_balance  = np.concatenate([
         stage_balance, 
         balance,
@@ -113,8 +111,8 @@ if "balance" in sys.argv:
     y_train = y_train[combined_balance]
     
     # Test set
-    stage_balance = balancing_data(y_test, 1.0)
-    balance = balancing_data(y_test, 1.0)
+    stage_balance = balancing_data(y_test, majority_weight)
+    balance = balancing_data(y_test, majority_weight)
     combined_balance  = np.concatenate([
         stage_balance, 
         balance,
@@ -135,7 +133,8 @@ sample_weights = np.array([class_weights[int(label)] for label in y_train])
 model.compile(
     optimizer = "Adam",
     loss =  "binary_crossentropy",
-    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    metrics = [metrics.F1Score(), metrics.Precision(), metrics.Recall()],
 )
 
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
@@ -185,6 +184,17 @@ print("\nTEST RESULT\n", file=f)
 for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
+
+for i in range(1, 10):    
+    threshold = i / 10
+    print(f"Threshold 0.{i}")
+    print(f"Threshold 0.{i}", file=f)
+    pred = model.predict(X_test, verbose=False, batch_size=batch_size)
+    arr = np.array([np.squeeze(x) for x in pred])
+    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+    cm = confusion_matrix(y_test, pred)
+    print("Confusion matrix:\n", cm)
+    print("Confusion matrix:\n", cm, file=f)
 
 f.close()
 

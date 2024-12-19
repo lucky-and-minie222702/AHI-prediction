@@ -52,7 +52,7 @@ def divide_signal(signals, win_size, step_size=None):
         
     return np.array(res)
 
-def balancing_data(data: np.ndarray, major_weight: float = 1.0) -> np.ndarray:  
+def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray:  
     count0 = np.count_nonzero(data == 0)
     count1 = len(data) - count0
     count0 += count0 == count1  # avoid equal
@@ -63,5 +63,5 @@ def balancing_data(data: np.ndarray, major_weight: float = 1.0) -> np.ndarray:
     majority_data = np.where(data == majority)[0]
     
     return np.random.permutation(np.concatenate([
-        minority_data, majority_data[:int(len(minority_data) * major_weight):]
+        minority_data, majority_data[:int(len(minority_data) * majority_weight):]
     ]))
