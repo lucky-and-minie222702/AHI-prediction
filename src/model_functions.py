@@ -52,7 +52,7 @@ else:
 
 def ResNetBlock(dimension: int, x, filters: int, strides: int = 1):
     if dimension == 1:
-        Conv = layers.Conv1Ds
+        Conv = layers.Conv1D
     elif dimension == 2:
         Conv = layers.Conv2D
     elif dimension == 3:
