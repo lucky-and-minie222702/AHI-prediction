@@ -17,37 +17,25 @@ def create_model_ECG(name: str):
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
     
-    conv = SEBlock(reduction_ratio=2)(conv)
+    # conv = SEBlock(reduction_ratio=2)(conv)
     
     conv = ResNetBlock(1, conv, 128, True)
     conv = ResNetBlock(1, conv, 128)
     conv = ResNetBlock(1, conv, 128)
 
-    conv = SEBlock(reduction_ratio=2)(conv)
+    # conv = SEBlock(reduction_ratio=2)(conv)
 
     conv = ResNetBlock(1, conv, 256, True)
     conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
     
-    conv = SEBlock(reduction_ratio=2)(conv)
+    # conv = SEBlock(reduction_ratio=2)(conv)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
     conv = ResNetBlock(1, conv, 512)
     
-    conv = SEBlock(reduction_ratio=2)(conv)
-    
-    # conv = ResNetBlock(1, conv, 1024, True)
-    # conv = ResNetBlock(1, conv, 1024)
-    # conv = ResNetBlock(1, conv, 1024)
-    
-    # conv = SEBlock(reduction_ratio=2)(conv)
-    
-    # conv = ResNetBlock(1, conv, 2048, True)
-    # conv = ResNetBlock(1, conv, 2048)
-    # conv = ResNetBlock(1, conv, 2048)
-    
-    # conv = SEBlock(reduction_ratio=2)(conv)
+    conv = SEBlock(reduction_ratio=4)(conv)
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
