@@ -8,11 +8,10 @@ def create_model_ECG(name: str):
     inp = layers.Input(shape=(None, 1))
     conv = layers.Normalization()(inp)
     
-    # down sample
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.L2())(conv)
+    # Embed
+    conv = layers.Conv1D(filters=64, kernel_size=1, strides=1, kernel_regularizer=reg.L2())(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
     
     # for stage detecting 
     stage_conv = ResNetBlock(1, conv, 64, True)
@@ -101,7 +100,7 @@ def create_model_ECG(name: str):
         inputs = inp,
         outputs = [
             stage_out,
-            ah_out,
+            # ah_out,
         ],
         name = name
     )
@@ -158,7 +157,7 @@ if "balance" in sys.argv:
     ah_balance = balancing_data(y_ah_train, 1.2)
     combined_balance  = np.concatenate([
         stage_balance, 
-        ah_balance,
+        # ah_balance,
     ])
     combined_balance = np.unique(combined_balance)
 
@@ -171,7 +170,7 @@ if "balance" in sys.argv:
     ah_balance = balancing_data(y_ah_test, 1.2)
     combined_balance  = np.concatenate([
         stage_balance, 
-        ah_balance,
+        # ah_balance,
     ])
     combined_balance = np.unique(combined_balance)
 
@@ -198,11 +197,11 @@ model.compile(
     optimizer = "Adam",
     loss = {
         "stage": "binary_crossentropy",
-        "ah": "binary_crossentropy",
+        # "ah": "binary_crossentropy",
     },
     metrics = {
         "stage": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-        "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+        # "ah": [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     }
 )
 
@@ -212,7 +211,7 @@ hist = model.fit(
     X_train,
     {
         "stage": y_stage_train, 
-        "ah": y_ah_train
+        # "ah": y_ah_train
     },
     epochs = max_epochs,
     batch_size = batch_size,
@@ -234,14 +233,14 @@ sample_weights_ah = np.array([class_weights_ah[int(label)] for label in y_ah_tes
 
 sample_weights_dict = {
     "stage": sample_weights_stage,
-    "ah": sample_weights_ah,
+    # "ah": sample_weights_ah,
 }
 
 scores = model.evaluate(
     X_test, 
     {
         "stage": y_stage_test, 
-        "ah": y_ah_test
+        # "ah": y_ah_test
     }, 
     sample_weight = sample_weights_dict,
     batch_size = batch_size, 
