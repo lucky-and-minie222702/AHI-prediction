@@ -163,7 +163,7 @@ sample_weights = np.array([class_weights[int(label)] for label in y_test])
 scores = model.evaluate(
     X_test, 
     y_test,
-    class_weights = class_weight,
+    sample_weight = sample_weights,
     batch_size = batch_size, 
     return_dict = True
 )
