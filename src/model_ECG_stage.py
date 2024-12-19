@@ -176,7 +176,7 @@ scores = model.evaluate(
 
 print("\nSUMMARY\n")
 
-f = open(path.join("history", f"{name}_logs_ECG.txt"), "w")
+f = open(path.join("history", f"{name}_logs_ECG_stages.txt"), "w")
 t = sum(cb_timer.logs)
 print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
@@ -194,7 +194,7 @@ f.close()
 
 for key, value in hist.history.items():
     data = np.array(value)
-    his_path = path.join("history", f"{name}_{key}_ECG")
+    his_path = path.join("history", f"{name}_{key}_ECG_stages")
     np.save(his_path, data)
 
 print("Saving history done!")
