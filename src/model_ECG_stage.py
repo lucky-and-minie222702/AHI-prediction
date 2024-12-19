@@ -48,8 +48,8 @@ def create_model_ECG_stage(name: str):
         name = name
     )
 
-    show_params(model, name)
-    # model.summary()
+    # show_params(model, name)
+    model.summary()
         
     return model
 

@@ -50,7 +50,7 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False, bottle_neck: bool = True):
+def ResNetBlock(dimension: int, x, filters: int, down_sample: bool = False, bottle_neck: bool = False):
     if dimension == 1:
         Conv = layers.Conv1D
     elif dimension == 2:
