@@ -133,7 +133,8 @@ model.compile(
     optimizer = "Adam",
     loss =  "binary_crossentropy",
     # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
-    metrics = [metrics.F1Score(), metrics.Precision(), metrics.Recall()],
+    # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
+    #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
 
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
