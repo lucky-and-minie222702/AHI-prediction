@@ -9,28 +9,34 @@ def create_model_ECG(name: str):
     conv = layers.Normalization()(inp)
     
     # Embed
-    conv = layers.Conv1D(filters=64, kernel_size=1, strides=1, kernel_regularizer=reg.L2())(conv)
+    conv = layers.Conv1D(filters=64, kernel_size=1, strides=1)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
     # for stage detecting 
     stage_conv = ResNetBlock(1, conv, 64, True)
     stage_conv = ResNetBlock(1, stage_conv, 64)
+    stage_conv = ResNetBlock(1, stage_conv, 64)
     
     stage_conv = ResNetBlock(1, stage_conv, 128, True)
+    stage_conv = ResNetBlock(1, stage_conv, 128)
     stage_conv = ResNetBlock(1, stage_conv, 128)
     
     stage_conv = ResNetBlock(1, stage_conv, 256, True)
     stage_conv = ResNetBlock(1, stage_conv, 256)
+    stage_conv = ResNetBlock(1, stage_conv, 256)
     
     stage_conv = ResNetBlock(1, stage_conv, 512, True)
+    stage_conv = ResNetBlock(1, stage_conv, 512)
     stage_conv = ResNetBlock(1, stage_conv, 512)
     
     stage_conv = ResNetBlock(1, stage_conv, 1024, True)
     stage_conv = ResNetBlock(1, stage_conv, 1024)
+    stage_conv = ResNetBlock(1, stage_conv, 1024)
     
-    stage_conv = ResNetBlock(1, stage_conv, 2048, True)
-    stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048, True)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
+    # stage_conv = ResNetBlock(1, stage_conv, 2048)
     
     stage_conv = SEBlock(reduction_ratio=8)(stage_conv)
 
