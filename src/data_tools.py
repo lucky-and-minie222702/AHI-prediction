@@ -32,21 +32,21 @@ if sys.argv[1] == "merge":
 
     sequences_ECG = scaler.fit_transform(sequences_ECG.T).T
 
-    sequences_ECG = np.vstack(
-        [sequences_ECG, sequences_ECG + np.random.normal(0, 0.015, sequences_ECG.shape), add_baseline_wander(sequences_ECG, frequency=0.05, amplitude=0.05, sampling_rate=100)]
-    )
-    sequences_ECG = np.vstack(
-        [sequences_ECG,  add_baseline_wander(sequences_ECG, frequency=0.075, amplitude=0.025, sampling_rate=100)]
-    )
-    sequences_SpO2 = np.vstack(
-        [sequences_SpO2, sequences_SpO2 + np.random.normal(0, 0.01, sequences_SpO2.shape), sequences_SpO2 + np.random.normal(0, 0.015, sequences_SpO2.shape)]
-    )
-    annotations = np.concatenate(
-        [annotations, annotations, annotations]
-    )
-    stages = np.concatenate(
-        [stages, stages, stages]
-    )
+    # sequences_ECG = np.vstack(
+    #     [sequences_ECG, sequences_ECG + np.random.normal(0, 0.015, sequences_ECG.shape), add_baseline_wander(sequences_ECG, frequency=0.05, amplitude=0.05, sampling_rate=100)]
+    # )
+    # sequences_ECG = np.vstack(
+    #     [sequences_ECG,  add_baseline_wander(sequences_ECG, frequency=0.075, amplitude=0.025, sampling_rate=100)]
+    # )
+    # sequences_SpO2 = np.vstack(
+    #     [sequences_SpO2, sequences_SpO2 + np.random.normal(0, 0.01, sequences_SpO2.shape), sequences_SpO2 + np.random.normal(0, 0.015, sequences_SpO2.shape)]
+    # )
+    # annotations = np.concatenate(
+    #     [annotations, annotations, annotations]
+    # )
+    # stages = np.concatenate(
+    #     [stages, stages, stages]
+    # )
 
     np.save(path.join("patients", "merged_ECG"), sequences_ECG)
     np.save(path.join("patients", "merged_SpO2"), sequences_SpO2)

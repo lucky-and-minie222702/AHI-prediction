@@ -15,19 +15,23 @@ def create_model_ECG_ah(name: str):
 
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
-    conv = ResNetBlock(1, conv, 64)
+    conv = ResNetBlock(1, conv, 64) 
     
     conv = ResNetBlock(1, conv, 128, True)
-    for _ in range(7):
-        conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
     
     conv = ResNetBlock(1, conv, 256, True)
-    for _ in range(35):
-        conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
     conv = ResNetBlock(1, conv, 512)
+    
+    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=50)(conv)
+    
+    conv = SEBlock(reduction_ratio=4)(conv)
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
@@ -88,9 +92,6 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
-annotations = np.concatenate(
-    [annotations, annotations]
-)
 
 indices = np.arange(len(annotations))
 train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))

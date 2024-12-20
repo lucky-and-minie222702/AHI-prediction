@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.signal import resample
 from data_functions import *
+import neurokit2 as nk
 
 scaler = MinMaxScaler()
 max_ECG_len = 0
@@ -31,6 +32,7 @@ for i in range(len(records)):
                 sig = sig[:total_time*30*128:] 
                 sig = resample(sig, 100 * len(sig) // 128)  # down from 128 to 100 hz
                 sig = sig[:len(sig) // 1000 * 1000:]  # convert to 10 seconds divisible
+                sig = nk.ecg.ecg_clean(sig, sampling_rate=100)  #  clean
                 max_ECG_len = max(max_ECG_len, len(sig))
             else:  # SpO2
                 sig = sig[:total_time*30*8:]
