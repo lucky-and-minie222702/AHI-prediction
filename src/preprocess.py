@@ -79,7 +79,10 @@ for i in range(len(records)):
                 annotations.append(1)
             else:
                 annotations.append(0)
-            if t - time[idx] >= duration[idx]:
+
+            duration10s = t - time[idx] 
+
+            if  duration10s >= duration[idx] and duration10s % 10 < 7:
                 idx += 1
                 if idx == len(time):
                     enough = True

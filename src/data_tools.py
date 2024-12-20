@@ -44,6 +44,11 @@ if sys.argv[1] == "merge":
     # stages = np.concatenate(
     #     [stages, stages]
     # )
+    
+    _, counts = np.unique(annotations, return_counts=True)
+    print(f"Annotations:  [0]: {counts[0]} | [1]: {counts[1]}")
+    _, counts = np.unique(stages, return_counts=True)
+    print(f"Stages:  [0]: {counts[0]} | [1]: {counts[1]}")
 
     np.save(path.join("patients", "merged_ECG"), sequences_ECG)
     np.save(path.join("patients", "merged_SpO2"), sequences_SpO2)
