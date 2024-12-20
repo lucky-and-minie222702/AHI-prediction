@@ -8,30 +8,29 @@ def create_model_ECG_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(norm_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=1, strides=1)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64)
-    conv = ResNetBlock(1, conv, 64)
-    conv = ResNetBlock(1, conv, 64)
+    conv = ResNetBlock(1, conv, 64, 13)
+    conv = ResNetBlock(1, conv, 64, 13)
+    conv = ResNetBlock(1, conv, 64, 13)
     
-    conv = ResNetBlock(1, conv, 128, True)
-    conv = ResNetBlock(1, conv, 128)
-    conv = ResNetBlock(1, conv, 128)
-    conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128, 11, True)
+    conv = ResNetBlock(1, conv, 128, 11)
+    conv = ResNetBlock(1, conv, 128, 11)
+    conv = ResNetBlock(1, conv, 128, 11)
     
-    conv = ResNetBlock(1, conv, 256, True)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256, 9, True)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
     
-    conv = ResNetBlock(1, conv, 512, True)
-    conv = ResNetBlock(1, conv, 512)
-    conv = ResNetBlock(1, conv, 512)
+    conv = ResNetBlock(1, conv, 512, 7, True)
+    conv = ResNetBlock(1, conv, 512, 7)
+    conv = ResNetBlock(1, conv, 512, 7)
     
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
@@ -96,6 +95,9 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
+annotations = np.concatenate([
+    annotations, annotations, annotations
+])
 
 indices = np.arange(len(annotations))
 train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
