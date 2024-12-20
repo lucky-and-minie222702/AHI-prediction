@@ -105,8 +105,8 @@ annotations = np.concatenate([
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
     train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
-    np.save(path.join("patients", "train_indices_ECG"), train_indices)
-    np.save(path.join("patients", "test_indices_ECG"), test_indices)
+    np.save(path.join("patients", "train_indices_ECG_ah"), train_indices)
+    np.save(path.join("patients", "test_indices_ECG_ah"), test_indices)
         
     X_train = sequences[train_indices]
     y_train = annotations[train_indices]
@@ -159,7 +159,7 @@ if "train" in sys.argv:
         ]
     )
 
-y_test = annotations[np.load(path.join("patients", "test_indices_ECG.npy"))]
+y_test = annotations[np.load(path.join("patients", "test_indices_ECG_ah.npy"))]
 model.load_weights(save_path)
 
 class_weights = compute_class_weight('balanced', classes=np.unique(annotations[test_indices]), y=y_test)
