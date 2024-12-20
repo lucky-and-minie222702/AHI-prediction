@@ -38,7 +38,7 @@ def create_model_ECG_ah(name: str):
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
-    out = layers.Dense(1, activation="sigmoid")(flat)
+    out = layers.Dense(2, activation="softmax")(flat)
     
     model = Model(
         inputs = inp,
@@ -58,6 +58,7 @@ name = sys.argv[sys.argv.index("id")+1]
 model.compile(
     optimizer = "Adam",
     loss =  "binary_crossentropy",
+    metrics = ["accuracy"]
     # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
@@ -89,7 +90,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
 cb_timer = TimingCallback()
 lr_scheduler = cbk.ReduceLROnPlateau(
     factor = 0.5,
-    min_lr = 0.000001,
+    min_lr = 0.00001,
     patience = 5,
 )
 
@@ -180,18 +181,18 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-for i in range(1, 10):    
-    threshold = i / 10
-    print(f"Threshold 0.{i}")
-    print(f"Threshold 0.{i}", file=f)
-    pred = model.predict(X_test, verbose=False, batch_size=batch_size)
-    arr = np.array([np.squeeze(x) for x in pred])
-    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-    cm = confusion_matrix(y_test, pred)
-    print("Confusion matrix:\n", cm)
-    print("Confusion matrix:\n", cm, file=f)
-    print(calc_cm(cm))
-    print(calc_cm(cm), file=f)
+# for i in range(1, 10):    
+#     threshold = i / 10
+#     print(f"Threshold 0.{i}")
+#     print(f"Threshold 0.{i}", file=f)
+#     pred = model.predict(X_test, verbose=False, batch_size=batch_size)
+#     arr = np.array([np.squeeze(x) for x in pred])
+#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+#     cm = confusion_matrix(y_test, pred)
+#     print("Confusion matrix:\n", cm)
+#     print("Confusion matrix:\n", cm, file=f)
+#     print(calc_cm(cm))
+#     print(calc_cm(cm), file=f)
 
 f.close()
 
