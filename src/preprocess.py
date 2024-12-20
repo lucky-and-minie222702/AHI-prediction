@@ -82,12 +82,13 @@ for i in range(len(records)):
 
             duration10s = t - time[idx] 
 
-            if  duration10s >= duration[idx] and duration10s % 10 < 7:
+            if  duration10s >= duration[idx] and duration10s - duration[idx] > 3:  # at least 7 / 10 seconds
                 idx += 1
                 if idx == len(time):
                     enough = True
         else:
             annotations.append(0)
+
     annotations = np.array(annotations)
     sleep_stages = list(map(lambda x: 1 if x == 0 else 0, sleep_stages))
     sleep_stages_10s = np.array([i for i in sleep_stages for _ in range(3)])

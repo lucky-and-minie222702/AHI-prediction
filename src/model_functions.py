@@ -177,29 +177,29 @@ class MyMultiHeadRelativeAttention(layers.Layer):
         return tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
 
     def call(self, inputs):
-        x = inputs  # batch_size, seq_length, d_model
+        x = inputs  # batch_size, seq, d_model
         batch_size = tf.shape(x)[0]
-        seq_length = tf.shape(x)[1]
+        seq = tf.shape(x)[1]
 
         # Generate relative positions
-        range_vec = tf.range(seq_length)
+        range_vec = tf.range(seq)
         relative_positions = tf.clip_by_value(
             range_vec[:, None] - range_vec[None, :], 
             -self.max_relative_position, self.max_relative_position
         )
         relative_indices = relative_positions + self.max_relative_position  
 
-        relative_embeddings = self.relative_embedding(relative_indices)  # seq_length, seq_length, depth
+        relative_embeddings = self.relative_embedding(relative_indices)  # seq, seq, depth
 
-        Q = self.query_dense(x)  # batch_size, seq_length, d_model
+        Q = self.query_dense(x)  # batch_size, seq, d_model
         K = self.key_dense(x)
         V = self.value_dense(x)
-
+  
         Q = self.split_heads(Q, batch_size)  # batch, seq, num_heads, depth
         K = self.split_heads(K, batch_size)
         V = self.split_heads(V, batch_size)
 
-        # batch_size, num_heads, seq_length, depth
+        # batch_size, num_heads, seq, depth
         Q = tf.transpose(Q, [0, 2, 1, 3])
         K = tf.transpose(K, [0, 2, 1, 3])
         V = tf.transpose(V, [0, 2, 1, 3])
@@ -207,7 +207,7 @@ class MyMultiHeadRelativeAttention(layers.Layer):
         scaling_factor = tf.math.sqrt(tf.cast(self.depth, tf.float32))
         content_scores = tf.matmul(Q, K, transpose_b=True) / scaling_factor  # batch, num_heads, seq, seq
 
-        rel_scores = tf.einsum('bhqd,qkd->bhqk', Q, relative_embeddings) / scaling_factor
+        rel_scores = tf.einsum('bhqd,qkd->bhqk', Q, relative_embeddings) / scaling_factor  # batch, num_heads, seq, seq  
 
         combined_scores = content_scores + rel_scores
 
@@ -215,45 +215,8 @@ class MyMultiHeadRelativeAttention(layers.Layer):
 
         attention_output = tf.matmul(attention_weights, V)  # batch, num_heads, seq, depth
 
-        attention_output = tf.transpose(attention_output, [0, 2, 1, 3])
-        attention_output = tf.reshape(attention_output, (batch_size, seq_length, self.d_model))
+        attention_output = tf.transpose(attention_output, [0, 2, 1, 3])  # batch, num_heads, seq, depth
+        attention_output = tf.reshape(attention_output, (batch_size, seq, self.d_model))
 
-        output = self.output_dense(attention_output)
-        return output
-
-
-class MyOneHeadRelativeAttention(layers.Layer):
-    def __init__(self, d_model: int, max_relative_position: int, **kwargs):
-        super().__init__(**kwargs)
-        self.d_model = d_model
-        self.max_relative_position = max_relative_position
-        self.embedding_table = layers.Embedding(2 * max_relative_position + 1, d_model)
-        
-        self.query_dense = layers.Dense(d_model)
-        self.key_dense = layers.Dense(d_model)
-        self.value_dense = layers.Dense(d_model)
-        self.output_dense = layers.Dense(d_model)
-        self.softmax = layers.Softmax(axis=-1)
-
-    def call(self, inputs):
-        x = inputs
-        seq_length = tf.shape(x)[1]
-        positions = tf.range(seq_length)
-        relative_positions = positions[:, None] - positions[None, :]
-        clipped_positions = tf.clip_by_value(relative_positions, -self.max_relative_position, self.max_relative_position)
-        relative_position_indices = clipped_positions + self.max_relative_position
-        relative_embeddings = self.embedding_table(relative_position_indices)
-
-        Q = self.query_dense(x)
-        K = self.key_dense(x)
-        V = self.value_dense(x)
-        scaling_factor = tf.math.sqrt(tf.cast(self.d_model, tf.float32))
-
-        content_scores = tf.matmul(Q, K, transpose_b=True) / scaling_factor
-        relative_scores = tf.einsum('bqd,qkd->bqk', Q, relative_embeddings) / scaling_factor
-        combined_scores = content_scores + relative_scores
-        attention_weights = self.softmax(combined_scores)
-
-        attention_output = tf.matmul(attention_weights, V)
         output = self.output_dense(attention_output)
         return output
