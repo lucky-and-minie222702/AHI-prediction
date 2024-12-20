@@ -66,12 +66,26 @@ def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray
         minority_data, majority_data[:int(len(minority_data) * majority_weight):]
     ]))
   
-def calc_cm(cm: np.ndarray | list):
+def calc_cm(cm: np.ndarray | list, return_dict: bool = True):
     TP = cm[1][1] 
     FP = cm[0][1]  
     FN = cm[1][0]
+    TN = cm[0][0]
 
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
+    
+    sensivity = TP / (TP + FN)
+    specifity = TN / (TN + FP)
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
 
-    return precision, recall
+    if return_dict:
+        return {
+            "precision": precision, 
+            "recall": recall, 
+            "sensivity": sensivity, 
+            "specifity": specifity,
+            "accuracy": accuracy
+        }
+    else:
+        return precision, recall, sensivity, specifity, accuracy

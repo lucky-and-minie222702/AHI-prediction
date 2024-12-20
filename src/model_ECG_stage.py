@@ -196,8 +196,8 @@ for i in range(1, 10):
     cm = confusion_matrix(y_test, pred)
     print("Confusion matrix:\n", cm)
     print("Confusion matrix:\n", cm, file=f)
-    print("Precision, recall: ", calc_cm(cm))
-    print("Precision, recall: ", calc_cm(cm), file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
 
 f.close()
 

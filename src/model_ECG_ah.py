@@ -8,7 +8,7 @@ def create_model_ECG_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(norm_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=3, padding="same")(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
 
@@ -17,16 +17,12 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 64)
     
     conv = ResNetBlock(1, conv, 128, True)
-    conv = ResNetBlock(1, conv, 128)
-    conv = ResNetBlock(1, conv, 128)
-    conv = ResNetBlock(1, conv, 128)
+    for _ in range(7):
+        conv = ResNetBlock(1, conv, 128)
     
     conv = ResNetBlock(1, conv, 256, True)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
+    for _ in range(35):
+        conv = ResNetBlock(1, conv, 256)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
@@ -195,8 +191,8 @@ for i in range(1, 10):
     cm = confusion_matrix(y_test, pred)
     print("Confusion matrix:\n", cm)
     print("Confusion matrix:\n", cm, file=f)
-    print("Precision, recall: ", calc_cm(cm))
-    print("Precision, recall: ", calc_cm(cm), file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
 
 f.close()
 
