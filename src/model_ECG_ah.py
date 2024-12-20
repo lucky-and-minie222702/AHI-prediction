@@ -12,20 +12,28 @@ def create_model_ECG_ah(name: str):
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
+    
+    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=50)(conv)
 
+    conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
     
     conv = ResNetBlock(1, conv, 128, True)
     conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128)
     
     conv = ResNetBlock(1, conv, 256, True)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256)
     conv = ResNetBlock(1, conv, 256)
     
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
-    
-    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=50)(conv)
+    conv = ResNetBlock(1, conv, 512)
     
     conv = SEBlock(reduction_ratio=4)(conv)
 

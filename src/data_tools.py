@@ -6,6 +6,10 @@ from sklearn.preprocessing import MinMaxScaler
 
 scaler = MinMaxScaler()
 
+if len(sys.argv) <  2:
+    print("No command, exit!")
+    exit()
+
 if sys.argv[1] == "merge":
     stages = []
     annotations = []
