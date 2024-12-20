@@ -159,7 +159,9 @@ if "train" in sys.argv:
         ]
     )
 
-y_test = annotations[np.load(path.join("patients", "test_indices_ECG_ah.npy"))]
+test_indices = np.load(path.join("patients", "test_indices_ECG_ah.npy"))
+X_test = sequences[test_indices]
+y_test = annotations[test_indices]
 model.load_weights(save_path)
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
