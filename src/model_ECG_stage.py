@@ -8,32 +8,38 @@ def create_model_ECG_stage(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(norm_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=7, strides=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64)
-    conv = ResNetBlock(1, conv, 64)
-    conv = ResNetBlock(1, conv, 64) 
+    conv = ResNetBlock(1, conv, 64, 13)
+    conv = ResNetBlock(1, conv, 64, 13)
+    conv = ResNetBlock(1, conv, 64, 13)
     
-    conv = ResNetBlock(1, conv, 128, True)
-    conv = ResNetBlock(1, conv, 128)
-    conv = ResNetBlock(1, conv, 128)
+    conv = ResNetBlock(1, conv, 128, 11, True)
+    conv = ResNetBlock(1, conv, 128, 11)
+    conv = ResNetBlock(1, conv, 128, 11)
+    conv = ResNetBlock(1, conv, 128, 11)
     
-    conv = ResNetBlock(1, conv, 256, True)
-    conv = ResNetBlock(1, conv, 256)
-    conv = ResNetBlock(1, conv, 256)
+    conv = ResNetBlock(1, conv, 256, 9, True)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
     
-    conv = ResNetBlock(1, conv, 512, True)
-    conv = ResNetBlock(1, conv, 512)
-    conv = ResNetBlock(1, conv, 512)
+    conv = ResNetBlock(1, conv, 512, 7, True)
+    conv = ResNetBlock(1, conv, 512, 7)
+    conv = ResNetBlock(1, conv, 512, 7)
+    
+    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
     conv = SEBlock(reduction_ratio=4)(conv)
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
-    out = layers.Dense(1, activation="sigmoid")(flat)
+    out = layers.Dense(2, activation="softmax")(flat)
     
     model = Model(
         inputs = inp,
@@ -46,13 +52,14 @@ def create_model_ECG_stage(name: str):
         
     return model
 
-save_path = path.join("res", "model_ECG_stages.weights.h5")
-model = create_model_ECG_stage("ECG_stages")
+save_path = path.join("res", "model_ECG_stage.weights.h5")
+model = create_model_ECG_stage("ECG_stage")
 name = sys.argv[sys.argv.index("id")+1]
 
 model.compile(
     optimizer = "Adam",
     loss =  "binary_crossentropy",
+    metrics = ["accuracy"]
     # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
@@ -68,13 +75,13 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 30
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 3,
+    patience = 5,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     save_path, 
@@ -84,17 +91,21 @@ cb_checkpoint = cbk.ModelCheckpoint(
 cb_timer = TimingCallback()
 lr_scheduler = cbk.ReduceLROnPlateau(
     factor = 0.5,
-    min_lr = 0.000001,
+    min_lr = 0.00001,
     patience = 5,
 )
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 stages  = np.load(path.join("patients", "merged_stages.npy"))
+stages = np.concatenate([
+    stages, stages, stages,
+    stages, stages, stages
+])
 
 indices = np.arange(len(stages))
 train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
-np.save(path.join("patients", "train_indices_ECG"), train_indices)
-np.save(path.join("patients", "test_indices_ECG"), test_indices)
+np.save(path.join("patients", "train_indices_ECG_stage"), train_indices)
+np.save(path.join("patients", "test_indices_ECG_stage"), test_indices)
     
 X_train = sequences[train_indices]
 y_train = stages[train_indices]
@@ -128,6 +139,10 @@ sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 
+y_train = to_categorical(y_train, num_classes=2)
+y_test = to_categorical(y_test, num_classes=2)
+y_val = to_categorical(y_val, num_classes=2)
+
 hist = model.fit(
     X_train,
     y_train,
@@ -143,7 +158,6 @@ hist = model.fit(
     ]
 )
 
-
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
@@ -158,7 +172,7 @@ scores = model.evaluate(
 
 print("\nSUMMARY\n")
 
-f = open(path.join("history", f"{name}_logs_ECG_stages.txt"), "w")
+f = open(path.join("history", f"{name}_logs_ECG_stage.txt"), "w")
 t = sum(cb_timer.logs)
 print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
@@ -172,24 +186,33 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-for i in range(1, 10):    
-    threshold = i / 10
-    print(f"Threshold 0.{i}")
-    print(f"Threshold 0.{i}", file=f)
-    pred = model.predict(X_test, verbose=False, batch_size=batch_size)
-    arr = np.array([np.squeeze(x) for x in pred])
-    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-    cm = confusion_matrix(y_test, pred)
-    print("Confusion matrix:\n", cm)
-    print("Confusion matrix:\n", cm, file=f)
-    print(calc_cm(cm))
-    print(calc_cm(cm), file=f)
+pred = model.predict(X_test, verbose=False, batch_size=batch_size)
+arr = np.array([np.squeeze(x) for x in pred])
+pred = np.array([np.argmax(x) for x in arr])
+cm = confusion_matrix(y_test, pred)
+print("Confusion matrix:\n", cm)
+print("Confusion matrix:\n", cm, file=f)
+print(calc_cm(cm))
+print(calc_cm(cm), file=f)
+
+# for i in range(1, 10):    
+#     threshold = i / 10
+#     print(f"Threshold 0.{i}")
+#     print(f"Threshold 0.{i}", file=f)
+#     pred = model.predict(X_test, verbose=False, batch_size=batch_size)
+#     arr = np.array([np.squeeze(x) for x in pred])
+#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+#     cm = confusion_matrix(y_test, pred)
+#     print("Confusion matrix:\n", cm)
+#     print("Confusion matrix:\n", cm, file=f)
+#     print(calc_cm(cm))
+#     print(calc_cm(cm), file=f)
 
 f.close()
 
 for key, value in hist.history.items():
     data = np.array(value)
-    his_path = path.join("history", f"{name}_{key}_ECG_stages")
+    his_path = path.join("history", f"{name}_{key}_ECG_stage")
     np.save(his_path, data)
 
 print("Saving history done!")
