@@ -103,25 +103,15 @@ y_test = stages[test_indices]
 
 if "balance" in sys.argv:
     # Train set
-    stage_balance = balancing_data(y_train, majority_weight)
     balance = balancing_data(y_train, majority_weight)
-    combined_balance  = np.concatenate([
-        stage_balance, 
-        balance,
-    ])
-    combined_balance = np.unique(combined_balance)
+    combined_balance = np.unique(balance)
 
     X_train = X_train[combined_balance]
     y_train = y_train[combined_balance]
     
     # Test set
-    stage_balance = balancing_data(y_test, majority_weight)
     balance = balancing_data(y_test, majority_weight)
-    combined_balance  = np.concatenate([
-        stage_balance, 
-        balance,
-    ])
-    combined_balance = np.unique(combined_balance)
+    combined_balance = np.unique(balance)
 
     X_test = X_test[combined_balance]
     y_test = y_test[combined_balance]
