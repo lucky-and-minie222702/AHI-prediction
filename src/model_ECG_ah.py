@@ -162,7 +162,7 @@ if "train" in sys.argv:
 y_test = annotations[np.load(path.join("patients", "test_indices_ECG_ah.npy"))]
 model.load_weights(save_path)
 
-class_weights = compute_class_weight('balanced', classes=np.unique(annotations[test_indices]), y=y_test)
+class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
