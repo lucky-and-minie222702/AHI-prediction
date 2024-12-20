@@ -102,8 +102,6 @@ annotations = np.concatenate([
     annotations, annotations, annotations
 ])
 
-annotations = to_categorical(annotations, num_classes=2)
-
 indices = np.arange(len(annotations))
 train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
 np.save(path.join("patients", "train_indices_ECG"), train_indices)
@@ -140,6 +138,10 @@ class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
+
+y_train = to_categorical(y_train, num_classes=2)
+y_test = to_categorical(y_test, num_classes=2)
+y_val = to_categorical(y_val, num_classes=2)
 
 hist = model.fit(
     X_train,
