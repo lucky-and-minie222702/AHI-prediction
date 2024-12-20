@@ -68,8 +68,8 @@ def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray
   
 def calc_cm(cm: np.ndarray | list, return_dict: bool = True):
     TP = cm[1][1] 
-    FP = cm[0][1]  
-    FN = cm[1][0]
+    FP = cm[1][0]  
+    FN = cm[0][1]
     TN = cm[0][0]
 
     precision = TP / (TP + FP)
@@ -90,7 +90,7 @@ def calc_cm(cm: np.ndarray | list, return_dict: bool = True):
             "specifity": specifity,
             "accuracy": accuracy,
             "positive_accuracy": Positive_accuracy,
-            "Negative_accuracy": Negative_accuracy,
+            "negative_accuracy": Negative_accuracy,
         }
     else:
         return precision, recall, sensivity, specifity, accuracy, Positive_accuracy, Negative_accuracy
