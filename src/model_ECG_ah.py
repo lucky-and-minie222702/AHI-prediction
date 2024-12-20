@@ -12,8 +12,6 @@ def create_model_ECG_ah(name: str):
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
-    
-    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=50)(conv)
 
     conv = ResNetBlock(1, conv, 64)
     conv = ResNetBlock(1, conv, 64)
@@ -34,6 +32,8 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, True)
     conv = ResNetBlock(1, conv, 512)
     conv = ResNetBlock(1, conv, 512)
+    
+    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
     conv = SEBlock(reduction_ratio=4)(conv)
 
@@ -74,7 +74,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 30
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
