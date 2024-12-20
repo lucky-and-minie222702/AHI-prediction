@@ -129,13 +129,13 @@ print("Dataset:")
 print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+
 class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
 print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
-
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
 
 hist = model.fit(
     X_train,
