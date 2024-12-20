@@ -178,6 +178,8 @@ scores = model.evaluate(
     return_dict = True
 )
 
+y_test = annotations[test_indices]
+
 print("\nSUMMARY\n")
 
 f = open(path.join("history", f"{name}_logs_ECG_ah.txt"), "w")
