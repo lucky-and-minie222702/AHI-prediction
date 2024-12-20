@@ -102,65 +102,73 @@ stages = np.concatenate([
     stages, stages, stages
 ])
 
-indices = np.arange(len(stages))
-train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
-np.save(path.join("patients", "train_indices_ECG_stage"), train_indices)
-np.save(path.join("patients", "test_indices_ECG_stage"), test_indices)
-    
-X_train = sequences[train_indices]
-y_train = stages[train_indices]
+if "train" in sys.argv:
+    indices = np.arange(len(stages))
+    train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
+    np.save(path.join("patients", "train_indices_ECG_stage"), train_indices)
+    np.save(path.join("patients", "test_indices_ECG_stage"), test_indices)
+        
+    X_train = sequences[train_indices]
+    y_train = stages[train_indices]
+    X_test = sequences[test_indices]
+    y_test = stages[test_indices]
+
+    if "balance" in sys.argv:
+        # Train set
+        balance = balancing_data(y_train, majority_weight)
+        combined_balance = np.unique(balance)
+
+        X_train = X_train[combined_balance]
+        y_train = y_train[combined_balance]
+        
+        # Test set
+        balance = balancing_data(y_test, majority_weight)
+        combined_balance = np.unique(balance)
+
+        X_test = X_test[combined_balance]
+        y_test = y_test[combined_balance]
+
+    print("Dataset:")
+    print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
+    print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
+
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+
+    class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+    class_weight = dict(enumerate(class_weights))
+    sample_weights = np.array([class_weights[int(label)] for label in y_train])
+
+    print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
+
+    y_train = to_categorical(y_train, num_classes=2)
+    y_test = to_categorical(y_test, num_classes=2)
+    y_val = to_categorical(y_val, num_classes=2)
+
+    hist = model.fit(
+        X_train,
+        y_train,
+        epochs = max_epochs,
+        batch_size = batch_size,
+        validation_data = (X_val, y_val),
+        class_weight = class_weight,
+        callbacks = [
+            cb_timer,
+            cb_early_stopping,
+            cb_checkpoint,
+            lr_scheduler
+        ]
+    )
+
+test_indices = np.load(path.join("patients", "test_indices_ECG_stage.npy"))
 X_test = sequences[test_indices]
 y_test = stages[test_indices]
-
-if "balance" in sys.argv:
-    # Train set
-    balance = balancing_data(y_train, majority_weight)
-    combined_balance = np.unique(balance)
-
-    X_train = X_train[combined_balance]
-    y_train = y_train[combined_balance]
-    
-    # Test set
-    balance = balancing_data(y_test, majority_weight)
-    combined_balance = np.unique(balance)
-
-    X_test = X_test[combined_balance]
-    y_test = y_test[combined_balance]
-
-print("Dataset:")
-print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
-print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
-
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
-
-class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-class_weight = dict(enumerate(class_weights))
-sample_weights = np.array([class_weights[int(label)] for label in y_train])
-
-print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
-
-y_train = to_categorical(y_train, num_classes=2)
-y_test = to_categorical(y_test, num_classes=2)
-y_val = to_categorical(y_val, num_classes=2)
-
-hist = model.fit(
-    X_train,
-    y_train,
-    epochs = max_epochs,
-    batch_size = batch_size,
-    validation_data = (X_val, y_val),
-    class_weight = class_weight,
-    callbacks = [
-        cb_timer,
-        cb_early_stopping,
-        cb_checkpoint,
-        lr_scheduler
-    ]
-)
+model.load_weights(save_path)
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
+
+y_test = to_categorical(y_test, num_classes=2)
 
 scores = model.evaluate(
     X_test, 
@@ -169,6 +177,8 @@ scores = model.evaluate(
     batch_size = batch_size, 
     return_dict = True
 )
+
+y_test = stages[test_indices]
 
 print("\nSUMMARY\n")
 
@@ -210,9 +220,10 @@ print(calc_cm(cm), file=f)
 
 f.close()
 
-for key, value in hist.history.items():
-    data = np.array(value)
-    his_path = path.join("history", f"{name}_{key}_ECG_stage")
-    np.save(his_path, data)
+if "train" in sys.argv:
+    for key, value in hist.history.items():
+        data = np.array(value)
+        his_path = path.join("history", f"{name}_{key}_ECG_stage")
+        np.save(his_path, data)
 
-print("Saving history done!")
+    print("Saving history done!")

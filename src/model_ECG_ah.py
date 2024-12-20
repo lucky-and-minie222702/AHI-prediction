@@ -220,9 +220,10 @@ print(calc_cm(cm), file=f)
 
 f.close()
 
-for key, value in hist.history.items():
-    data = np.array(value)
-    his_path = path.join("history", f"{name}_{key}_ECG_ah")
-    np.save(his_path, data)
+if "train" in sys.argv:
+    for key, value in hist.history.items():
+        data = np.array(value)
+        his_path = path.join("history", f"{name}_{key}_ECG_ah")
+        np.save(his_path, data)
 
-print("Saving history done!")
+    print("Saving history done!")
