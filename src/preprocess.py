@@ -49,6 +49,7 @@ for i in range(len(records)):
         print(f"Succeed in preprocessing patient {i+1}")
     except Exception: 
         print(f"Fail to preprocess patient {i+1}")
+        exit()
     
     edf_file.close()
     
