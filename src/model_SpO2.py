@@ -35,7 +35,7 @@ model.compile(
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
 
-max_epochs = 100
+max_epochs = 10
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
@@ -124,6 +124,7 @@ print("\nTEST RESULT\n", file=f)
 
 reconstructed_data = model.predict(X_test)
 reconstruction_error = np.mean(np.power(X_test - reconstructed_data, 2), axis=1)
+print(reconstruction_error)
 threshold = np.percentile(reconstruction_error, 80)
 pred = (reconstruction_error > threshold).astype(int) 
 
