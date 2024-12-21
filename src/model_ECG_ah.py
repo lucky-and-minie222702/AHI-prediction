@@ -33,6 +33,8 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, 5)
     conv = ResNetBlock(1, conv, 512, 5)
     
+    conv = ResNetBlock(1, conv, 1024, 3, True)
+    
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
     conv = SEBlock(reduction_ratio=4)(conv)
