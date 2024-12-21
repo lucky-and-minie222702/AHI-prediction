@@ -36,8 +36,8 @@ for i in range(len(records)):
                 max_ECG_len = max(max_ECG_len, len(sig))
             else:  # SpO2
                 sig = sig[:total_time*30*8:]
-                sig = resample(sig, 3 * len(sig) // 8)  # down from 8 to 3 hz
-                sig = sig[:len(sig) // 30 * 30:]  # convert to 10 seconds divisible
+                sig = resample(sig, 1 * len(sig) // 8)  # down from 8 to 1 hz
+                sig = sig[:len(sig) // 10 * 10:]  # convert to 10 seconds divisible
                 sig /= 100  # from 0 -> 1
                 max_SpO2_len = max(max_SpO2_len, len(sig))
             signals[channel] = sig

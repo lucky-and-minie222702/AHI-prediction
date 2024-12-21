@@ -66,7 +66,7 @@ def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray
         minority_data, majority_data[:int(len(minority_data) * majority_weight):]
     ]))
   
-def calc_cm(cm: np.ndarray | list, return_dict: bool = True):
+def calc_cm(cm: np.ndarray | list):
     TP = cm[1][1] 
     FP = cm[1][0]  
     FN = cm[0][1]
@@ -82,15 +82,28 @@ def calc_cm(cm: np.ndarray | list, return_dict: bool = True):
     Positive_accuracy = TP / (TP + FP)
     Negative_accuracy = TN / (TN + FN)
 
-    if return_dict:
-        return {
-            "precision": precision, 
-            "recall": recall, 
-            "sensivity": sensivity, 
-            "specifity": specifity,
-            "accuracy": accuracy,
-            "positive_accuracy": Positive_accuracy,
-            "negative_accuracy": Negative_accuracy,
-        }
-    else:
-        return precision, recall, sensivity, specifity, accuracy, Positive_accuracy, Negative_accuracy
+    return {
+        "precision": precision, 
+        "recall": recall, 
+        "sensivity": sensivity, 
+        "specifity": specifity,
+        "accuracy": accuracy,
+        "positive_accuracy": Positive_accuracy,
+        "negative_accuracy": Negative_accuracy,
+    }
+    
+def calc_stats(data: np.ndarray | list[np.ndarray]):
+    res = []
+    for d in data:
+        stats = {}
+        stats["max"] = np.max(d)
+        stats["min"] = np.min(d)
+        stats["mean"] = np.mean(d)
+        stats["median"] = np.median(d)
+        stats["std"] = np.std(d)
+        stats["var"] = np.var(d)
+        stats["range"] = stats["max"] - stats["min"]
+        
+        res.append(stats)
+        
+    return res

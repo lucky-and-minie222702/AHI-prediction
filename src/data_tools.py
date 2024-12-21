@@ -24,13 +24,13 @@ if sys.argv[1] == "merge":
         stage = np.load(path.join("patients", f"patients_{i}_stages.npy"))
         
         sequences_ECG += np.split(seq_ECG, len(seq_ECG) // 1000)
-        sequences_SpO2 += np.split(seq_SpO2, len(seq_SpO2) // 30)
+        sequences_SpO2 += np.split(seq_SpO2, len(seq_SpO2) // 10)
         
         annotations.extend(ann.tolist())
         stages.extend(stage.tolist())
 
     sequences_ECG = np.array(sequences_ECG)
-    sequences_SpO2 = np.array(seq_SpO2)
+    sequences_SpO2 = np.array(sequences_SpO2)
     annotations = np.array(annotations)
     stages = np.array(stages)
 
