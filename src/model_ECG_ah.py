@@ -65,7 +65,7 @@ model.compile(
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
 
-max_epochs = 200
+max_epochs = 0 if "test_save" in sys.argv else 200
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
@@ -119,13 +119,6 @@ if "train" in sys.argv:
 
         X_train = X_train[combined_balance]
         y_train = y_train[combined_balance]
-        
-        # Test set
-        balance = balancing_data(y_test, majority_weight)
-        combined_balance = np.unique(balance)
-
-        X_test = X_test[combined_balance]
-        y_test = y_test[combined_balance]
 
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
@@ -161,6 +154,15 @@ if "train" in sys.argv:
 test_indices = np.load(path.join("patients", "test_indices_ECG_ah.npy"))
 X_test = sequences[test_indices]
 y_test = annotations[test_indices]
+
+if "balance" in sys.argv:
+    # Test set
+    balance = balancing_data(y_test, majority_weight)
+    combined_balance = np.unique(balance)
+
+    X_test = X_test[combined_balance]
+    y_test = y_test[combined_balance]
+
 model.load_weights(save_path)
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
