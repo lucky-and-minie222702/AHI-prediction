@@ -5,12 +5,12 @@ from sklearn.utils import resample
 
 def create_model_SpO2(name: str):    
     # min mean median std var
-    inp = layers.Input(shape=(10, ))
-    e_x = layers.Normalization()(inp)
-    e_x = layers.Dense(6, activation="relu")(e_x)
-    e_x = layers.Dense(2, activation="relu")(e_x)
-    d_x = layers.Dense(6, activation="relu")(e_x)
-    out = layers.Dense(10, activation="sigmoid")(d_x)
+    inp = layers.Input(shape=(4, ))
+    x = layers.Normalization()(inp)
+    x = layers.Dense(3, activation="relu")(x)
+    x = layers.Dense(2, activation="relu")(x)
+    x = layers.Dense(3, activation="relu")(x)
+    out = layers.Dense(4, activation="sigmoid")(x)
     
     model = Model(
         inputs = inp,
@@ -35,7 +35,7 @@ model.compile(
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
 
-max_epochs = 10
+max_epochs = 1
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
@@ -45,12 +45,13 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 40
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
+    patience = 3,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     save_path, 
@@ -76,6 +77,9 @@ idx = np.array([
 ])
 sequences = sequences[idx]
 annotations = annotations[idx]
+
+sequences = list(map(lambda x: list(x.values()), calc_stats(sequences)))
+sequences = np.array(sequences)
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
@@ -125,7 +129,8 @@ print("\nTEST RESULT\n", file=f)
 reconstructed_data = model.predict(X_test)
 reconstruction_error = np.mean(np.power(X_test - reconstructed_data, 2), axis=1)
 print(reconstruction_error)
-threshold = np.percentile(reconstruction_error, 80)
+threshold = np.max(reconstruction_error[y_test == 0])
+print(threshold)
 pred = (reconstruction_error > threshold).astype(int) 
 
 cm = confusion_matrix(y_test, pred)

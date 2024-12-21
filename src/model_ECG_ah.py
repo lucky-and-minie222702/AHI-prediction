@@ -75,12 +75,13 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 40
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
+    patience = 3,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     save_path, 

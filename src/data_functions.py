@@ -96,13 +96,13 @@ def calc_stats(data: np.ndarray | list[np.ndarray]):
     res = []
     for d in data:
         stats = {}
-        stats["max"] = np.max(d)
+        # stats["max"] = np.max(d)
         stats["min"] = np.min(d)
         stats["mean"] = np.mean(d)
-        stats["median"] = np.median(d)
+        # stats["median"] = np.median(d)
         stats["std"] = np.std(d)
         stats["var"] = np.var(d)
-        stats["range"] = stats["max"] - stats["min"]
+        # stats["range"] = stats["max"] - stats["min"]
         
         res.append(stats)
         
