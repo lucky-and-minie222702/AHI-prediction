@@ -8,7 +8,7 @@ def create_model_ECG_stage(name: str):
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=3)(norm_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
