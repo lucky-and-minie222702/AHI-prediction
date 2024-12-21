@@ -13,25 +13,25 @@ def create_model_ECG_ah(name: str):
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
+    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 11)
     
-    conv = ResNetBlock(1, conv, 128, 7, True)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
+    conv = ResNetBlock(1, conv, 128, 9, True)
+    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 9)
     
-    conv = ResNetBlock(1, conv, 256, 5, True)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
+    conv = ResNetBlock(1, conv, 256, 7, True)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
     
-    conv = ResNetBlock(1, conv, 512, 3, True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 5, True)
+    conv = ResNetBlock(1, conv, 512, 5)
+    conv = ResNetBlock(1, conv, 512, 5)
     
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
@@ -58,7 +58,7 @@ name = sys.argv[sys.argv.index("id")+1]
 
 model.compile(
     optimizer = "Adam",
-    loss =  "binary_crossentropy",
+    loss =  "categorical_crossentropy",
     metrics = ["accuracy"]
     # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
