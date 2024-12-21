@@ -65,7 +65,7 @@ model.compile(
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
 
-max_epochs = 0 if "test_save" in sys.argv else 200
+max_epochs = 1 if "test_save" in sys.argv else 200
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
