@@ -1,0 +1,10 @@
+*ipynb
+*__pycache__
+history
+img
+patients
+database
+*zip
+*test*
+*.DS_Store
+res
