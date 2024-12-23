@@ -182,6 +182,8 @@ scores = model.evaluate(
 )
 
 y_test = annotations[test_indices]
+if "balance" in sys.argv:
+    y_test = y_test[combined_balance]
 
 print("\nSUMMARY\n")
 
