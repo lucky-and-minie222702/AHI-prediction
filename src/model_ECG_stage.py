@@ -99,6 +99,7 @@ sequences = np.load(path.join("patients", "merged_ECG.npy"))
 stages  = np.load(path.join("patients", "merged_stages.npy"))
 stages = np.concatenate([
     stages, stages, stages,
+    stages, stages, stages,
 ])
 
 if "train" in sys.argv:
