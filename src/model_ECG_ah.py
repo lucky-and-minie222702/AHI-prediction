@@ -219,12 +219,13 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
+raw_pred = model.predict([X_test, X_test_rri, X_test_rpa], verbose=False, batch_size=batch_size)
+
 for d in range(1, 10):
     threshold = d / 10
     print(f"Threshold 0.{d}")
     print(f"Threshold 0.{d}", file=f)
-    pred = model.predict(X_test, verbose=False, batch_size=batch_size)
-    arr = np.array([np.squeeze(x) for x in pred])
+    arr = np.array([np.squeeze(x) for x in raw_pred])
     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
     cm = confusion_matrix(y_test, pred)
     print("Confusion matrix:\n", cm)
