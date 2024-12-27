@@ -29,16 +29,14 @@ for i in range(len(records)):
             idx = edf_file.getSignalLabels().index(channel)
             sig = edf_file.readSignal(idx)
             if channel == "ECG":
-                sig = sig[:total_time*30*128:] 
                 sig = resample(sig, 100 * len(sig) // 128)  # down from 128 to 100 hz
-                sig = sig[:len(sig) // 1000 * 1000:]  # convert to 10 seconds divisible
                 sig = nk.ecg.ecg_clean(sig, sampling_rate=100)  #  clean
+                sig = sig[:total_time * 3000:]  # convert to 30 seconds divisible for total_time
                 max_ECG_len = max(max_ECG_len, len(sig))
             else:  # SpO2
-                sig = sig[:total_time*30*8:]
                 sig = resample(sig, 1 * len(sig) // 8)  # down from 8 to 1 hz
-                sig = sig[:len(sig) // 10 * 10:]  # convert to 10 seconds divisible
                 sig /= 100  # from 0 -> 1
+                sig = sig[:total_time * 30:]  # convert to 30 seconds divisible for total_time
                 max_SpO2_len = max(max_SpO2_len, len(sig))
             signals[channel] = sig
             
@@ -46,7 +44,6 @@ for i in range(len(records)):
             start_sleep = str(edf_file.getStartdatetime())[11:]
             
         for key, value in signals.items():
-            # value = scaler.fit_transform(value.reshape(-1, 1)).flatten()
             np.save(path.join("patients", f"patients_{i+1}_{key}"), value)
 
         print(f"Succeed in preprocessing patient {i+1}")
@@ -68,8 +65,8 @@ for i in range(len(records)):
     AI = apnea_count / (sleep_time / 3600)
     HI = hyponea_count / (sleep_time / 3600)
     print(" | => AHI:", AHI)
-    print(" | => Apnea index:")
-    print(" | => Hyponea index:")
+    print(" | => Apnea index:", AI)
+    print(" | => Hyponea index:", HI)
     
     f = open(path.join("patients", f"patients_{i+1}_AHI.txt"), "w")
     print(AHI, file=f)
@@ -90,11 +87,12 @@ for i in range(len(records)):
     annotations = []
     idx = 0
     enough = False
-    for t in range(5, total_time * 30, 5):
+    for t in range(5, total_time * 30 + 5, 5):
         if not enough:
             if t - (time[idx] + duration[idx]) > 2:  # at least 3 / 5 seconds
                 idx += 1
                 if idx == len(time):
+                    annotations.append(0)
                     enough = True
                     continue
             
@@ -106,10 +104,10 @@ for i in range(len(records)):
             annotations.append(0)
     annotations = np.array(annotations)
     sleep_stages = list(map(lambda x: 1 if x == 0 else 0, sleep_stages))
-    sleep_stages_10s = np.array([i for i in sleep_stages for _ in range(3)])
+    sleep_stages_5s = np.array([i for i in sleep_stages for _ in range(6)])
 
     np.save(path.join("patients", f"patients_{i+1}_anns"), annotations)
-    np.save(path.join("patients", f"patients_{i+1}_stages"), sleep_stages_10s)
+    np.save(path.join("patients", f"patients_{i+1}_stages"), sleep_stages_5s)
 
 
 print("\nMax ECG sequence lenght:", max_ECG_len)
