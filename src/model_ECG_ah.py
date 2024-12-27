@@ -1,3 +1,4 @@
+from cv2 import threshold
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
@@ -118,7 +119,7 @@ if "train" in sys.argv:
     class_weight = dict(enumerate(class_weights))
     sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
-    print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
+    print(f"\nTrain size: {X_train.shape[0]}")
 
     # y_train = to_categorical(y_train, num_classes=2)
     # y_test = to_categorical(y_test, num_classes=2)
@@ -187,14 +188,18 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-pred = model.predict(X_test, verbose=False, batch_size=batch_size)
-arr = np.array([np.squeeze(x) for x in pred])
-pred = np.array([np.argmax(x) for x in arr])
-cm = confusion_matrix(y_test, pred)
-print("Confusion matrix:\n", cm)
-print("Confusion matrix:\n", cm, file=f)
-print(calc_cm(cm))
-print(calc_cm(cm), file=f)
+for d in range(1, 10):
+    threshold = d / 10
+    print(f"Threshold 0.{d}")
+    print(f"Threshold 0.{d}", file=f)
+    pred = model.predict(X_test, verbose=False, batch_size=batch_size)
+    arr = np.array([np.squeeze(x) for x in pred])
+    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+    cm = confusion_matrix(y_test, pred)
+    print("Confusion matrix:\n", cm)
+    print("Confusion matrix:\n", cm, file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
 
 f.close()
 
