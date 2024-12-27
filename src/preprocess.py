@@ -46,7 +46,6 @@ for i in range(len(records)):
         for key, value in signals.items():
             np.save(path.join("patients", f"patients_{i+1}_{key}"), value)
 
-        print(f"Succeed in preprocessing patient {i+1}")
     except Exception: 
         print(f"Fail to preprocess patient {i+1}")
         edf_file.close()
