@@ -104,12 +104,11 @@ for i in range(len(records)):
                 annotations.append(0)
         else:
             annotations.append(0)
-
     annotations = np.array(annotations)
     sleep_stages = list(map(lambda x: 1 if x == 0 else 0, sleep_stages))
     sleep_stages_10s = np.array([i for i in sleep_stages for _ in range(3)])
 
-    # np.save(path.join("patients", f"patients_{i+1}_anns"), annotations)
+    np.save(path.join("patients", f"patients_{i+1}_anns"), annotations)
     np.save(path.join("patients", f"patients_{i+1}_stages"), sleep_stages_10s)
 
 
