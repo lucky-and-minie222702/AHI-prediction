@@ -11,7 +11,7 @@ def create_model_ECG_ah(name: str):
     conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
+    # conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
     conv = ResNetBlock(1, conv, 64, 11)
     conv = ResNetBlock(1, conv, 64, 11)
