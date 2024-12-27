@@ -102,8 +102,6 @@ annotations  = np.load(path.join("patients", "merged_anns.npy"))
 annotations = np.concatenate([
     annotations, annotations,
 ])
-print(len(sequences), len(annotations))
-exit()
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
