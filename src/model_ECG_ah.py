@@ -6,7 +6,7 @@ from sklearn.utils.class_weight import compute_class_weight
 def create_model_ECG_ah(name: str):    
     rri_inp = layers.Input(shape=(None, 1))
     rri_conv = layers.Normalization()(rri_inp)
-    rri_conv = layers.Conv1D(filters=64, kernel_size=1)(rri_conv)
+    rri_conv = layers.Conv1D(filters=32, kernel_size=1)(rri_conv)
     rri_conv = layers.BatchNormalization()(rri_conv)
     rri_conv = layers.Activation("relu")(rri_conv)
     rri_conv = layers.GlobalAvgPool1D()(rri_conv)
@@ -14,19 +14,17 @@ def create_model_ECG_ah(name: str):
     
     rpa_inp = layers.Input(shape=(None, 1))
     rpa_conv = layers.Normalization()(rpa_inp)
-    rpa_conv = layers.Conv1D(filters=128, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.Conv1D(filters=32, kernel_size=1)(rpa_conv)
     rpa_conv = layers.BatchNormalization()(rpa_conv)
     rpa_conv = layers.Activation("relu")(rpa_conv)
     rpa_conv = layers.GlobalAvgPool1D()(rpa_conv)
     rpa_conv = layers.Flatten()(rpa_conv)
     
     # 500, 5 seconds
-    inp = layers.Input(shape=(None, 1))
-
+    inp = layers.Input(shape=(None, 1))  
     conv = layers.Normalization()(inp)
 
     conv = ResNetBlock(1, conv, 64, 3, True)
-    conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
     
     conv = ResNetBlock(1, conv, 128, 3, True)
@@ -48,12 +46,10 @@ def create_model_ECG_ah(name: str):
     
     conv = ResNetBlock(1, conv, 1024, 3, True)
     conv = ResNetBlock(1, conv, 1024, 3)
-    conv = ResNetBlock(1, conv, 1024, 3)
     
-    conv = MyMultiHeadRelativeAttention(depth=64, num_heads=32, max_relative_position=16)(conv)
     conv = SEBlock(reduction_ratio=2)(conv)
+
     conv = layers.GlobalAvgPool1D()(conv)
-    
 
     flat = layers.concatenate([conv, rri_conv, rpa_conv])
     flat = layers.Flatten()(flat)
@@ -93,7 +89,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 100
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
