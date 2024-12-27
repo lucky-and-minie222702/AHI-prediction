@@ -4,7 +4,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
 def create_model_ECG_ah(name: str):    
-    # 1000, 1 - 10 seconds
+    # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
@@ -32,11 +32,8 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, 5, True)
     conv = ResNetBlock(1, conv, 512, 5)
     conv = ResNetBlock(1, conv, 512, 5)
-    conv = ResNetBlock(1, conv, 512, 5)
     
     conv = ResNetBlock(1, conv, 1024, 3, True)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    conv = ResNetBlock(1, conv, 1024, 3)
     
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
@@ -103,8 +100,7 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 annotations = np.concatenate([
-    annotations, annotations, annotations,
-    annotations, annotations, annotations,
+    annotations, annotations,
 ])
 
 if "train" in sys.argv:

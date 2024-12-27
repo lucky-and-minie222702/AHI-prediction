@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime, timedelta
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
@@ -107,3 +108,16 @@ def calc_stats(data: np.ndarray | list[np.ndarray]):
         res.append(stats)
         
     return res
+
+def calc_time(start: str, end: str) -> int:
+    # Parse times
+    fmt = "%H:%M:%S"
+    start_time = datetime.strptime(start, fmt)
+    end_time = datetime.strptime(end, fmt)
+
+    # handle overnight case
+    if end_time < start_time:
+        end_time += timedelta(days=1)
+
+    elapsed_seconds = int((end_time - start_time).total_seconds())
+    return elapsed_seconds

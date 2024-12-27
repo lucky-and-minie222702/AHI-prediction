@@ -4,7 +4,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
 def create_model_ECG_stage(name: str):    
-    # 1000, 1 - 10 seconds
+    # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
@@ -98,8 +98,7 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 stages  = np.load(path.join("patients", "merged_stages.npy"))
 stages = np.concatenate([
-    stages, stages, stages,
-    stages, stages, stages,
+    stages, stages
 ])
 
 if "train" in sys.argv:

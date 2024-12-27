@@ -37,9 +37,6 @@ if sys.argv[1] == "merge":
     sequences_ECG = scaler.fit_transform(sequences_ECG.T).T
 
     sequences_ECG = np.vstack(
-        [sequences_ECG, add_baseline_wander(sequences_ECG, frequency=0.1, amplitude=0.1, sampling_rate=100), add_baseline_wander(sequences_ECG, frequency=0.15, amplitude=0.15, sampling_rate=100), add_baseline_wander(sequences_ECG, frequency=0.2, amplitude=0.2, sampling_rate=100)]
-    )
-    sequences_ECG = np.vstack(
         [sequences_ECG + np.random.normal(0.0, 0.05, sequences_ECG.shape)]
     )
     sequences_SpO2 = np.vstack(
