@@ -6,39 +6,34 @@ from sklearn.utils import resample
 def create_model_ECG_ah(name: str):    
     # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))
-    norm_inp = layers.Normalization()(inp)
-    
-    conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    # conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
+    conv = layers.Normalization()(inp)
 
-    conv = ResNetBlock(1, conv, 64, 11)
-    conv = ResNetBlock(1, conv, 64, 11)
-    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 7, True)
+    conv = ResNetBlock(1, conv, 64, 7)
+    conv = ResNetBlock(1, conv, 64, 7)
     
-    conv = ResNetBlock(1, conv, 128, 9, True)
-    conv = ResNetBlock(1, conv, 128, 9)
-    conv = ResNetBlock(1, conv, 128, 9)
-    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 5, True)
+    conv = ResNetBlock(1, conv, 128, 5)
+    conv = ResNetBlock(1, conv, 128, 5)
+    conv = ResNetBlock(1, conv, 128, 5)
     
-    conv = ResNetBlock(1, conv, 256, 7, True)
-    conv = ResNetBlock(1, conv, 256, 7)
-    conv = ResNetBlock(1, conv, 256, 7)
-    conv = ResNetBlock(1, conv, 256, 7)
-    conv = ResNetBlock(1, conv, 256, 7)
-    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 3, True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
     
-    conv = ResNetBlock(1, conv, 512, 5, True)
-    conv = ResNetBlock(1, conv, 512, 5)
-    conv = ResNetBlock(1, conv, 512, 5)
-    conv = ResNetBlock(1, conv, 512, 5)
+    conv = ResNetBlock(1, conv, 512, 3, True)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)  
+    conv = ResNetBlock(1, conv, 512, 3)
     
     conv = ResNetBlock(1, conv, 1024, 3, True)
     conv = ResNetBlock(1, conv, 1024, 3)
     conv = ResNetBlock(1, conv, 1024, 3)
     
-    # conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
+    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
     conv = SEBlock(reduction_ratio=4)(conv)
 
