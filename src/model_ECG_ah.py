@@ -1,7 +1,6 @@
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.utils import resample
 
 def create_model_ECG_ah(name: str):    
     # 500, 5 seconds
@@ -20,11 +19,10 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
     
-    # conv = ResNetBlock(1, conv, 1024, 3, True)
-    # conv = ResNetBlock(1, conv, 1024, 3)
-    # conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3, True)
+    conv = ResNetBlock(1, conv, 1024, 3)
     
-    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
+    conv = MyMultiHeadRelativeAttention(depth=64, num_heads=32, max_relative_position=16)(conv)
     
     conv = SEBlock(reduction_ratio=4)(conv)
 

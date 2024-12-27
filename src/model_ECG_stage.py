@@ -1,7 +1,6 @@
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.utils import resample
 
 def create_model_ECG_stage(name: str):    
     # 500, 5 seconds
