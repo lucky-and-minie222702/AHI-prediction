@@ -23,8 +23,8 @@ if sys.argv[1] == "merge":
         ann = np.load(path.join("patients", f"patients_{i}_anns.npy"))
         stage = np.load(path.join("patients", f"patients_{i}_stages.npy"))
         
-        sequences_ECG += np.split(seq_ECG, len(seq_ECG) // 500)
-        sequences_SpO2 += np.split(seq_SpO2, len(seq_SpO2) // 10)
+        sequences_ECG += np.split(seq_ECG, len(seq_ECG) // 500)  # 5 seconds
+        sequences_SpO2 += np.split(seq_SpO2, len(seq_SpO2) // 300)  # 30 seconds
         
         annotations.extend(ann.tolist())
         stages.extend(stage.tolist())

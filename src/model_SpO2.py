@@ -3,7 +3,7 @@ from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
-def create_model_ECG_stage(name: str):    
+def create_model_SpO2_ah(name: str):    
     # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
@@ -13,25 +13,27 @@ def create_model_ECG_stage(name: str):
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
+    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 11)
     
-    conv = ResNetBlock(1, conv, 128, 7, True)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
+    conv = ResNetBlock(1, conv, 128, 9, True)
+    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 9)
     
-    conv = ResNetBlock(1, conv, 256, 5, True)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
+    conv = ResNetBlock(1, conv, 256, 7, True)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
+    conv = ResNetBlock(1, conv, 256, 7)
     
-    conv = ResNetBlock(1, conv, 512, 3, True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 5, True)
+    conv = ResNetBlock(1, conv, 512, 5)
+    conv = ResNetBlock(1, conv, 512, 5)
+    
+    conv = ResNetBlock(1, conv, 1024, 3, True)
     
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
@@ -52,8 +54,8 @@ def create_model_ECG_stage(name: str):
         
     return model
 
-save_path = path.join("res", "model_ECG_stage.weights.h5")
-model = create_model_ECG_stage("ECG_stage")
+save_path = path.join("res", "model_SpO2_ah.weights.h5")
+model = create_model_SpO2_ah("SpO2_ah")
 name = sys.argv[sys.argv.index("id")+1]
 
 model.compile(
@@ -75,7 +77,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 100
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -95,22 +97,31 @@ lr_scheduler = cbk.ReduceLROnPlateau(
     patience = 5,
 )
 
-sequences = np.load(path.join("patients", "merged_ECG.npy"))
-stages  = np.load(path.join("patients", "merged_stages.npy"))
-stages = np.concatenate([
-    stages, stages
+sequences = np.load(path.join("patients", "merged_SpO2.npy"))
+annotations  = np.load(path.join("patients", "merged_anns.npy"))
+
+annotations = np.round(np.mean(
+    np.array(np.split(annotations, len(annotations) // 6))
+, axis=1))
+
+annotations = np.concatenate([
+    annotations, annotations,
 ])
 
+print(len(sequences))
+print(len(annotations))
+exit()
+
 if "train" in sys.argv:
-    indices = np.arange(len(stages))
+    indices = np.arange(len(annotations))
     train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
-    np.save(path.join("patients", "train_indices_ECG_stage"), train_indices)
-    np.save(path.join("patients", "test_indices_ECG_stage"), test_indices)
+    np.save(path.join("patients", "train_indices_SpO2_ah"), train_indices)
+    np.save(path.join("patients", "test_indices_SpO2_ah"), test_indices)
         
     X_train = sequences[train_indices]
-    y_train = stages[train_indices]
+    y_train = annotations[train_indices]
     X_test = sequences[test_indices]
-    y_test = stages[test_indices]
+    y_test = annotations[test_indices]
 
     if "balance" in sys.argv:
         # Train set
@@ -151,9 +162,9 @@ if "train" in sys.argv:
         ]
     )
 
-test_indices = np.load(path.join("patients", "test_indices_ECG_stage.npy"))
+test_indices = np.load(path.join("patients", "test_indices_SpO2_ah.npy"))
 X_test = sequences[test_indices]
-y_test = stages[test_indices]
+y_test = annotations[test_indices]
 
 if "balance" in sys.argv:
     # Test set
@@ -179,13 +190,13 @@ scores = model.evaluate(
     return_dict = True
 )
 
-y_test = stages[test_indices]
+y_test = annotations[test_indices]
 if "balance" in sys.argv:
     y_test = y_test[combined_balance]
 
 print("\nSUMMARY\n")
 
-f = open(path.join("history", f"{name}_logs_ECG_stage.txt"), "w")
+f = open(path.join("history", f"{name}_logs_SpO2_ah.txt"), "w")
 t = sum(cb_timer.logs)
 print(f"Total training time: {convert_seconds(t)}")
 print(f"Total training time: {convert_seconds(t)}", file=f)
@@ -213,7 +224,7 @@ f.close()
 if "train" in sys.argv:
     for key, value in hist.history.items():
         data = np.array(value)
-        his_path = path.join("history", f"{name}_{key}_ECG_stage")
+        his_path = path.join("history", f"{name}_{key}_SpO2_ah")
         np.save(his_path, data)
 
     print("Saving history done!")

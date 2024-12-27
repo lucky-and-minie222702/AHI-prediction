@@ -8,7 +8,7 @@ if "disable_GPU" in sys.argv:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 if "no_logs" in sys.argv:
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 import numpy as np
 import keras
