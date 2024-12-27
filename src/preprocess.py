@@ -67,9 +67,9 @@ for i in range(len(records)):
     AHI = apnea_hyponea_count / (sleep_time / 3600)
     AI = apnea_count / (sleep_time / 3600)
     HI = hyponea_count / (sleep_time / 3600)
-    print(" | => AHI:", AHI, apnea_hyponea_count)
-    print(" | => Apnea index:", AI, apnea_count)
-    print(" | => Hyponea index:", HI, hyponea_count)
+    print(" | => AHI:", AHI)
+    print(" | => Apnea index:")
+    print(" | => Hyponea index:")
     
     f = open(path.join("patients", f"patients_{i+1}_AHI.txt"), "w")
     print(AHI, file=f)
