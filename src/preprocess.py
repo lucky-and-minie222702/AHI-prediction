@@ -30,7 +30,7 @@ for i in range(len(records)):
             sig = edf_file.readSignal(idx)
             if channel == "ECG":
                 sig = resample(sig, 100 * len(sig) // 128)  # down from 128 to 100 hz
-                # sig = nk.ecg.ecg_clean(sig, sampling_rate=100)  #  clean
+                sig = nk.ecg.ecg_clean(sig, sampling_rate=100)  #  clean
                 sig = sig[:total_time * 3000:]  # convert to 30 seconds divisible for total_time
                 max_ECG_len = max(max_ECG_len, len(sig))
             else:  # SpO2
