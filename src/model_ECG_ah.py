@@ -120,9 +120,9 @@ if "train" in sys.argv:
 
     print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
 
-    y_train = to_categorical(y_train, num_classes=2)
-    y_test = to_categorical(y_test, num_classes=2)
-    y_val = to_categorical(y_val, num_classes=2)
+    # y_train = to_categorical(y_train, num_classes=2)
+    # y_test = to_categorical(y_test, num_classes=2)
+    # y_val = to_categorical(y_val, num_classes=2)
 
     hist = model.fit(
         X_train,
@@ -157,7 +157,7 @@ class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-y_test = to_categorical(y_test, num_classes=2)
+# y_test = to_categorical(y_test, num_classes=2)
 
 scores = model.evaluate(
     X_test, 
