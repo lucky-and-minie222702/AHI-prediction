@@ -36,30 +36,30 @@ def create_model_ECG_ah(name: str):
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64, 11)
-    conv = ResNetBlock(1, conv, 64, 11)
-    conv = ResNetBlock(1, conv, 64, 11)
+    # conv = ResNetBlock(1, conv, 64, 11)
+    # conv = ResNetBlock(1, conv, 64, 11)
+    # conv = ResNetBlock(1, conv, 64, 11)
     
-    conv = ResNetBlock(1, conv, 128, 9, True)
-    conv = ResNetBlock(1, conv, 128, 9)
-    conv = ResNetBlock(1, conv, 128, 9)
-    conv = ResNetBlock(1, conv, 128, 9)
+    # conv = ResNetBlock(1, conv, 128, 9, True)
+    # conv = ResNetBlock(1, conv, 128, 9)
+    # conv = ResNetBlock(1, conv, 128, 9)
+    # conv = ResNetBlock(1, conv, 128, 9)
     
-    conv = ResNetBlock(1, conv, 256, 9, True)
-    conv = ResNetBlock(1, conv, 256, 9)
-    conv = ResNetBlock(1, conv, 256, 9)
-    conv = ResNetBlock(1, conv, 256, 9)
-    conv = ResNetBlock(1, conv, 256, 9)
-    conv = ResNetBlock(1, conv, 256, 9)
+    # conv = ResNetBlock(1, conv, 256, 9, True)
+    # conv = ResNetBlock(1, conv, 256, 9)
+    # conv = ResNetBlock(1, conv, 256, 9)
+    # conv = ResNetBlock(1, conv, 256, 9)
+    # conv = ResNetBlock(1, conv, 256, 9)
+    # conv = ResNetBlock(1, conv, 256, 9)
     
-    conv = ResNetBlock(1, conv, 512, 9, True)
-    conv = ResNetBlock(1, conv, 512, 9)
-    conv = ResNetBlock(1, conv, 512, 9)
-    conv = ResNetBlock(1, conv, 512, 9)
+    # conv = ResNetBlock(1, conv, 512, 9, True)
+    # conv = ResNetBlock(1, conv, 512, 9)
+    # conv = ResNetBlock(1, conv, 512, 9)
+    # conv = ResNetBlock(1, conv, 512, 9)
     
-    conv = ResNetBlock(1, conv, 1024, 5, True)
-    conv = ResNetBlock(1, conv, 1024, 5)
-    conv = ResNetBlock(1, conv, 1024, 5)
+    # conv = ResNetBlock(1, conv, 1024, 5, True)
+    # conv = ResNetBlock(1, conv, 1024, 5)
+    # conv = ResNetBlock(1, conv, 1024, 5)
     
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     conv = SEBlock(reduction_ratio=2)(conv)
@@ -149,8 +149,6 @@ if "train" in sys.argv:
         X_train = X_train[combined_balance]
         y_train = y_train[combined_balance]
 
-    X_train_rri, X_train_rpa = calc_ecg(X_train)
-
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
@@ -160,6 +158,8 @@ if "train" in sys.argv:
     class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weight = dict(enumerate(class_weights))
     sample_weights = np.array([class_weights[int(label)] for label in y_train])
+
+    X_train_rri, X_train_rpa = calc_ecg(X_train)
 
     print(f"\nTrain size: {X_train.shape[0]}")
 
