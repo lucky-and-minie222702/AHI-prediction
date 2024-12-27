@@ -1,5 +1,7 @@
 import numpy as np
 from datetime import datetime, timedelta
+from scipy.signal import find_peaks
+import neurokit2 as nk
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
@@ -121,3 +123,19 @@ def calc_time(start: str, end: str) -> int:
 
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
+
+def calc_ecg(signals, fs: int = 100):
+    rri_res = []
+    rpa_res = []
+    t = np.linspace(0, 10, fs * 10)
+    for sig in signals:
+        peaks, _ = find_peaks(sig, height=0.5, distance=fs * 0.6)  # minimum 0.6s between beats
+
+        r_peaks_time = t[peaks]
+        rri = np.diff(r_peaks_time) 
+        rpa = sig[peaks]
+        
+        rri_res.append(rri)
+        rpa_res.append(rpa)
+    
+    return np.array(rri_res), np.array(rpa_res)

@@ -4,50 +4,74 @@ from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG_ah(name: str):    
+    rri_inp = layers.Input(shape=(None, 1))
+    rri_conv = layers.Normalization()(rri_inp)
+    rri_conv = layers.Conv1D(filters=64, kernel_size=1)(rri_conv)
+    rri_conv = layers.BatchNormalization()(rri_conv)
+    rri_conv = layers.Activation("relu")(rri_conv)
+    rri_conv = layers.Conv1D(filters=64, kernel_size=1)(rri_conv)
+    rri_conv = layers.BatchNormalization()(rri_conv)
+    rri_conv = layers.Activation("relu")(rri_conv)
+    rri_conv = layers.GlobalAvgPool1D()(rri_conv)
+    rri_conv = layers.Flatten()(rri_conv)
+    
+    rpa_inp = layers.Input(shape=(None, 1))
+    rpa_conv = layers.Normalization()(rpa_inp)
+    rpa_conv = layers.Conv1D(filters=64, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.BatchNormalization()(rpa_conv)
+    rpa_conv = layers.Activation("relu")(rpa_conv)
+    rpa_conv = layers.Conv1D(filters=64, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.BatchNormalization()(rpa_conv)
+    rpa_conv = layers.Activation("relu")(rpa_conv)
+    rpa_conv = layers.GlobalAvgPool1D()(rpa_conv)
+    rpa_conv = layers.Flatten()(rpa_conv)
+    
     # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))
+
     conv = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=11, strides=2)(conv)
+    conv = layers.Conv1D(filters=64, kernel_size=13)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
 
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
+    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 11)
+    conv = ResNetBlock(1, conv, 64, 11)
     
-    conv = ResNetBlock(1, conv, 128, 7, True)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
+    conv = ResNetBlock(1, conv, 128, 9, True)
+    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 9)
+    conv = ResNetBlock(1, conv, 128, 9)
     
-    conv = ResNetBlock(1, conv, 256, 5, True)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
+    conv = ResNetBlock(1, conv, 256, 9, True)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
+    conv = ResNetBlock(1, conv, 256, 9)
     
-    conv = ResNetBlock(1, conv, 512, 3, True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 9, True)
+    conv = ResNetBlock(1, conv, 512, 9)
+    conv = ResNetBlock(1, conv, 512, 9)
+    conv = ResNetBlock(1, conv, 512, 9)
     
-    conv = ResNetBlock(1, conv, 1024, 3, True)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 5, True)
+    conv = ResNetBlock(1, conv, 1024, 5)
+    conv = ResNetBlock(1, conv, 1024, 5)
     
-    conv = MyMultiHeadRelativeAttention(depth=64, num_heads=32, max_relative_position=16)(conv)
-    
+    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     conv = SEBlock(reduction_ratio=2)(conv)
+    conv = layers.GlobalAvgPool1D()(conv)
+    
 
-    flat = layers.GlobalAvgPool1D()(conv)
+    flat = layers.concatenate([conv, rri_conv, rpa_conv])
     flat = layers.Flatten()(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
-        inputs = inp,
+        inputs = [inp, rri_inp, rpa_inp],
         outputs = out,
         name = name
     )
@@ -125,10 +149,13 @@ if "train" in sys.argv:
         X_train = X_train[combined_balance]
         y_train = y_train[combined_balance]
 
+    X_train_rri, X_train_rpa = calc_ecg(X_train)
+
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+    X_val_rri, X_val_rpa = calc_ecg(X_val)
 
     class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weight = dict(enumerate(class_weights))
@@ -141,11 +168,11 @@ if "train" in sys.argv:
     # y_val = to_categorical(y_val, num_classes=2)
 
     hist = model.fit(
-        X_train,
+        [X_train, X_train_rri, X_train_rpa],
         y_train,
         epochs = max_epochs,
         batch_size = batch_size,
-        validation_data = (X_val, y_val),
+        validation_data = ([X_val, X_val_rri, X_val_rpa], y_val),
         class_weight = class_weight,
         callbacks = [
             cb_timer,
@@ -173,10 +200,10 @@ class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-# y_test = to_categorical(y_test, num_classes=2)
+X_test_rri, X_test_rpa = calc_ecg(X_test)
 
 scores = model.evaluate(
-    X_test, 
+    [X_test, X_test_rri, X_test_rpa], 
     y_test,
     sample_weight = sample_weights,
     batch_size = batch_size, 
