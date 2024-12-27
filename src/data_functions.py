@@ -127,6 +127,8 @@ def calc_time(start: str, end: str) -> int:
 def calc_ecg(signals, fs: int = 100):
     rri_res = []
     rpa_res = []
+    max_rri = 0
+    max_rpa = 0
     t = np.linspace(0, 10, fs * 10)
     for sig in signals:
         peaks, _ = find_peaks(sig, height=0.5, distance=fs * 0.6)  # minimum 0.6s between beats
@@ -135,7 +137,13 @@ def calc_ecg(signals, fs: int = 100):
         rri = np.diff(r_peaks_time) 
         rpa = sig[peaks]
         
+        max_rri = max(max_rri, len(rri))
+        max_rpa = max(max_rpa, len(rpa))
+        
         rri_res.append(rri)
         rpa_res.append(rpa)
     
-    return np.array(rri_res), np.array(rpa_res)
+    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
+    rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
+    
+    return rri_res, rpa_res
