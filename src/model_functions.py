@@ -29,7 +29,6 @@ from sklearn.model_selection import KFold
 import sklearn.preprocessing as prep
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
-from scikeras.wrappers import KerasClassifier
 import sklearn.model_selection as mdselect
 import keras.applications as apl
 import keras.regularizers as reg
