@@ -6,7 +6,7 @@ from sklearn.utils.class_weight import compute_class_weight
 def create_model_ECG_ah(name: str):    
     rri_inp = layers.Input(shape=(None, 1))
     rri_conv = layers.Normalization()(rri_inp)
-    rri_conv = layers.Conv1D(filters=32, kernel_size=1)(rri_conv)
+    rri_conv = layers.Conv1D(filters=16, kernel_size=1)(rri_conv)
     rri_conv = layers.BatchNormalization()(rri_conv)
     rri_conv = layers.Activation("relu")(rri_conv)
     rri_conv = layers.GlobalAvgPool1D()(rri_conv)
@@ -14,11 +14,14 @@ def create_model_ECG_ah(name: str):
     
     rpa_inp = layers.Input(shape=(None, 1))
     rpa_conv = layers.Normalization()(rpa_inp)
-    rpa_conv = layers.Conv1D(filters=32, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.Conv1D(filters=16, kernel_size=1)(rpa_conv)
     rpa_conv = layers.BatchNormalization()(rpa_conv)
     rpa_conv = layers.Activation("relu")(rpa_conv)
     rpa_conv = layers.GlobalAvgPool1D()(rpa_conv)
     rpa_conv = layers.Flatten()(rpa_conv)
+    
+    f_flat = layers.concatenate([rri_conv, rpa_conv])
+    f_flat = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(f_flat)
     
     # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))  
@@ -50,8 +53,13 @@ def create_model_ECG_ah(name: str):
     conv = SEBlock(reduction_ratio=2)(conv)
 
     conv = layers.GlobalAvgPool1D()(conv)
+    
+    conv = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(conv)
+    
+    att = layers.MultiHeadAttention(num_heads=8, key_dim=64, value_dim=64)(conv, f_flat, f_flat)
 
-    flat = layers.concatenate([conv, rri_conv, rpa_conv])
+    flat = layers.Flatten()(att)
+
     flat = layers.Flatten()(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
