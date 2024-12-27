@@ -8,30 +8,21 @@ def create_model_ECG_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     conv = layers.Normalization()(inp)
 
-    conv = ResNetBlock(1, conv, 64, 7, True)
-    conv = ResNetBlock(1, conv, 64, 7)
-    conv = ResNetBlock(1, conv, 64, 7)
+    conv = ResNetBlock(1, conv, 64, 5, True)
+    conv = ResNetBlock(1, conv, 64, 5)
     
-    conv = ResNetBlock(1, conv, 128, 5, True)
-    conv = ResNetBlock(1, conv, 128, 5)
-    conv = ResNetBlock(1, conv, 128, 5)
-    conv = ResNetBlock(1, conv, 128, 5)
+    conv = ResNetBlock(1, conv, 128, 3, True)
+    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)  
-    conv = ResNetBlock(1, conv, 512, 3)
     
-    conv = ResNetBlock(1, conv, 1024, 3, True)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    conv = ResNetBlock(1, conv, 1024, 3)
+    # conv = ResNetBlock(1, conv, 1024, 3, True)
+    # conv = ResNetBlock(1, conv, 1024, 3)
+    # conv = ResNetBlock(1, conv, 1024, 3)
     
     conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
     
@@ -39,7 +30,7 @@ def create_model_ECG_ah(name: str):
 
     flat = layers.GlobalAvgPool1D()(conv)
     flat = layers.Flatten()(flat)
-    out = layers.Dense(2, activation="softmax")(flat)
+    out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
         inputs = inp,
@@ -58,9 +49,9 @@ name = sys.argv[sys.argv.index("id")+1]
 
 model.compile(
     optimizer = "Adam",
-    loss =  "categorical_crossentropy",
-    metrics = ["accuracy"]
-    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    loss =  "binary_crossentropy",
+    # metrics = ["accuracy"]
+    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
