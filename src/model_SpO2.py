@@ -6,23 +6,27 @@ from sklearn.utils import resample
 
 def create_model_SpO2_ah(name: str):    
     # 500, 5 seconds
-    
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
     rnn = layers.TimeDistributed(layers.LSTM(64))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(1))(rnn)
+    x = layers.TimeDistributed(layers.Dense(16))(rnn)
+    x = layers.TimeDistributed(layers.Dense(4))(x)
     
     x = ResNetBlock(1, x, 64, 3, True)
+    x = ResNetBlock(1, x, 64, 3)
     x = ResNetBlock(1, x, 64, 3)
     
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
+    x = ResNetBlock(1, x, 128, 3)
 
     x = ResNetBlock(1, x, 256, 3, True)
     x = ResNetBlock(1, x, 256, 3)
+    x = ResNetBlock(1, x, 256, 3)
     
     x = ResNetBlock(1, x, 512, 3, True)
+    x = ResNetBlock(1, x, 512, 3)
     x = ResNetBlock(1, x, 512, 3)
     
     x = SEBlock(reduction_ratio=2)(x)
