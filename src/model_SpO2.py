@@ -77,7 +77,7 @@ if "ese" in sys.argv:
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 5,
+    patience = 7,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     save_path, 
