@@ -23,6 +23,7 @@ def create_model_ECG_ah(name: str):
 
     conv = ResNetBlock(1, conv, 64, 3, True)
     conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = ResNetBlock(1, conv, 128, 3, True)
     conv = ResNetBlock(1, conv, 128, 3)
@@ -42,6 +43,7 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, 3)
     
     conv = ResNetBlock(1, conv, 1024, 3, True)
+    conv = ResNetBlock(1, conv, 1024, 3)
     conv = ResNetBlock(1, conv, 1024, 3)
     
     conv = SEBlock(reduction_ratio=2)(conv)
