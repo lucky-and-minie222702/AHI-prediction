@@ -25,6 +25,8 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 512, 3, True)
     x = ResNetBlock(1, x, 512, 3)
     
+    conv = SEBlock(reduction_ratio=2)(conv)
+    
     x = layers.GlobalAvgPool1D()(x)
 
     out = layers.Dense(1)(x)
