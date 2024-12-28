@@ -27,11 +27,13 @@ def map_AHI(x):
     else:
         return 2
 
-def add_baseline_wander(ecg_signal, frequency: float, amplitude: float, sampling_rate: int):
+def add_baseline_wander(ecg_signal, frequency: float, amplitude: float, sampling_rate: int, flat_rate: float):
     res = []
     for p in ecg_signal:
+        flat_regions = np.random.choice([0, 1], size=len(t), p=[flat_rate, 1 - flat_rate])
         t = np.arange(len(p)) / sampling_rate
         baseline = amplitude * np.sin(2 * np.pi * frequency * t)
+        baseline *= flat_regions
         res.append(p + baseline)
     return np.array(res)
 

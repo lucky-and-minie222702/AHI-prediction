@@ -6,22 +6,17 @@ from sklearn.utils.class_weight import compute_class_weight
 def create_model_ECG_ah(name: str):    
     rri_inp = layers.Input(shape=(None, 1))
     rri_conv = layers.Normalization()(rri_inp)
-    rri_conv = layers.Conv1D(filters=32, kernel_size=1)(rri_conv)
+    rri_conv = layers.Conv1D(filters=16, kernel_size=1)(rri_conv)
     rri_conv = layers.BatchNormalization()(rri_conv)
     rri_conv = layers.Activation("relu")(rri_conv)
-    rri_conv = layers.Dropout(rate=0.3)(rri_conv)
     rri_conv = layers.GlobalAvgPool1D()(rri_conv)
     
     rpa_inp = layers.Input(shape=(None, 1))
     rpa_conv = layers.Normalization()(rpa_inp)
-    rpa_conv = layers.Conv1D(filters=32, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.Conv1D(filters=16, kernel_size=1)(rpa_conv)
     rpa_conv = layers.BatchNormalization()(rpa_conv)
     rpa_conv = layers.Activation("relu")(rpa_conv)
     rpa_conv = layers.GlobalAvgPool1D()(rpa_conv)
-    rpa_conv = layers.Dropout(rate=0.3)(rpa_conv)
-    
-    f_flat = layers.concatenate([rri_conv, rpa_conv])
-    f_flat = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(f_flat)
     
     # 500, 5 seconds
     inp = layers.Input(shape=(None, 1))  
@@ -29,14 +24,11 @@ def create_model_ECG_ah(name: str):
 
     conv = ResNetBlock(1, conv, 64, 3, True)
     conv = ResNetBlock(1, conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-    conv = layers.Dropout(rate=0.2)(conv)
     
     conv = ResNetBlock(1, conv, 128, 3, True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
-    conv = layers.Dropout(rate=0.2)(conv)
     
     conv = ResNetBlock(1, conv, 256, 3, True)
     conv = ResNetBlock(1, conv, 256, 3)
@@ -44,27 +36,24 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
-    conv = layers.Dropout(rate=0.2)(conv)
     
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
-    conv = layers.Dropout(rate=0.2)(conv)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    conv = ResNetBlock(1, conv, 1024, 3, True)
+    conv = ResNetBlock(1, conv, 1024, 3)
     
     conv = SEBlock(reduction_ratio=2)(conv)
 
     conv = layers.GlobalAvgPool1D()(conv)
-    shortcut = layers.Dense(256)(conv)
     
-    conv = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(conv)
-    
-    att = layers.MultiHeadAttention(num_heads=8, key_dim=64, value_dim=64)(conv, f_flat, f_flat)
-    
-    flat = layers.Flatten()(att)
-    flat = layers.Dense(256)(flat)
-    flat = layers.Add()([flat, shortcut])
-    flat = layers.BatchNormalization()(flat)
-    flat = layers.LeakyReLU(negative_slope=0.2)(flat)
+    flat = layers.concatenate([conv, rri_conv, rpa_conv])
+
+    flat = layers.Flatten()(flat)
+
+    flat = layers.Flatten()(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
@@ -124,7 +113,7 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 annotations = np.concatenate([
-    annotations, annotations,
+    annotations, annotations, annotations,
 ])
 
 if "train" in sys.argv:
@@ -198,6 +187,8 @@ class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
 X_test_rri, X_test_rpa = calc_ecg(X_test)
+
+print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 scores = model.evaluate(
     [X_test, X_test_rri, X_test_rpa], 

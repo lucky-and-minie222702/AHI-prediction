@@ -1,47 +1,63 @@
+from cv2 import threshold
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG_stage(name: str):    
+    rri_inp = layers.Input(shape=(None, 1))
+    rri_conv = layers.Normalization()(rri_inp)
+    rri_conv = layers.Conv1D(filters=16, kernel_size=1)(rri_conv)
+    rri_conv = layers.BatchNormalization()(rri_conv)
+    rri_conv = layers.Activation("relu")(rri_conv)
+    rri_conv = layers.GlobalAvgPool1D()(rri_conv)
+    
+    rpa_inp = layers.Input(shape=(None, 1))
+    rpa_conv = layers.Normalization()(rpa_inp)
+    rpa_conv = layers.Conv1D(filters=16, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.BatchNormalization()(rpa_conv)
+    rpa_conv = layers.Activation("relu")(rpa_conv)
+    rpa_conv = layers.GlobalAvgPool1D()(rpa_conv)
+    
     # 500, 5 seconds
-    inp = layers.Input(shape=(None, 1))
-    norm_inp = layers.Normalization()(inp)
-    
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
+    inp = layers.Input(shape=(None, 1))  
+    conv = layers.Normalization()(inp)
 
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 9)
+    conv = ResNetBlock(1, conv, 64, 3, True)
+    conv = ResNetBlock(1, conv, 64, 3)
     
-    conv = ResNetBlock(1, conv, 128, 7, True)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
-    conv = ResNetBlock(1, conv, 128, 7)
+    conv = ResNetBlock(1, conv, 128, 3, True)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     
-    conv = ResNetBlock(1, conv, 256, 5, True)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
-    conv = ResNetBlock(1, conv, 256, 5)
+    conv = ResNetBlock(1, conv, 256, 3, True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
     
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
     
-    conv = MyMultiHeadRelativeAttention(depth=32, num_heads=32, max_relative_position=16)(conv)
+    conv = ResNetBlock(1, conv, 1024, 3, True)
+    conv = ResNetBlock(1, conv, 1024, 3)
     
-    conv = SEBlock(reduction_ratio=4)(conv)
+    conv = SEBlock(reduction_ratio=2)(conv)
 
-    flat = layers.GlobalAvgPool1D()(conv)
+    conv = layers.GlobalAvgPool1D()(conv)
+    
+    flat = layers.concatenate([conv, rri_conv, rpa_conv])
+
     flat = layers.Flatten()(flat)
-    out = layers.Dense(2, activation="softmax")(flat)
+
+    flat = layers.Flatten()(flat)
+    out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
-        inputs = inp,
+        inputs = [inp, rri_inp, rpa_inp],
         outputs = out,
         name = name
     )
@@ -58,8 +74,8 @@ name = sys.argv[sys.argv.index("id")+1]
 model.compile(
     optimizer = "Adam",
     loss =  "binary_crossentropy",
-    metrics = ["accuracy"]
-    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    # metrics = ["accuracy"]
+    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -74,7 +90,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 100
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -95,21 +111,21 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 )
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
-stages  = np.load(path.join("patients", "merged_stages.npy"))
-stages = np.concatenate([
-    stages, stages
+annotations  = np.load(path.join("patients", "merged_stages.npy"))
+annotations = np.concatenate([
+    annotations, annotations, annotations,
 ])
 
 if "train" in sys.argv:
-    indices = np.arange(len(stages))
+    indices = np.arange(len(annotations))
     train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
     np.save(path.join("patients", "train_indices_ECG_stage"), train_indices)
     np.save(path.join("patients", "test_indices_ECG_stage"), test_indices)
         
     X_train = sequences[train_indices]
-    y_train = stages[train_indices]
+    y_train = annotations[train_indices]
     X_test = sequences[test_indices]
-    y_test = stages[test_indices]
+    y_test = annotations[test_indices]
 
     if "balance" in sys.argv:
         # Train set
@@ -121,26 +137,28 @@ if "train" in sys.argv:
 
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
-    print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+    X_val_rri, X_val_rpa = calc_ecg(X_val)
 
     class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weight = dict(enumerate(class_weights))
     sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
-    print(f"\nTrain size: {X_train.shape[0]} - Test size: {X_test.shape[0]}\n")
+    X_train_rri, X_train_rpa = calc_ecg(X_train)
 
-    y_train = to_categorical(y_train, num_classes=2)
-    y_test = to_categorical(y_test, num_classes=2)
-    y_val = to_categorical(y_val, num_classes=2)
+    print(f"\nTrain size: {X_train.shape[0]}")
+
+    # y_train = to_categorical(y_train, num_classes=2)
+    # y_test = to_categorical(y_test, num_classes=2)
+    # y_val = to_categorical(y_val, num_classes=2)
 
     hist = model.fit(
-        X_train,
+        [X_train, X_train_rri, X_train_rpa],
         y_train,
         epochs = max_epochs,
         batch_size = batch_size,
-        validation_data = (X_val, y_val),
+        validation_data = ([X_val, X_val_rri, X_val_rpa], y_val),
         class_weight = class_weight,
         callbacks = [
             cb_timer,
@@ -152,7 +170,7 @@ if "train" in sys.argv:
 
 test_indices = np.load(path.join("patients", "test_indices_ECG_stage.npy"))
 X_test = sequences[test_indices]
-y_test = stages[test_indices]
+y_test = annotations[test_indices]
 
 if "balance" in sys.argv:
     # Test set
@@ -168,17 +186,19 @@ class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-y_test = to_categorical(y_test, num_classes=2)
+X_test_rri, X_test_rpa = calc_ecg(X_test)
+
+print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 scores = model.evaluate(
-    X_test, 
+    [X_test, X_test_rri, X_test_rpa], 
     y_test,
     sample_weight = sample_weights,
     batch_size = batch_size, 
     return_dict = True
 )
 
-y_test = stages[test_indices]
+y_test = annotations[test_indices]
 if "balance" in sys.argv:
     y_test = y_test[combined_balance]
 
@@ -198,14 +218,19 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-pred = model.predict(X_test, verbose=False, batch_size=batch_size)
-arr = np.array([np.squeeze(x) for x in pred])
-pred = np.array([np.argmax(x) for x in arr])
-cm = confusion_matrix(y_test, pred)
-print("Confusion matrix:\n", cm)
-print("Confusion matrix:\n", cm, file=f)
-print(calc_cm(cm))
-print(calc_cm(cm), file=f)
+raw_pred = model.predict([X_test, X_test_rri, X_test_rpa], verbose=False, batch_size=batch_size)
+
+for d in range(1, 10):
+    threshold = d / 10
+    print(f"Threshold 0.{d}")
+    print(f"Threshold 0.{d}", file=f)
+    arr = np.array([np.squeeze(x) for x in raw_pred])
+    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+    cm = confusion_matrix(y_test, pred)
+    print("Confusion matrix:\n", cm)
+    print("Confusion matrix:\n", cm, file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
 
 f.close()
 
