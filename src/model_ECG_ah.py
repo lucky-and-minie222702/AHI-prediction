@@ -1,4 +1,3 @@
-from cv2 import threshold
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
