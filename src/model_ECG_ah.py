@@ -46,8 +46,6 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 1024, 3)
     
     conv = SEBlock(reduction_ratio=2)(conv)
-    
-    conv = MyMultiHeadRelativeAttention(depth=128, num_heads=8, max_relative_position=8)(conv)
 
     conv = layers.GlobalAvgPool1D()(conv)
     
