@@ -54,7 +54,6 @@ def create_model_ECG_stage(name: str):
 
     flat = layers.Flatten()(flat)
 
-    flat = layers.Flatten()(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
