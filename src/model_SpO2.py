@@ -10,9 +10,7 @@ def create_model_SpO2_ah(name: str):
     norm_inp = layers.Normalization()(inp)
     
     rnn = layers.TimeDistributed(layers.LSTM(64))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(16))(rnn)
-    x = layers.TimeDistributed(layers.BatchNormalization())(x)
-    x = layers.TimeDistributed(layers.Dense(4))(x)
+    x = layers.TimeDistributed(layers.Dense(32))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
     x = ResNetBlock(1, x, 64, 3, True)
@@ -22,8 +20,10 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
     x = ResNetBlock(1, x, 128, 3)
+    x = ResNetBlock(1, x, 128, 3)
 
     x = ResNetBlock(1, x, 256, 3, True)
+    x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
     
