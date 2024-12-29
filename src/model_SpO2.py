@@ -4,12 +4,11 @@ from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
-def create_model_SpO2_ah(name: str):    
-    # 500, 5 seconds
+def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(128))(norm_inp)
+    rnn = layers.TimeDistributed(layers.LSTM(96))(norm_inp)
     x = layers.TimeDistributed(layers.Dense(64))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
@@ -29,7 +28,7 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 512, 3)
     x = ResNetBlock(1, x, 512, 3)
     
-    x = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=16)(x)
+    x = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=24)(x)
     
     x = SEBlock(reduction_ratio=2)(x)
     
