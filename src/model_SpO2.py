@@ -12,9 +12,9 @@ def create_model_SpO2_ah(name: str):
     x = layers.TimeDistributed(layers.Dense(64))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
-    x = ResNetBlock(1, x, 64, 3, True)
-    x = ResNetBlock(1, x, 64, 3)
-    x = ResNetBlock(1, x, 64, 3)
+    x = ResNetBlock(1, x, 64, 5, True)
+    x = ResNetBlock(1, x, 64, 5)
+    x = ResNetBlock(1, x, 64, 5)
     
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)

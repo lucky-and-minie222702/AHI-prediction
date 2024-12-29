@@ -21,9 +21,9 @@ def create_model_ECG_ah(name: str):
     inp = layers.Input(shape=(None, 1))  
     conv = layers.Normalization()(inp)
 
-    conv = ResNetBlock(1, conv, 64, 3, True)
-    conv = ResNetBlock(1, conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 5, True)
+    conv = ResNetBlock(1, conv, 64, 5)
+    conv = ResNetBlock(1, conv, 64, 5)
     
     conv = ResNetBlock(1, conv, 128, 3, True)
     conv = ResNetBlock(1, conv, 128, 3)
@@ -53,6 +53,8 @@ def create_model_ECG_ah(name: str):
     flat = layers.concatenate([conv, rri_conv, rpa_conv])
     
     flat = layers.Dense(1024, activation="relu")(flat)
+    flat = layers.Dense(256, activation="relu")(flat)
+    flat = layers.Dense(64, activation="relu")(flat)
 
     out = layers.Dense(1, activation="sigmoid")(flat)
     
