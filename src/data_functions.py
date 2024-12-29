@@ -27,14 +27,56 @@ def map_AHI(x):
     else:
         return 2
 
-def add_baseline_wander(ecg_signal, frequency: float, amplitude: float, sampling_rate: int, flat_rate: float):
+def rearrange_array(arr: np.ndarray, group_size: int, num_groups: int) -> np.ndarray:
+    # Convert input to numpy array
+    arr = np.array(arr)
+    
+    # Count occurrences of 0s and 1s
+    count_0 = np.sum(arr == 0)
+    count_1 = np.sum(arr == 1)
+
+    # Create alternating groups of specified size
+    result = []
+    for _ in range(num_groups):
+        # Add group of 0s
+        if count_0 > 0:
+            size_0 = min(group_size, count_0)
+            result.append(np.zeros(size_0, dtype=int))
+            count_0 -= size_0
+        # Add group of 1s
+        if count_1 > 0:
+            size_1 = min(group_size, count_1)
+            result.append(np.ones(size_1, dtype=int))
+            count_1 -= size_1
+
+    if len(result) == 0:
+        return np.array([])
+    return np.concatenate(result)
+
+def pad_arrays(arr1: np.ndarray, arr2: np.ndarray):
+    len1, len2 = len(arr1), len(arr2)
+    if len1 < len2:
+        arr1 = np.pad(arr1, (0, len2 - len1), constant_values=0)
+    return arr1, arr2
+
+def add_baseline_wander(ecg_signal: np.ndarray, frequency: float, amplitude: float, sampling_rate: int, flat_rate: float, group_size: int = 500, num_groups: int = 5000):
     res = []
-    for p in ecg_signal:
-        flat_regions = np.random.choice([0, 1], size=len(p), p=[flat_rate, 1 - flat_rate])
-        t = np.arange(len(p)) / sampling_rate
-        baseline = amplitude * np.sin(2 * np.pi * frequency * t)
-        baseline *= flat_regions
-        res.append(p + baseline)
+    og_size = ecg_signal.shape[1]
+    p = ecg_signal.flatten()
+
+    if num_groups == 0:
+        flat_rate = 0.0
+    
+    flat_regions = np.random.choice([0, 1], size=len(p), p=[flat_rate, 1 - flat_rate])
+    if num_groups != 0:
+        flat_regions = rearrange_array(flat_regions, group_size, num_groups)
+    t = np.arange(len(p)) / sampling_rate
+    baseline = amplitude * np.sin(2 * np.pi * frequency * t)
+    flat_regions, baseline = pad_arrays(flat_regions, baseline)
+    baseline *= flat_regions
+    
+    res = p + baseline
+    res = np.split(res, len(res) // og_size)
     return np.array(res)
 
 def divide_signal(signals, win_size: int, step_size: int = None):
