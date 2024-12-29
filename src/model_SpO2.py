@@ -112,6 +112,7 @@ sequences = np.vstack(
 annotations = np.concatenate([
     annotations, annotations,
 ])
+annotations /= 10
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
@@ -190,7 +191,7 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
+pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 10
 
 print("Real - Prediction:")
 print("Real - Prediction:", file=f)

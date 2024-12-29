@@ -5,14 +5,14 @@ from sklearn.utils.class_weight import compute_class_weight
 def create_model_ECG_ah(name: str):    
     rri_inp = layers.Input(shape=(None, 1))
     rri_conv = layers.Normalization()(rri_inp)
-    rri_conv = layers.Conv1D(filters=16, kernel_size=1)(rri_conv)
+    rri_conv = layers.Conv1D(filters=32, kernel_size=1)(rri_conv)
     rri_conv = layers.BatchNormalization()(rri_conv)
     rri_conv = layers.Activation("relu")(rri_conv)
     rri_conv = layers.GlobalAvgPool1D()(rri_conv)
     
     rpa_inp = layers.Input(shape=(None, 1))
     rpa_conv = layers.Normalization()(rpa_inp)
-    rpa_conv = layers.Conv1D(filters=16, kernel_size=1)(rpa_conv)
+    rpa_conv = layers.Conv1D(filters=32, kernel_size=1)(rpa_conv)
     rpa_conv = layers.BatchNormalization()(rpa_conv)
     rpa_conv = layers.Activation("relu")(rpa_conv)
     rpa_conv = layers.GlobalAvgPool1D()(rpa_conv)
@@ -29,6 +29,7 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, True)
     conv = ResNetBlock(1, conv, 256, 3)
@@ -36,8 +37,10 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
     
     conv = ResNetBlock(1, conv, 512, 3, True)
+    conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
