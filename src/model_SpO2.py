@@ -8,8 +8,8 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(128))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(64))(rnn)
+    rnn = layers.TimeDistributed(layers.LSTM(32))(norm_inp)
+    x = layers.TimeDistributed(layers.Dense(16))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
     x = ResNetBlock(1, x, 64, 5, True)
@@ -109,7 +109,7 @@ for i in range(1, 26):
     annotations.append(ann)
     
 sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([np.split(x, len(x) // 30) for x in sequences])
+sequences = np.array([np.split(x, len(x) // 10) for x in sequences])
 annotations = np.array(annotations)
 
 sequences = np.vstack(
