@@ -7,19 +7,21 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     x = layers.Normalization()(inp)
     
-    x = layers.Conv1D(filters=32, kernel_size=1)(x)
+    x = layers.Conv1D(filters=64, kernel_size=1)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.GlobalAvgPool1D()(x)
-    
+
     x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dropout(rate=0.5)(x)
     x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dropout(rate=0.5)(x)
+    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dropout(rate=0.5)(x)
     x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dropout(rate=0.5)(x)
     x = layers.Dense(32, activation="relu")(x)
-    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dropout(rate=0.5)(x)
 
     out = layers.Dense(1, activation="sigmoid")(x)
 
@@ -57,7 +59,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 200
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
