@@ -93,7 +93,7 @@ sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 
 annotations = np.concatenate([
-    annotations, annotations
+    annotations, annotations, annotations
 ])
 
 annotations = np.array([x for x in annotations for _ in range(5)]).flatten()
