@@ -105,7 +105,7 @@ for i in range(1, 26):
     annotations.append(ann)
     
 sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([np.split(x, len(x) // 15) for x in sequences])  # 15 seconds
+sequences = np.array([np.split(x, len(x) // 30) for x in sequences])  # 15 seconds
 annotations = np.array(annotations)
 
 sequences = np.vstack(
