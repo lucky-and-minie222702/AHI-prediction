@@ -6,7 +6,7 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     x = layers.Normalization()(inp)
     
-    x = layers.Conv1D(filters=64, kernel_size=1, padding="same")(x)
+    x = layers.Conv1D(filters=32, kernel_size=1, padding="same")(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.GlobalAvgPool1D()(x)
@@ -154,6 +154,14 @@ X_test = sequences[test_indices]
 y_test = annotations[test_indices]
 
 model.load_weights(save_path)
+
+if "balance" in sys.argv:
+    # Test set
+    balance = balancing_data(y_test, majority_weight)
+    combined_balance = np.unique(balance)
+
+    X_test = X_test[combined_balance]
+    y_test = y_test[combined_balance]
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
 class_weight = dict(enumerate(class_weights))
