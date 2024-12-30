@@ -31,8 +31,6 @@ def create_model_SpO2_ah(name: str):
     x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
-    x = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(x)
-    x = layers.LSTM(4)(x)
     x = layers.Flatten()(x)
 
     out = layers.Dense(1, activation="sigmoid")(x)
