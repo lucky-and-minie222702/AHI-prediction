@@ -97,7 +97,7 @@ for i in range(1, 26):
     annotations.append(ann)
     
 sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([divide_signal([x], win_size=30, step_size=5)[0] for x in sequences])
+sequences = np.array([divide_signal([x], win_size=30, step_size=15)[0] for x in sequences])
 annotations = np.array(annotations)
 
 sequences = np.vstack(
