@@ -92,10 +92,8 @@ annotations = np.concatenate([
 
 annotations = np.array([x for x in annotations for _ in range(5)])
 
-print(sequences.shape, annotations.shape)
-
 sequences = divide_signal([sequences], win_size=15, step_size=5)[0]
-annotations = divide_signal([annotations], win_size=15 / 5, step_size=5 / 5)[0]
+annotations = divide_signal([annotations], win_size=15 // 5, step_size=5 // 5)[0]
 annotations = np.array([key for key, _ in groupby(annotations)])
 
 if "train" in sys.argv:
