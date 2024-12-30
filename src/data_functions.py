@@ -191,3 +191,11 @@ def calc_ecg(signals, fs: int = 100):
     rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
     
     return rri_res, rpa_res
+
+def calc_percentile(arr: np.ndarray, num: float) -> float:
+    arr = sorted(arr)
+    
+    count = sum(1 for x in arr if x < num)
+    
+    percentile = (count / len(arr)) * 100
+    return percentile

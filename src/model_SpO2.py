@@ -33,8 +33,10 @@ def create_model_SpO2_ah(name: str):
     x = SEBlock(reduction_ratio=2)(x)
     
     x = layers.GlobalAvgPool1D()(x)
+    
+    x = layers.Dense(128, activation="relu")(x)
 
-    out = layers.Dense(1)(x)
+    out = layers.Dense(1, activation="sigmoid")(x)
 
     model = Model(
         inputs = inp,
@@ -53,9 +55,9 @@ save_path = path.join("res", f"model_SpO2_ah_{name if name != '1' else ''}.weigh
 
 model.compile(
     optimizer = "Adam",
-    loss =  "mse",
+    loss =  "binary_crossentropy",
     # metrics = ["accuracy"]
-    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -113,6 +115,10 @@ annotations = np.concatenate([
 ])
 annotations /= 10
 
+threshold = 1.5
+
+annotations = np.array([1 if x >= threshold else 0 for x in annotations])
+
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
     train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))
@@ -124,8 +130,8 @@ if "train" in sys.argv:
     X_test = sequences[test_indices]
     y_test = annotations[test_indices]
 
-    # print("Dataset:")
-    # print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
+    print("Dataset:")
+    print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
@@ -141,7 +147,7 @@ if "train" in sys.argv:
         epochs = max_epochs,
         batch_size = batch_size,
         validation_data = (X_val, y_val),
-        # class_weight = class_weight,s
+        # class_weight = class_weight,
         callbacks = [
             cb_timer,
             cb_early_stopping,
@@ -160,7 +166,7 @@ model.load_weights(save_path)
 # class_weight = dict(enumerate(class_weights))
 # sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-# print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
+print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 scores = model.evaluate(
     X_test, 
@@ -190,13 +196,26 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 10
+raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 10
 
-print("Real - Prediction:")
-print("Real - Prediction:", file=f)
-for i, ans in enumerate(y_test):
-    print(ans * 10, pred[i])
-    print(ans * 10, pred[i], file=f)
+for d in range(1, 10):
+    threshold = d / 10
+    print(f"Threshold 0.{d}")
+    print(f"Threshold 0.{d}", file=f)
+    arr = np.array([np.squeeze(x) for x in raw_pred])
+    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+    cm = confusion_matrix(y_test, pred)
+    print("Confusion matrix:\n", cm)
+    print("Confusion matrix:\n", cm, file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
+
+# print("Real - Prediction:")
+# print("Real - Prediction:", file=f)
+# for i, ans in enumerate(y_test):
+#     print(ans * 10, pred[i])
+#     print(ans * 10, pred[i], file=f)
+    
     
 
 f.close()
