@@ -47,9 +47,9 @@ def create_model_SpO2_ah(name: str):
         
     return model
 
-save_path = path.join("res", "model_SpO2_ah.weights.h5")
 model = create_model_SpO2_ah("SpO2_ah")
 name = sys.argv[sys.argv.index("id")+1]
+save_path = path.join("res", f"model_SpO2_ah_{name if name != "1" else ""}.weights.h5")
 
 model.compile(
     optimizer = "Adam",

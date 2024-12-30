@@ -71,9 +71,9 @@ def create_model_ECG_stage(name: str):
         
     return model
 
-save_path = path.join("res", "model_ECG_stage.weights.h5")
 model = create_model_ECG_stage("ECG_stage")
 name = sys.argv[sys.argv.index("id")+1]
+save_path = path.join("res", f"model_ECG_stage_{name if name != "1" else ""}.weights.h5")
 
 model.compile(
     optimizer = "Adam",
