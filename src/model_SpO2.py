@@ -13,21 +13,22 @@ def create_model_SpO2_ah(name: str):
 
     x = layers.Dense(64)(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")
+    x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
     x = layers.Dense(128)(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(rate=0.5)(x)
     
     x = layers.Dense(128)(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")
+    x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
     x = layers.Dense(64)(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")
+    x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
     x = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(x)
