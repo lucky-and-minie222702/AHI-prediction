@@ -13,9 +13,10 @@ def create_model_SpO2_ah(name: str):
     x = layers.TimeDistributed(layers.GlobalAvgPool1D())(x)
     
     x = ResNetBlock(1, x, 64, 3, True)
-    x = ResNetBlock(1, x, 64, 3)
-    x = ResNetBlock(1, x, 64, 3)
-    x = ResNetBlock(1, x, 64, 3)
+    x = ResNetBlock(1, x, 64, 3, True)
+    x = ResNetBlock(1, x, 64, 3, True)
+    x = ResNetBlock(1, x, 64, 3, True)
+    x = ResNetBlock(1, x, 64, 3, True)
     
     x = SEBlock(reduction_ratio=2)(x)
     
