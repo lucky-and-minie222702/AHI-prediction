@@ -6,35 +6,30 @@ from sklearn.utils import resample
 
 def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
-    norm_inp = layers.Normalization()(inp)
+    x = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(32))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(16))(rnn)
-    
-    x = layers.Conv1D(filters=32, kernel_size=11, strides=3)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
-    x = layers.MaxPool1D(pool_size=5, strides=4)(x)
+    x = layers.TimeDistributed(layers.Conv1D(filters=16, kernel_size=5))(x)
+    x = layers.TimeDistributed(layers.MaxPool1D(pool_size=3, strides=2))(x)
+    x = layers.TimeDistributed(layers.GlobalAvgPool1D())(x)
     
     x = ResNetBlock(1, x, 64, 5, True)
     x = ResNetBlock(1, x, 64, 5)
-    x = ResNetBlock(1, x, 64, 5)
+    x = ResNetBlock(1, x, 64, 5, True)
     
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
-    x = ResNetBlock(1, x, 128, 3)
-    x = ResNetBlock(1, x, 128, 3)
+    x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
 
     x = ResNetBlock(1, x, 256, 3, True)
     x = ResNetBlock(1, x, 256, 3)
+    x = ResNetBlock(1, x, 256, 3, True)
     x = ResNetBlock(1, x, 256, 3)
-    x = ResNetBlock(1, x, 256, 3)
-    x = ResNetBlock(1, x, 256, 3)
+    x = ResNetBlock(1, x, 256, 3, True)
     
     x = ResNetBlock(1, x, 512, 3, True)
     x = ResNetBlock(1, x, 512, 3)
-    x = ResNetBlock(1, x, 512, 3)
+    x = ResNetBlock(1, x, 512, 3, True)
     
     x = SEBlock(reduction_ratio=2)(x)
     
@@ -113,7 +108,7 @@ for i in range(1, 26):
     annotations.append(ann)
     
 sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([np.split(x, len(x) // 15) for x in sequences])
+sequences = np.array([divide_signal([x], win_size=30, step_size=5)[0] for x in sequences])
 annotations = np.array(annotations)
 
 sequences = np.vstack(
