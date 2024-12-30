@@ -8,8 +8,8 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(128))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(64))(rnn)
+    rnn = layers.TimeDistributed(layers.LSTM(64))(norm_inp)
+    x = layers.TimeDistributed(layers.Dense(32))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
     x = ResNetBlock(1, x, 64, 5, True)
