@@ -23,8 +23,6 @@ def create_model_SpO2_ah(name: str):
     
     x = layers.LSTM(64)(x)
     
-    x = SEBlock(reduction_ratio=2)(x)
-    
     x = layers.GlobalAvgPool1D()(x)
     
     x = layers.Dense(256, activation="relu")(x)
