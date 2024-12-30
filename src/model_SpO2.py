@@ -179,13 +179,8 @@ scores = model.evaluate(
 
 y_test = annotations[test_indices]
 if "balance" in sys.argv:
-    # Test set
-    balance = balancing_data(y_test, majority_weight)
-    combined_balance = np.unique(balance)
-
-    X_test = X_test[combined_balance]
     y_test = y_test[combined_balance]
-
+    
 print("\nSUMMARY\n")
 
 f = open(path.join("history", f"{name}_logs_SpO2_ah.txt"), "w")
