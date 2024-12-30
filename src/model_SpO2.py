@@ -1,16 +1,12 @@
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.utils import resample
 
 def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     x = layers.Normalization()(inp)
     
-    x = layers.Conv1D(filters=64, kernel_size=3, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
-    x = layers.Conv1D(filters=64, kernel_size=3, padding="same")(x)
+    x = layers.Conv1D(filters=64, kernel_size=1, padding="same")(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.GlobalAvgPool1D()(x)
