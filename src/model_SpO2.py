@@ -92,8 +92,8 @@ annotations = np.concatenate([
 
 print(sequences.shape, annotations.shape)
 
-sequences = divide_signal([sequences], win_size=15, step_size=1)[0]
-annotations = divide_signal([annotations], win_size=15, step_size=1)[0]
+sequences = divide_signal([sequences], win_size=15, step_size=10)[0]
+annotations = divide_signal([annotations], win_size=15, step_size=10)[0]
 annotations = np.round(np.mean(annotations, axis=1))
 
 if "train" in sys.argv:
