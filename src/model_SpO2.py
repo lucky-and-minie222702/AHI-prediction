@@ -6,9 +6,8 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, 1))
     x = layers.Normalization()(inp)
     
-    x = layers.Conv1D(filters=32, kernel_size=1, padding="same")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = layers.Conv1D(filters=32, kernel_size=3, padding="same", activation="relu")(x)
+    x = layers.Conv1D(filters=64, kernel_size=3, padding="same", activation="relu")(x)
     x = layers.GlobalAvgPool1D()(x)
 
     x = layers.Dense(64, activation="relu")(x)
@@ -92,8 +91,8 @@ annotations = np.concatenate([
 
 print(sequences.shape, annotations.shape)
 
-sequences = divide_signal([sequences], win_size=15, step_size=10)[0]
-annotations = divide_signal([annotations], win_size=15, step_size=10)[0]
+sequences = divide_signal([sequences], win_size=30, step_size=15)[0]
+annotations = divide_signal([annotations], win_size=30, step_size=15)[0]
 annotations = np.round(np.mean(annotations, axis=1))
 
 if "train" in sys.argv:
