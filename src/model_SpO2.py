@@ -15,8 +15,10 @@ def create_model_SpO2_ah(name: str):
     conv = ResNetBlock(1, conv, 128, 5)
     conv = ResNetBlock(1, conv, 128, 5)
     conv = ResNetBlock(1, conv, 128, 5)
+    conv = ResNetBlock(1, conv, 128, 5)
     
     conv = ResNetBlock(1, conv, 256, 3, True)
+    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
