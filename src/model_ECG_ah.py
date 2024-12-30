@@ -71,7 +71,7 @@ def create_model_ECG_ah(name: str):
 
 model = create_model_ECG_ah("ECG_ah")
 name = sys.argv[sys.argv.index("id")+1]
-save_path = path.join("res", f"model_ECG_ah_{name if name != '1' else ''}.weights.h5")
+save_path = path.join("res", f"model_ECG_ah{name if name != '1' else ''}.weights.h5")
 
 model.compile(
     optimizer = "Adam",
