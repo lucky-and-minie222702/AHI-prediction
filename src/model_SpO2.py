@@ -20,8 +20,6 @@ def create_model_SpO2_ah(name: str):
     x = layers.MaxPool1D(pool_size=3, strides=2)(x)
     x = ResNetBlock(1, x, 64, 3, True)
     x = layers.MaxPool1D(pool_size=3, strides=2)(x)
-    x = ResNetBlock(1, x, 64, 3, True)
-    x = layers.MaxPool1D(pool_size=3, strides=2)(x)
     
     x = SEBlock(reduction_ratio=2)(x)
     
