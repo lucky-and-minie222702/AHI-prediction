@@ -8,8 +8,8 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(128))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(64))(rnn)
+    rnn = layers.TimeDistributed(layers.LSTM(64))(norm_inp)
+    x = layers.TimeDistributed(layers.Dense(32))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
     x = ResNetBlock(1, x, 64, 5, True)
@@ -34,7 +34,7 @@ def create_model_SpO2_ah(name: str):
     
     x = SEBlock(reduction_ratio=2)(x)
     
-    x = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=8)(x)
+    x = MyMultiHeadRelativeAttention(depth=32, num_heads=8, max_relative_position=8)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     
