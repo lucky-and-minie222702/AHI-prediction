@@ -19,8 +19,10 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
     x = ResNetBlock(1, x, 128, 3)
+    x = ResNetBlock(1, x, 128, 3)
 
     x = ResNetBlock(1, x, 256, 3, True)
+    x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
     
@@ -28,7 +30,7 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 512, 3)
     x = ResNetBlock(1, x, 512, 3)
     
-    x = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=16)(x)
+    x = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=8)(x)
     
     x = SEBlock(reduction_ratio=2)(x)
     
@@ -36,7 +38,7 @@ def create_model_SpO2_ah(name: str):
     
     x = layers.Dense(128, activation="relu")(x)
 
-    out = layers.Dense(1, activation="sigmoid")(x)
+    out = layers.Dense(1)(x)
 
     model = Model(
         inputs = inp,
@@ -55,9 +57,9 @@ save_path = path.join("res", f"model_SpO2_ah_{name if name != '1' else ''}.weigh
 
 model.compile(
     optimizer = "Adam",
-    loss =  "binary_crossentropy",
+    loss =  "mse",
     # metrics = ["accuracy"]
-    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -95,7 +97,7 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = []
 annotations = []
 maxlen = 0
-for i in range(1, 25):
+for i in range(1, 26):
     seq_SpO2 = np.load(path.join("patients", f"patients_{i}_SpO2.npy"))
     ann = float(open(path.join("patients", f"patients_{i}_AHI.txt")).readlines()[-1])
     maxlen = max(maxlen, len(seq_SpO2))
@@ -103,7 +105,7 @@ for i in range(1, 25):
     annotations.append(ann)
     
 sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([np.split(x, len(x) // 30) for x in sequences])  # 30 seconds
+sequences = np.array([np.split(x, len(x) // 10) for x in sequences])  # 10 seconds
 annotations = np.array(annotations)
 
 sequences = np.vstack(
@@ -131,7 +133,7 @@ if "train" in sys.argv:
     y_test = annotations[test_indices]
 
     print("Dataset:")
-    print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
+    # print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
@@ -166,7 +168,7 @@ model.load_weights(save_path)
 # class_weight = dict(enumerate(class_weights))
 # sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
+# print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 scores = model.evaluate(
     X_test, 
@@ -198,23 +200,23 @@ for metric, score in scores.items():
 
 raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 10
 
-for d in range(1, 10):
-    threshold = d / 10
-    print(f"Threshold 0.{d}")
-    print(f"Threshold 0.{d}", file=f)
-    arr = np.array([np.squeeze(x) for x in raw_pred])
-    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-    cm = confusion_matrix(y_test, pred)
-    print("Confusion matrix:\n", cm)
-    print("Confusion matrix:\n", cm, file=f)
-    print(calc_cm(cm))
-    print(calc_cm(cm), file=f)
+# for d in range(1, 10):
+#     threshold = d / 10
+#     print(f"Threshold 0.{d}")
+#     print(f"Threshold 0.{d}", file=f)
+#     arr = np.array([np.squeeze(x) for x in raw_pred])
+#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+#     cm = confusion_matrix(y_test, pred)
+#     print("Confusion matrix:\n", cm)
+#     print("Confusion matrix:\n", cm, file=f)
+#     print(calc_cm(cm))
+    # print(calc_cm(cm), file=f)
 
-# print("Real - Prediction:")
-# print("Real - Prediction:", file=f)
-# for i, ans in enumerate(y_test):
-#     print(ans * 10, pred[i])
-#     print(ans * 10, pred[i], file=f)
+print("Real - Prediction:")
+print("Real - Predicti/on:", file=f)
+for i, ans in enumerate(y_test):
+    print(ans * 10, raw_pred[i])
+    print(ans * 10, raw_pred[i], file=f)
     
     
 
