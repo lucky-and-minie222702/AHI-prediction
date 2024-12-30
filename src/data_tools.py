@@ -31,7 +31,7 @@ if sys.argv[1] == "merge":
         stages.extend(stage.tolist())
 
     sequences_ECG = np.array(sequences_ECG)
-    sequences_SpO2 = np.array(sequences_SpO2)
+    sequences_SpO2 = np.array(sequences_SpO2).flatten()
     annotations = np.array(annotations)
     stages = np.array(stages)
 

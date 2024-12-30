@@ -8,8 +8,8 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(64))(norm_inp)
-    x = layers.TimeDistributed(layers.Dense(32))(rnn)
+    rnn = layers.TimeDistributed(layers.LSTM(128))(norm_inp)
+    x = layers.TimeDistributed(layers.Dense(64))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
     x = ResNetBlock(1, x, 64, 5, True)
@@ -34,12 +34,13 @@ def create_model_SpO2_ah(name: str):
     
     x = SEBlock(reduction_ratio=2)(x)
     
-    x = MyMultiHeadRelativeAttention(depth=32, num_heads=4, max_relative_position=8)(x)
+    x = MyMultiHeadRelativeAttention(depth=64, num_heads=8, max_relative_position=8)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     
-    x = layers.Dense(256, activation="relu")(x)
-    x = layers.Dense(64, activation="relu")(x)
+    x = layers.Dense(512, activation="relu")(x)
+    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dense(32, activation="relu")(x)
 
     out = layers.Dense(1)(x)
 
@@ -108,7 +109,7 @@ for i in range(1, 26):
     annotations.append(ann)
     
 sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([np.split(x, len(x) // 15) for x in sequences])
+sequences = np.array([np.split(x, len(x) // 30) for x in sequences])
 annotations = np.array(annotations)
 
 sequences = np.vstack(
@@ -120,7 +121,7 @@ annotations = np.concatenate([
 ])
 annotations /= 10
 
-threshold = 1.5
+# threshold = 1.5
 
 # annotations = np.array([1 if x >= threshold else 0 for x in annotations])
 
