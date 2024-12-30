@@ -179,7 +179,7 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 10
+raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
 
 for d in range(1, 10):
     threshold = d / 10
