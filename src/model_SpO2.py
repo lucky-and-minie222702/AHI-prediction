@@ -1,6 +1,7 @@
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
+from itertools import groupby
 
 def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, 1))
@@ -89,11 +90,13 @@ annotations = np.concatenate([
     annotations, annotations
 ])
 
+annotations = np.array([x for x in annotations for _ in range(5)])
+
 print(sequences.shape, annotations.shape)
 
-sequences = divide_signal([sequences], win_size=30, step_size=15)[0]
-annotations = divide_signal([annotations], win_size=30, step_size=15)[0]
-annotations = np.round(np.mean(annotations, axis=1))
+sequences = divide_signal([sequences], win_size=15, step_size=5)[0]
+annotations = divide_signal([annotations], win_size=15 / 5, step_size=5 / 5)[0]
+annotations = np.array([key for key, _ in groupby(annotations)])
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
