@@ -20,8 +20,10 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 128, 3)
     x = ResNetBlock(1, x, 128, 3)
     x = ResNetBlock(1, x, 128, 3)
+    x = ResNetBlock(1, x, 128, 3)
 
     x = ResNetBlock(1, x, 256, 3, True)
+    x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3)
@@ -36,7 +38,8 @@ def create_model_SpO2_ah(name: str):
     
     x = layers.GlobalAvgPool1D()(x)
     
-    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dense(256, activation="relu")(x)
+    x = layers.Dense(64, activation="relu")(x)
 
     out = layers.Dense(1)(x)
 
@@ -119,7 +122,7 @@ annotations /= 10
 
 threshold = 1.5
 
-annotations = np.array([1 if x >= threshold else 0 for x in annotations])
+# annotations = np.array([1 if x >= threshold else 0 for x in annotations])
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
