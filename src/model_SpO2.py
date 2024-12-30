@@ -20,14 +20,14 @@ def create_model_SpO2_ah(name: str):
     x = layers.MaxPool1D(pool_size=3, strides=2)(x)
     x = ResNetBlock(1, x, 64, 3, True)
     x = layers.MaxPool1D(pool_size=3, strides=2)(x)
+    x = layers.Conv1D(filters=1, kernel_size=1)(x)
     
     x = SEBlock(reduction_ratio=2)(x)
     
-    x = layers.LSTM(64)(x)
+    x = layers.LSTM(32)(x)
     
     x = layers.Flatten()(x)
     
-    x = layers.Dense(256, activation="relu")(x)
     x = layers.Dense(64, activation="relu")(x)
 
     out = layers.Dense(1)(x)
