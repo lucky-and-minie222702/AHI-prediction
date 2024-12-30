@@ -21,12 +21,11 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 256, 3, True)
     x = ResNetBlock(1, x, 256, 3)
     
+    x = layers.LSTM(64)(x)
+    
     x = SEBlock(reduction_ratio=2)(x)
     
     x = layers.GlobalAvgPool1D()(x)
-    
-    x = layers.LSTM(64)(x)
-    x = layers.Flatten()
     
     x = layers.Dense(256, activation="relu")(x)
     x = layers.Dense(64, activation="relu")(x)
