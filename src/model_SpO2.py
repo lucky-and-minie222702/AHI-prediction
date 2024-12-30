@@ -34,7 +34,7 @@ def create_model_SpO2_ah(name: str):
     
     x = SEBlock(reduction_ratio=2)(x)
     
-    x = MyMultiHeadRelativeAttention(depth=32, num_heads=8, max_relative_position=8)(x)
+    x = MyMultiHeadRelativeAttention(depth=32, num_heads=4, max_relative_position=8)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     
