@@ -11,26 +11,20 @@ def create_model_SpO2_ah(name: str):
     x = layers.Activation("relu")(x)
     x = layers.GlobalAvgPool1D()(x)
 
-    x = layers.Dense(64)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = layers.Dense(64, activation="relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
-    x = layers.Dense(128)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = layers.Dense(128, activation="relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
-    x = layers.Dense(128)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = layers.Dense(128, activation="relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
-    x = layers.Dense(64)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x = layers.Dense(64, activation="relu")(x)
     x = layers.Dropout(rate=0.5)(x)
     
+    x = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(x)
+    x = layers.LSTM(8)(x)
     x = layers.Flatten()(x)
 
     out = layers.Dense(1, activation="sigmoid")(x)
