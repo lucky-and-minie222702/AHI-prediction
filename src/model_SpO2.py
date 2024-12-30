@@ -19,6 +19,8 @@ def create_model_SpO2_ah(name: str):
     x = layers.Dropout(rate=0.5)(x)
     x = layers.Dense(64, activation="relu")(x)
     x = layers.Dropout(rate=0.5)(x)
+    x = layers.Dense(32, activation="relu")(x)
+    x = layers.LSTM(16)(x)
 
     out = layers.Dense(1, activation="sigmoid")(x)
 
