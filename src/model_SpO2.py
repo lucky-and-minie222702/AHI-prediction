@@ -30,9 +30,9 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 512, 3)
     x = ResNetBlock(1, x, 512, 3)
     
-    x = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=8)(x)
-    
     x = SEBlock(reduction_ratio=2)(x)
+    
+    x = MyMultiHeadRelativeAttention(depth=64, num_heads=16, max_relative_position=8)(x)
     
     x = layers.GlobalAvgPool1D()(x)
     
