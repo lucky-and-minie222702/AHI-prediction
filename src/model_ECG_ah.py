@@ -120,7 +120,7 @@ annotations = np.concatenate([
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
-    train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
+    train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))
     np.save(path.join("patients", "train_indices_ECG_ah"), train_indices)
     np.save(path.join("patients", "test_indices_ECG_ah"), test_indices)
         
@@ -140,7 +140,7 @@ if "train" in sys.argv:
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
     X_val_rri, X_val_rpa = calc_ecg(X_val)
 
     class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)

@@ -8,7 +8,7 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(None, None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    rnn = layers.TimeDistributed(layers.LSTM(96))(norm_inp)
+    rnn = layers.TimeDistributed(layers.LSTM(128))(norm_inp)
     x = layers.TimeDistributed(layers.Dense(64))(rnn)
     x = layers.TimeDistributed(layers.BatchNormalization())(x)
     
@@ -28,7 +28,7 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 512, 3)
     x = ResNetBlock(1, x, 512, 3)
     
-    x = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=24)(x)
+    x = MyMultiHeadRelativeAttention(depth=32, num_heads=16, max_relative_position=16)(x)
     
     x = SEBlock(reduction_ratio=2)(x)
     
@@ -105,17 +105,17 @@ sequences = np.array([np.split(x, len(x) // 30) for x in sequences])  # 30 secon
 annotations = np.array(annotations)
 
 sequences = np.vstack(
-    [sequences, sequences + np.random.normal(0.0, 0.01, sequences.shape)]
+    [sequences, sequences + np.random.normal(0.0, 0.01, sequences.shape), sequences + np.random.normal(0.0, 0.015, sequences.shape)]
 )
 
 annotations = np.concatenate([
-    annotations, annotations,
+    annotations, annotations, annotations,
 ])
 annotations /= 10
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
-    train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(69696969))
+    train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))
     np.save(path.join("patients", "train_indices_SpO2_ah"), train_indices)
     np.save(path.join("patients", "test_indices_SpO2_ah"), test_indices)
         
@@ -127,7 +127,7 @@ if "train" in sys.argv:
     # print("Dataset:")
     # print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2,random_state=np.random.randint(69696969))
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
     # class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     # class_weight = dict(enumerate(class_weights))
@@ -195,8 +195,8 @@ pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 1
 print("Real - Prediction:")
 print("Real - Prediction:", file=f)
 for i, ans in enumerate(y_test):
-    print(ans, pred[i])
-    print(ans, pred[i], file=f)
+    print(ans * 10, pred[i])
+    print(ans * 10, pred[i], file=f)
     
 
 f.close()
