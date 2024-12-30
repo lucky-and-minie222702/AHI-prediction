@@ -12,34 +12,24 @@ def create_model_SpO2_ah(name: str):
     x = layers.TimeDistributed(layers.MaxPool1D(pool_size=3, strides=2))(x)
     x = layers.TimeDistributed(layers.GlobalAvgPool1D())(x)
     
-    x = ResNetBlock(1, x, 64, 5, True)
-    x = ResNetBlock(1, x, 64, 5)
-    x = ResNetBlock(1, x, 64, 5, True)
+    x = ResNetBlock(1, x, 64, 3, True)
+    x = ResNetBlock(1, x, 64, 3)
     
-    x = ResNetBlock(1, x, 128, 3, True)
-    x = ResNetBlock(1, x, 128, 3)
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
 
     x = ResNetBlock(1, x, 256, 3, True)
     x = ResNetBlock(1, x, 256, 3)
-    x = ResNetBlock(1, x, 256, 3, True)
-    x = ResNetBlock(1, x, 256, 3)
-    x = ResNetBlock(1, x, 256, 3, True)
-    
-    x = ResNetBlock(1, x, 512, 3, True)
-    x = ResNetBlock(1, x, 512, 3)
-    x = ResNetBlock(1, x, 512, 3, True)
     
     x = SEBlock(reduction_ratio=2)(x)
     
-    x = MyMultiHeadRelativeAttention(depth=64, num_heads=8, max_relative_position=8)(x)
-    
     x = layers.GlobalAvgPool1D()(x)
     
-    x = layers.Dense(512, activation="relu")(x)
-    x = layers.Dense(128, activation="relu")(x)
-    x = layers.Dense(32, activation="relu")(x)
+    x = layers.LSTM(64)(x)
+    x = layers.Flatten()
+    
+    x = layers.Dense(256, activation="relu")(x)
+    x = layers.Dense(64, activation="relu")(x)
 
     out = layers.Dense(1)(x)
 
