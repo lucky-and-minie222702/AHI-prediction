@@ -1,36 +1,27 @@
-from sympy import sequence
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils import resample
 
 def create_model_SpO2_ah(name: str):
-    inp = layers.Input(shape=(None, None, 1))
+    inp = layers.Input(shape=(None, 1))
     x = layers.Normalization()(inp)
     
-    x = layers.TimeDistributed(layers.Conv1D(filters=16, kernel_size=5))(x)
-    x = layers.TimeDistributed(layers.MaxPool1D(pool_size=3, strides=2))(x)
-    x = layers.TimeDistributed(layers.GlobalAvgPool1D())(x)
+    x = layers.Conv1D(filters=32, kernel_size=1)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.GlobalAvgPool1D()(x)
     
-    x = ResNetBlock(1, x, 64, 3, True)
-    x = layers.MaxPool1D(pool_size=3, strides=2)(x)
-    x = ResNetBlock(1, x, 64, 3, True)
-    x = layers.MaxPool1D(pool_size=3, strides=2)(x)
-    x = ResNetBlock(1, x, 64, 3, True)
-    x = layers.MaxPool1D(pool_size=3, strides=2)(x)
-    x = ResNetBlock(1, x, 64, 3, True)
-    x = layers.MaxPool1D(pool_size=3, strides=2)(x)
-    x = layers.Conv1D(filters=1, kernel_size=1)(x)
-    
-    x = SEBlock(reduction_ratio=2)(x)
-    
-    x = layers.LSTM(32)(x)
-    
-    x = layers.Flatten()(x)
-    
+    x = layers.Dense(32, activation="relu")(x)
+    x = layers.Dropout(rate=0.25)(x)
     x = layers.Dense(64, activation="relu")(x)
+    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dense(64, activation="relu")(x)
+    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dense(32, activation="relu")(x)
+    x = layers.Dropout(rate=0.25)(x)
 
-    out = layers.Dense(1)(x)
+    out = layers.Dense(1, activation="sigmoid")(x)
 
     model = Model(
         inputs = inp,
@@ -49,9 +40,9 @@ save_path = path.join("res", f"model_SpO2_ah{name if name != '1' else ''}.weight
 
 model.compile(
     optimizer = "Adam",
-    loss =  "mse",
+    loss =  "binary_crossentropy",
     # metrics = ["accuracy"]
-    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -86,32 +77,18 @@ lr_scheduler = cbk.ReduceLROnPlateau(
     patience = 5,
 )
 
-sequences = []
-annotations = []
-maxlen = 0
-for i in range(1, 26):
-    seq_SpO2 = np.load(path.join("patients", f"patients_{i}_SpO2.npy"))
-    ann = float(open(path.join("patients", f"patients_{i}_AHI.txt")).readlines()[-1])
-    maxlen = max(maxlen, len(seq_SpO2))
-    sequences.append(seq_SpO2)
-    annotations.append(ann)
-    
-sequences = pad_sequences(sequences, maxlen=maxlen)
-sequences = np.array([divide_signal([x], win_size=30, step_size=15)[0] for x in sequences])
-annotations = np.array(annotations)
-
-sequences = np.vstack(
-    [sequences, sequences + np.random.normal(0.0, 0.01, sequences.shape)]
-)
+sequences = np.load(path.join("patients", "merged_SpO2.npy"))
+annotations  = np.load(path.join("patients", "merged_anns.npy"))
 
 annotations = np.concatenate([
     annotations, annotations
 ])
-annotations /= 10
 
-# threshold = 1.5
+print(sequences.shape, annotations.shape)
 
-# annotations = np.array([1 if x >= threshold else 0 for x in annotations])
+sequences = divide_signal([sequences], win_size=15, step_size=1)[0]
+annotations = divide_signal([annotations], win_size=15, step_size=1)[0]
+annotations = np.round(np.mean(annotations, axis=1))
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
@@ -124,14 +101,22 @@ if "train" in sys.argv:
     X_test = sequences[test_indices]
     y_test = annotations[test_indices]
 
+    if "balance" in sys.argv:
+        # Train set
+        balance = balancing_data(y_train, majority_weight)
+        combined_balance = np.unique(balance)
+
+        X_train = X_train[combined_balance]
+        y_train = y_train[combined_balance]
+
     print("Dataset:")
-    # print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
+    print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
-    # class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-    # class_weight = dict(enumerate(class_weights))
-    # sample_weights = np.array([class_weights[int(label)] for label in y_train])
+    class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+    class_weight = dict(enumerate(class_weights))
+    sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
     print(f"\nTrain size: {X_train.shape[0]}")
 
@@ -156,23 +141,28 @@ y_test = annotations[test_indices]
 
 model.load_weights(save_path)
 
-# class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
-# class_weight = dict(enumerate(class_weights))
-# sample_weights = np.array([class_weights[int(label)] for label in y_test])
+class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
+class_weight = dict(enumerate(class_weights))
+sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-# print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
+print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 scores = model.evaluate(
     X_test, 
     y_test,
-    # sample_weight = sample_weights,
+    sample_weight = sample_weights,
     batch_size = batch_size, 
     return_dict = True
 )
 
 y_test = annotations[test_indices]
-# if "balance" in sys.argv:
-#     y_test = y_test[combined_balance]
+if "balance" in sys.argv:
+    # Test set
+    balance = balancing_data(y_test, majority_weight)
+    combined_balance = np.unique(balance)
+
+    X_test = X_test[combined_balance]
+    y_test = y_test[combined_balance]
 
 print("\nSUMMARY\n")
 
@@ -192,26 +182,25 @@ for metric, score in scores.items():
 
 raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze() * 10
 
-# for d in range(1, 10):
-#     threshold = d / 10
-#     print(f"Threshold 0.{d}")
-#     print(f"Threshold 0.{d}", file=f)
-#     arr = np.array([np.squeeze(x) for x in raw_pred])
-#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-#     cm = confusion_matrix(y_test, pred)
-#     print("Confusion matrix:\n", cm)
-#     print("Confusion matrix:\n", cm, file=f)
-#     print(calc_cm(cm))
-    # print(calc_cm(cm), file=f)
+for d in range(1, 10):
+    threshold = d / 10
+    print(f"Threshold 0.{d}")
+    print(f"Threshold 0.{d}", file=f)
+    arr = np.array([np.squeeze(x) for x in raw_pred])
+    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+    cm = confusion_matrix(y_test, pred)
+    print("Confusion matrix:\n", cm)
+    print("Confusion matrix:\n", cm, file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
 
-print("Real - Prediction:")
-print("Real - Predicti/on:", file=f)
-for i, ans in enumerate(y_test):
-    print(ans * 10, raw_pred[i])
-    print(ans * 10, raw_pred[i], file=f)
+# print("Real - Prediction:")
+# print("Real - Predicti/on:", file=f)
+# for i, ans in enumerate(y_test):
+#     print(ans * 10, raw_pred[i])
+#     print(ans * 10, raw_pred[i], file=f)
     
     
-
 f.close()
 
 if "train" in sys.argv:
