@@ -122,8 +122,8 @@ def calc_cm(cm: np.ndarray | list):
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
     
-    sensivity = TP / (TP + FN)
-    specifity = TN / (TN + FP)
+    sensitivity = TP / (TP + FN)
+    specificity = TN / (TN + FP)
     accuracy = (TP + TN) / (TP + TN + FP + FN)
     
     Positive_accuracy = TP / (TP + FP)
@@ -132,8 +132,8 @@ def calc_cm(cm: np.ndarray | list):
     return {
         "precision": precision, 
         "recall": recall, 
-        "sensivity": sensivity, 
-        "specifity": specifity,
+        "sensitivity": sensitivity, 
+        "specificity": specificity,
         "accuracy": accuracy,
         "positive_accuracy": Positive_accuracy,
         "negative_accuracy": Negative_accuracy,
