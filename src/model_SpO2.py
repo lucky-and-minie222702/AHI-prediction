@@ -58,7 +58,7 @@ save_path = path.join("res", f"model_SpO2_ah{name if name != '1' else ''}.weight
 model.compile(
     optimizer = "Adam",
     loss =  "mse",
-    # metrics = ["accuracy"]
+    metrics = ["mae"]
     # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
