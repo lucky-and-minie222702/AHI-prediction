@@ -224,7 +224,7 @@ raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
 #     print(calc_cm(cm), file=f)
 
 print("Real - Prediction:")
-print("Real - Predicti/on:", file=f)
+print("Real - Prediction:", file=f)
 for i, ans in enumerate(y_test):
     print(ans * 10, raw_pred[i] * 10)
     print(ans * 10, raw_pred[i] * 10, file=f)
