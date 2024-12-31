@@ -1,3 +1,4 @@
+from matplotlib.cbook import flatten
 from model_functions import *
 from data_functions import *
 from sklearn.utils.class_weight import compute_class_weight
@@ -55,8 +56,12 @@ def create_model_ECG_ah(name: str):
     flat = layers.Dense(1024, activation="relu")(flat)
     flat = layers.Dense(256, activation="relu")(flat)
     flat = layers.Dense(64, activation="relu")(flat)
+    
+    x = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(flat)
+    x = layers.LSTM(64)(x)
+    x = layers.Flatten()(x)
 
-    out = layers.Dense(1, activation="sigmoid")(flat)
+    out = layers.Dense(1, activation="sigmoid")(x)
     
     model = Model(
         inputs = [inp, rri_inp, rpa_inp],

@@ -58,7 +58,11 @@ def create_model_ECG_stage(name: str):
     flat = layers.Dense(256, activation="relu")(flat)
     flat = layers.Dense(64, activation="relu")(flat)
 
-    out = layers.Dense(1, activation="sigmoid")(flat)
+    x = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(flat)
+    x = layers.LSTM(64)(x)
+    x = layers.Flatten()(x)
+
+    out = layers.Dense(1, activation="sigmoid")(x)
     
     model = Model(
         inputs = [inp, rri_inp, rpa_inp],
