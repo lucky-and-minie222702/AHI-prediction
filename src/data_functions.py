@@ -79,7 +79,7 @@ def add_baseline_wander(ecg_signal: np.ndarray, frequency: float, amplitude: flo
     res = np.split(res, len(res) // og_size)
     return np.array(res)
 
-def divide_signal(signals, win_size: int, step_size: int = None):
+def divide_signal(signals, win_size: int, step_size: int = None) -> np.ndarray:
     res = []
     for signal in signals:
         signal = np.array(signal)
