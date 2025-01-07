@@ -3,7 +3,7 @@ from model_functions import *
 
 # rpa = 10 (max 120 beats, rri = 9)
 def create_model():
-    inp = layers.Input(shape=(3000, 1))
+    inp = layers.Input(shape=(3008, 1))
     en = layers.Normalization()(inp)
     
     en = ResNetBlock(1, en, 512, 9, True)
@@ -15,7 +15,7 @@ def create_model():
     en = ResNetBlock(1, en, 64, 3, True)
     en = ResNetBlock(1, en, 64, 3,)
     en = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(en)
-    en = layers.Dense(128, activation="sigmoid")(en)
+    en = layers.Activation("sigmoid")(en)
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     de = ResNetBlock(1, expanded_en, 64, 3, True, True)
@@ -27,7 +27,7 @@ def create_model():
     de = ResNetBlock(1, de, 512, 9, True, True)
     de = ResNetBlock(1, de, 512, 9, False, True)
     de = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(de)
-    de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
+    de = layers.Activation("sigmoid")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
@@ -100,6 +100,7 @@ if "train" in sys.argv:
     sequences = np.load(path.join("patients", "merged_ECG.npy"))
     print(f"Train size: {len(sequences)}")
     rpa, rri = calc_ecg(sequences)
+    sequences = pad_sequences(sequences, max_len=3008)
     hist = decoder.fit(
         sequences,
         [sequences, rpa, rri],
