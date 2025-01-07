@@ -13,7 +13,7 @@ def create_model():
     en = ResNetBlock(1, en, 64, 5, True)
     en = ResNetBlock(1, en, 32, 3, True)
     en = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(en)
-    en = layers.Activation("sigmoid")(en)  # 47
+    en = layers.Dense(32, activation="sigmoid")(en)  # 47 -> 32
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     de = ResNetBlock(1, expanded_en, 32, 3, True, True)
