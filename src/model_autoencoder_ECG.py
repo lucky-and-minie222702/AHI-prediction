@@ -1,0 +1,133 @@
+import os
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import numpy as np
+import keras
+import sys
+import tensorflow as tf
+import pandas as pd
+from keras import Sequential, Model
+from keras import layers
+from os import path
+from keras.saving import load_model 
+import argparse
+from keras.utils import to_categorical
+from keras import optimizers
+from sklearn.utils import shuffle
+from collections import Counter
+from keras import metrics
+from sklearn.model_selection import KFold
+import sklearn.preprocessing as prep
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from scikeras.wrappers import KerasClassifier
+import sklearn.model_selection as mdselect
+import keras.applications as apl
+import keras.regularizers as reg
+import joblib
+import tensorflow.python.keras.backend as K
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+import keras.callbacks as cbk
+from data_functions import *
+from model_functions import *
+
+# rpa = 10 (max 120 beats, rri = 9)
+def create_model():
+    inp = layers.Input(shape=(500, 1))
+    en = layers.Normalization()(inp)
+    
+    en = ResNetBlock(1, en, 256, 13, True)
+    en = ResNetBlock(1, en, 256, 11)
+    en = ResNetBlock(1, en, 128, 9, True)
+    en = ResNetBlock(1, en, 128, 7)
+    en = ResNetBlock(1, en, 64, 5, True)
+    en = ResNetBlock(1, en, 64, 3)
+    en = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(en)
+    en = layers.Dense(64, activation="sigmoid")(en)
+    
+    expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
+    de = ResNetBlock(1, expanded_en, 64, 3, True, True)
+    de = ResNetBlock(1, de, 64, 5, False, True)
+    de = ResNetBlock(1, de, 128, 7, True, True)
+    de = ResNetBlock(1, de, 128, 9, False, True)
+    de = ResNetBlock(1, de, 256, 11, True, True)
+    de = ResNetBlock(1, de, 256, 13, False, True)
+    de = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(de)
+    de = layers.Dense(500, activation="sigmoid", name="ecg")(de)
+    
+    de_rpa = ResNetBlock(1, expanded_en, 64, 7, True)
+    de_rpa = ResNetBlock(1, de_rpa, 64, 7, True)
+    de_rpa = ResNetBlock(1, de_rpa, 64, 7, True)
+    de_rpa = layers.Flatten()(de_rpa)
+    de_rpa = layers.Dense(128, activation="relu")(de_rpa)
+    de_rpa = layers.Dense(10, name="rpa")(de_rpa)
+    
+    de_rri = ResNetBlock(1, expanded_en, 64, 7, True)
+    de_rri = ResNetBlock(1, de_rri, 64, 7, True)
+    de_rri = ResNetBlock(1, de_rri, 64, 7, True)
+    de_rri = layers.Flatten()(de_rri)
+    de_rri = layers.Dense(128, activation="relu")(de_rri)
+    de_rri = layers.Dense(10, name="rri")(de_rri)
+    
+    decoder = Model(
+        inputs = inp,
+        outputs = [de, de_rpa, de_rri],
+    )
+    
+    encoder = Model(
+        inputs = inp,
+        outputs = en,
+    )
+    
+    return decoder, encoder
+
+save_path = path.join("res", "model_auto_encoder_ECG.weights.h5")
+max_epochs = 1 if "test_save" in sys.argv else 500
+batch_size = 64
+if "batch_size" in sys.argv:
+    batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
+
+# callbacks
+early_stopping_epoch = 200
+if "ese" in sys.argv:
+    early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
+cb_early_stopping = cbk.EarlyStopping(
+    monitor = "loss",
+    restore_best_weights = True,
+    start_from_epoch = early_stopping_epoch,
+    patience = 5,
+)
+cb_timer = TimingCallback()
+
+if "train" in sys.argv:
+    decoder, encoder = create_model()
+    
+    decoder.compile(
+        optimizer = "adam",
+        loss = {
+            "ecg": "mse",
+            "rpa": "mse",
+            "rri": "mse",
+        }
+    )
+    
+    decoder.summary()
+    exit()
+    sequences = np.load(path.join("patients", "merged_ECG.npy"))
+    rpa, rri = calc_ecg(sequences)
+    hist = decoder.fit(
+        sequences,
+        [sequences, rpa, rri],
+        epochs = max_epochs,
+        batch_size = batch_size,
+        callbacks = [
+            cb_timer,
+        ]
+    )
+    decoder.save_weights(save_path)
+    for key, value in hist.history.items():
+        data = np.array(value)
+        his_path = path.join("history", f"{key}_ECG_autoencoder")
+        np.save(his_path, data)
+
+    print("Saving history done!")

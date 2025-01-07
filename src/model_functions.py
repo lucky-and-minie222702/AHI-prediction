@@ -49,15 +49,26 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, down_sample: bool = False, bottle_neck: bool = False):
-    if dimension == 1:
-        Conv = layers.Conv1D
-    elif dimension == 2:
-        Conv = layers.Conv2D
-    elif dimension == 3:
-        Conv = layers.Conv3D
+def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False):
+    if not transpose:
+        if dimension == 1:
+            Conv = layers.Conv1D
+        elif dimension == 2:
+            Conv = layers.Conv2D
+        elif dimension == 3:
+            Conv = layers.Conv3D
+    else:
+        if dimension == 1:
+            Conv = layers.Conv1DTranspose
+        elif dimension == 2:
+            Conv = layers.Conv2DTranspose
+        elif dimension == 3:
+            Conv = layers.Conv3DTranspose
     
-    strides = 1 + down_sample
+    if isinstance(change_sample, bool):
+        strides = 1 + change_sample
+    else:
+        strides = change_sample
     factor = 4 if bottle_neck else 1
     kernel_size = 1 if bottle_neck else kernel_size
     
@@ -112,6 +123,55 @@ class SEBlock(layers.Layer):
 
         return layers.Multiply()([inputs, se])
    
+
+class MyAtt(layers.Layer):
+    def __init__(self, depth: int, num_heads: int, seq_len: int = -1):
+        super(MyAtt, self).__init__()
+        self.num_heads = num_heads        
+        self.depth = depth
+        self.d_model = depth * num_heads
+        self.seq_len = seq_len
+        
+        self.Wq = tf.keras.layers.Dense(self.d_model)
+        self.Wk = tf.keras.layers.Dense(self.d_model)
+        self.Wv = tf.keras.layers.Dense(self.d_model)
+        self.dense = tf.keras.layers.Dense(self.d_model)
+
+    def split_heads(self, x, batch_size: int):
+        # num_heads, depth
+        x = tf.reshape(x, (batch_size, self.seq_len, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])  # batch, heads, seq, depth
+
+    def scaled_dot_product_attention(self, Q, K, V):
+        matmul_qk = tf.matmul(Q, K, transpose_b=True) 
+        dk = tf.cast(tf.shape(K)[-1], tf.float32)
+        scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+        weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # softmax normalized
+        output = tf.matmul(weights, V)
+        return output, weights
+
+    def call(self, query, key, value):
+        batch_size = tf.shape(query)[0]
+        
+        Q = self.Wq(query)
+        K = self.Wk(key)
+        V = self.Wv(value)
+        
+        # split heads
+        Q = self.split_heads(Q, batch_size)
+        K = self.split_heads(K, batch_size)
+        V = self.split_heads(V, batch_size)
+        
+        attention_output, w = self.scaled_dot_product_attention(Q, K, V)
+        print(w.shape, V.shape, attention_output.shape)
+        
+        # merge heads
+        attention_output = tf.transpose(attention_output, perm=[0, 2, 1, 3])
+        concat_attention = tf.reshape(attention_output, (batch_size, self.seq_len, self.d_model))
+        
+        output = self.dense(concat_attention)
+        return output
+
 
 class TimingCallback(keras.callbacks.Callback):
     def __init__(self, logs = {}):

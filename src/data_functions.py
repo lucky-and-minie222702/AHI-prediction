@@ -168,11 +168,9 @@ def calc_time(start: str, end: str) -> int:
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
 
-def calc_ecg(signals, fs: int = 100):
+def calc_ecg(signals, fs: int = 100, max_rri: int = 10, max_rpa: int = 10):
     rri_res = []
     rpa_res = []
-    max_rri = 0
-    max_rpa = 0
     t = np.linspace(0, 10, fs * 10)
     for sig in signals:
         peaks, _ = find_peaks(sig, height=0.5, distance=fs * 0.6)  # minimum 0.6s between beats
@@ -190,7 +188,7 @@ def calc_ecg(signals, fs: int = 100):
     rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
     rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
     
-    return rri_res, rpa_res
+    return rpa_res, rri_res
 
 def calc_percentile(arr: np.ndarray, num: float) -> float:
     arr = sorted(arr)
