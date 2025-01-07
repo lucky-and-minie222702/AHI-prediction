@@ -75,7 +75,7 @@ for i in range(len(records)):
     
     AHIs.append(AHI)
     
-    # ANNOTATION for each 10 seconds (not timestep)
+    # ANNOTATION for each 1 seconds (not timestep)
 
     # parse times
     content = open(path.join("database", f"{records[i]}_respevt.txt"), "r").readlines()[3:-1:]
@@ -86,28 +86,28 @@ for i in range(len(records)):
     annotations = []
     idx = 0
     enough = False
-    for t in range(5, total_time * 30 + 5, 5):
+    for t in range(1, total_time * 30 + 1, 1):
         if not enough:
-            if t - (time[idx] + duration[idx]) > 2:  # at least 3 / 5 seconds
+            if t - (time[idx] + duration[idx]) > 0:
                 idx += 1
                 if idx == len(time):
                     annotations.append(0)
                     enough = True
                     continue
             
-            if t - time[idx] >= 3:  # at least 3 / 5 seconds
+            if t - time[idx] >= 1:
                 annotations.append(1)
             else:
                 annotations.append(0)
         else:
             annotations.append(0)
+
     annotations = np.array(annotations)
-    annotations = np.array(np.split(annotations, len(annotations) // 6))
-    annotations = np.round(np.mean(annotations, axis=1))
     sleep_stages = list(map(lambda x: 1 if x == 0 else 0, sleep_stages))
+    sleep_stages_1s = np.array([i for i in sleep_stages for _ in range(30)])
 
     np.save(path.join("patients", f"patients_{i+1}_anns"), annotations)
-    np.save(path.join("patients", f"patients_{i+1}_stages"), sleep_stages)
+    np.save(path.join("patients", f"patients_{i+1}_stages"), sleep_stages_1s)
 
 
 print("\nMax ECG sequence lenght:", max_ECG_len)

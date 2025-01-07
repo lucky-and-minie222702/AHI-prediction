@@ -59,7 +59,7 @@ def pad_arrays(arr1: np.ndarray, arr2: np.ndarray):
         arr1 = np.pad(arr1, (0, len2 - len1), constant_values=0)
     return arr1, arr2
 
-def add_baseline_wander(ecg_signal: np.ndarray, frequency: float, amplitude: float, sampling_rate: int, flat_rate: float, group_size: int = 500, num_groups: int = 5000):
+def add_baseline_wander(ecg_signal: np.ndarray, frequency: float, amplitude: float, sampling_rate: int, flat_rate: float, group_size: int = 300, num_groups: int = 8000):
     res = []
     og_size = ecg_signal.shape[1]
     p = ecg_signal.flatten()
@@ -79,25 +79,21 @@ def add_baseline_wander(ecg_signal: np.ndarray, frequency: float, amplitude: flo
     res = np.split(res, len(res) // og_size)
     return np.array(res)
 
-def divide_signal(signals, win_size: int, step_size: int = None) -> np.ndarray:
-    res = []
-    for signal in signals:
-        signal = np.array(signal)
-        if step_size is None:
-            # non-overlap
-            step_size = win_size  
-        
-        num_segments = (len(signal) - win_size) // step_size + 1
-        segments = []
+def divide_signal(signal, win_size: int, step_size: int = None) -> np.ndarray:
+    signal = np.array(signal)
+    if step_size is None:
+        # non-overlap
+        step_size = win_size  
+    
+    num_segments = (len(signal) - win_size) // step_size + 1
+    segments = []
 
-        for i in range(0, num_segments * step_size, step_size):
-            segment = signal[i:i + win_size]
-            if len(segment) == win_size: 
-                segments.append(segment)
-
-        res.append(segments)
+    for i in range(0, num_segments * step_size, step_size):
+        segment = signal[i:i + win_size]
+        if len(segment) == win_size: 
+            segments.append(segment)
         
-    return np.array(res)
+    return np.array(segments)
 
 def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray:  
     count0 = np.count_nonzero(data == 0)
