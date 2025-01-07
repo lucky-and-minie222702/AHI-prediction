@@ -27,7 +27,7 @@ def create_model():
     de = ResNetBlock(1, de, 512, 9, True, True)
     de = ResNetBlock(1, de, 512, 9, False, True)
     de = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(de)
-    de = layers.Activation("sigmoid")(de)
+    de = layers.Activation("sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
