@@ -72,7 +72,7 @@ early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
-    monitor = "ecg_loss",
+    monitor = "val_ecg_loss",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
     patience = 5,
@@ -106,9 +106,10 @@ if "train" in sys.argv:
         [sequences, rpa, rri],
         epochs = max_epochs,
         batch_size = batch_size,
+        validation_split = 0.2,
         callbacks = [
             cb_timer,
-        ]
+        ]        
     )
     
     encoder.save_weights(save_path)
