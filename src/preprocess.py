@@ -102,10 +102,8 @@ for i in range(len(records)):
         else:
             annotations.append(0)
     annotations = np.array(annotations)
-    print(annotations.shape)
     annotations = np.array(np.split(annotations, len(annotations) // 6))
     annotations = np.round(np.mean(annotations, axis=1))
-    print(annotations.shape)
     sleep_stages = list(map(lambda x: 1 if x == 0 else 0, sleep_stages))
 
     np.save(path.join("patients", f"patients_{i+1}_anns"), annotations)
