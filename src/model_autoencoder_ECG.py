@@ -68,7 +68,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 100
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -89,7 +89,11 @@ if "train" in sys.argv:
             "rpa": "mse",
             "rri": "mse",
         },
-        metrics = "mae",
+        metrics = {
+            "ecg": "mae",
+            "rpa": "mae",
+            "rri": "mae",
+        },
     )
     
     decoder.summary()
