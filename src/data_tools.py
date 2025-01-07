@@ -57,9 +57,6 @@ if sys.argv[1] == "merge":
     annotations = np.concatenate([annotations, annotations, annotations])
     stages = np.concatenate([stages, stages, stages])
     
-    print(annotations.shape, stages.shape, sequences_ECG.shape, sequences_SpO2.shape)
-    exit()
-    
     _, counts = np.unique(annotations, return_counts=True)
     print(f"Annotations: [0]: {counts[0]} | [1]: {counts[1]}")
     _, counts = np.unique(stages, return_counts=True)
