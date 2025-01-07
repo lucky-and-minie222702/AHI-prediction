@@ -89,6 +89,7 @@ if "train" in sys.argv:
     
     decoder.summary()
     sequences = np.load(path.join("patients", "merged_ECG.npy"))
+    print(f"Train size: {len(sequences)}")
     rpa, rri = calc_ecg(sequences)
     hist = decoder.fit(
         sequences,
