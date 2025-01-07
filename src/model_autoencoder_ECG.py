@@ -15,7 +15,7 @@ def create_model():
     en = ResNetBlock(1, en, 64, 5, True)
     en = ResNetBlock(1, en, 64, 5,)
     en = layers.Lambda(lambda x: tf.reduce_mean(x, axis=-1))(en)
-    en = layers.Dense(64, activation="sigmoid")(en)  # 47 -> 32
+    en = layers.Dense(128, activation="sigmoid")(en)  # 47 -> 32
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     de = ResNetBlock(1, expanded_en, 64, 5, True, True)
@@ -33,16 +33,20 @@ def create_model():
     de_rpa = ResNetBlock(1, de_rpa, 64, 5)
     de_rpa = ResNetBlock(1, de_rpa, 128, 7, True)
     de_rpa = ResNetBlock(1, de_rpa, 128, 7)
+    de_rpa = ResNetBlock(1, de_rpa, 256, 9, True)
+    de_rpa = ResNetBlock(1, de_rpa, 256, 9)
     de_rpa = layers.Flatten()(de_rpa)
-    de_rpa = layers.Dense(256, activation="relu")(de_rpa)
+    de_rpa = layers.Dense(512, activation="relu")(de_rpa)
     de_rpa = layers.Dense(60, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 5, True)
     de_rri = ResNetBlock(1, de_rri, 64, 5)
     de_rri = ResNetBlock(1, de_rri, 128, 7, True)
     de_rri = ResNetBlock(1, de_rri, 128, 7)
+    de_rri = ResNetBlock(1, de_rri, 256, 9, True)
+    de_rri = ResNetBlock(1, de_rri, 256, 9)
     de_rri = layers.Flatten()(de_rri)
-    de_rri = layers.Dense(256, activation="relu")(de_rri)
+    de_rri = layers.Dense(512, activation="relu")(de_rri)
     de_rri = layers.Dense(60, name="rri")(de_rri)
     
     decoder = Model(
