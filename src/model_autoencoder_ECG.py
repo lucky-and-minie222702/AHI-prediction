@@ -31,7 +31,7 @@ def create_model():
     de_rpa = ResNetBlock(1, de_rpa, 256, 9, True)
     de_rpa = layers.Flatten()(de_rpa)
     de_rpa = layers.Dense(256, activation="relu")(de_rpa)
-    de_rpa = layers.Dense(50, name="rpa")(de_rpa)
+    de_rpa = layers.Dense(60, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 32, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 5, True)
@@ -39,7 +39,7 @@ def create_model():
     de_rri = ResNetBlock(1, de_rri, 256, 9, True)
     de_rri = layers.Flatten()(de_rri)
     de_rri = layers.Dense(256, activation="relu")(de_rri)
-    de_rri = layers.Dense(50, name="rri")(de_rri)
+    de_rri = layers.Dense(60, name="rri")(de_rri)
     
     decoder = Model(
         inputs = inp,
