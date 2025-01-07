@@ -62,7 +62,7 @@ def create_model():
     return decoder, encoder
 
 save_path = path.join("res", "model_auto_encoder_ECG.weights.h5")
-max_epochs = 1 if "test_save" in sys.argv else 500
+max_epochs = 1 if "test_save" in sys.argv else 100
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
