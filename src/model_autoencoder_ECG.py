@@ -1,32 +1,3 @@
-import os
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import numpy as np
-import keras
-import sys
-import tensorflow as tf
-import pandas as pd
-from keras import Sequential, Model
-from keras import layers
-from os import path
-from keras.saving import load_model 
-import argparse
-from keras.utils import to_categorical
-from keras import optimizers
-from sklearn.utils import shuffle
-from collections import Counter
-from keras import metrics
-from sklearn.model_selection import KFold
-import sklearn.preprocessing as prep
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
-import sklearn.model_selection as mdselect
-import keras.applications as apl
-import keras.regularizers as reg
-import joblib
-import tensorflow.python.keras.backend as K
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-import keras.callbacks as cbk
 from data_functions import *
 from model_functions import *
 
@@ -113,7 +84,6 @@ if "train" in sys.argv:
     )
     
     decoder.summary()
-    exit()
     sequences = np.load(path.join("patients", "merged_ECG.npy"))
     rpa, rri = calc_ecg(sequences)
     hist = decoder.fit(
@@ -125,7 +95,9 @@ if "train" in sys.argv:
             cb_timer,
         ]
     )
-    decoder.save_weights(save_path)
+    
+    encoder.save_weights(save_path)
+
     for key, value in hist.history.items():
         data = np.array(value)
         his_path = path.join("history", f"{key}_ECG_autoencoder")
