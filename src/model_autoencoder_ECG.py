@@ -72,7 +72,7 @@ early_stopping_epoch = 100
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
-    monitor = "loss",
+    monitor = "ecg_loss",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
     patience = 5,
