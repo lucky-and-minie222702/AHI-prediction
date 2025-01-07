@@ -3,7 +3,7 @@ from model_functions import *
 
 # rpa = 10 (max 120 beats, rri = 9)
 def create_model():
-    inp = layers.Input(shape=(3008, 1))
+    inp = layers.Input(shape=(3000, 1))
     en = layers.Normalization()(inp)
     
     en = ResNetBlock(1, en, 512, 9, True)
@@ -98,7 +98,7 @@ if "train" in sys.argv:
     sequences = np.load(path.join("patients", "merged_ECG.npy"))
     print(f"Train size: {len(sequences)}")
     rpa, rri = calc_ecg(sequences)
-    sequences = pad_sequences(sequences, maxlen=3008)
+    # sequences = pad_sequences(sequences, maxlen=3008)
     hist = decoder.fit(
         sequences,
         [sequences, rpa, rri],
