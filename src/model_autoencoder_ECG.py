@@ -88,7 +88,8 @@ if "train" in sys.argv:
             "ecg": "mse",
             "rpa": "mse",
             "rri": "mse",
-        }
+        },
+        metrics = "mae",
     )
     
     decoder.summary()
