@@ -72,7 +72,7 @@ def create_model():
     de_rri = layers.GlobalAvgPool1D()(de_rri)
     de_rri = layers.Dense(50, name="rri")(de_rri)
     
-    decoder = Model(
+    autoencoder = Model(
         inputs = inp,
         outputs = [de, de_rpa, de_rri],
     )
@@ -82,7 +82,7 @@ def create_model():
         outputs = en,
     )
     
-    return decoder, encoder
+    return autoencoder, encoder
 
 save_path = path.join("res", "model_auto_encoder_ECG.weights.h5")
 max_epochs = 1 if "test_save" in sys.argv else 150
@@ -102,9 +102,9 @@ cb_early_stopping = cbk.EarlyStopping(
 )
 cb_timer = TimingCallback()
 
-decoder, encoder = create_model()
+autoencoder, encoder = create_model()
 
-decoder.compile(
+autoencoder.compile(
     optimizer = "adam",
     loss = {
         "ecg": "mse",
@@ -118,8 +118,8 @@ decoder.compile(
     },
 )
 
-# decoder.summary()
-show_params(decoder, "autoencoder")
+# autoencoder.summary()
+show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 print(f"Train size: {len(sequences)}")
@@ -127,7 +127,7 @@ print(f"Train size: {len(sequences)}")
 if "train" in sys.argv:
     rpa, rri = calc_ecg(sequences)
     # sequences = pad_sequences(sequences, maxlen=3008)
-    hist = decoder.fit(
+    hist = autoencoder.fit(
         sequences,
         [sequences, rpa, rri],
         epochs = max_epochs,
@@ -154,7 +154,7 @@ if "train" in sys.argv:
 
 
 if "encode" in sys.argv:
-    del decoder
+    del autoencoder
     encoder.load_weights(save_path)
     encoded_ECG = encoder.predict(sequences, batch_size=batch_size).squeeze()
     np.save(path.join("patients", "merged_ECG.npy"))
