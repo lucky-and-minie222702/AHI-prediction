@@ -90,7 +90,7 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
-    x = activation(x)(x)
+    x = activation(x)
     return x
 
 
