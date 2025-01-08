@@ -20,7 +20,7 @@ def create_model():
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
-    en = layers.Dense(128, activation="sigmoid")(en)
+    en = layers.Dense(128)(en)
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     de = ResNetBlock(1, expanded_en, 512, 3, True, True)
@@ -42,6 +42,7 @@ def create_model():
     de = layers.BatchNormalization()(de)
     de = layers.Conv1D(filters=8, kernel_size=3)(de)
     de = layers.BatchNormalization()(de)
+    de = SEBlock()(de)
 
     de = layers.Flatten()(de)
     de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
