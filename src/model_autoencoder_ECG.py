@@ -88,28 +88,29 @@ cb_early_stopping = cbk.EarlyStopping(
 )
 cb_timer = TimingCallback()
 
-if "train" in sys.argv:
-    decoder, encoder = create_model()
-    
-    decoder.compile(
-        optimizer = "adam",
-        loss = {
-            "ecg": "mse",
-            "rpa": "mse",
-            "rri": "mse",
-        },
-        metrics = {
-            "ecg": "mae",
-            "rpa": "mae",
-            "rri": "mae",
-        },
-    )
-    
-    # decoder.summary()
-    show_params(decoder, "autoencoder")
+decoder, encoder = create_model()
 
-    sequences = np.load(path.join("patients", "merged_ECG.npy"))
-    print(f"Train size: {len(sequences)}")
+decoder.compile(
+    optimizer = "adam",
+    loss = {
+        "ecg": "mse",
+        "rpa": "mse",
+        "rri": "mse",
+    },
+    metrics = {
+        "ecg": "mae",
+        "rpa": "mae",
+        "rri": "mae",
+    },
+)
+
+# decoder.summary()
+show_params(decoder, "autoencoder")
+
+sequences = np.load(path.join("patients", "merged_ECG.npy"))
+print(f"Train size: {len(sequences)}")
+
+if "train" in sys.argv:
     rpa, rri = calc_ecg(sequences)
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = decoder.fit(
@@ -136,3 +137,11 @@ if "train" in sys.argv:
         np.save(his_path, data)
 
     print("Saving history done!")
+
+
+if "encode" in sys.argv:
+    del decoder
+    encoder.load_weights(save_path)
+    encoded_ECG = encoder.predict(sequences, batch_size=batch_size).squeeze()
+    np.save(path.join("patients", "merged_ECG.npy"))
+    print("Encoding done!")

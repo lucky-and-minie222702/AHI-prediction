@@ -4,29 +4,36 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG_stage(name: str):    
     # after encoder
-    inp = layers.Input(shape=(64, 1))  
+    inp = layers.Input(shape=(128, 1))  
     norm_inp = layers.Normalization()(inp)
     
     # branch 1
-    br1 = ResNetBlock(1, norm_inp, 64, 3, True)
-    br1 = ResNetBlock(1, br1, 64, 3)
-    br1 = ResNetBlock(1, br1, 64, 3)
-    br1 = ResNetBlock(1, br1, 128, 3, True)
-    br1 = ResNetBlock(1, br1, 128, 3)
-    br1 = ResNetBlock(1, br1, 128, 3)
+    br1 = ResNetBlock(1, norm_inp, 64, 3, True, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 64, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 64, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 128, 3, True, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 128, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 128, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 256, 3, True, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 256, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br1 = ResNetBlock(1, br1, 256, 3, activation=layers.LeakyReLU(negative_slope=0.25))
     
     # branch 2
-    br2 = ResNetBlock(1, norm_inp, 64, 3, True)
-    br2 = ResNetBlock(1, br2, 64, 3)
-    br2 = ResNetBlock(1, br2, 64, 3)
-    br2 = ResNetBlock(1, br2, 128, 3, True)
-    br2 = ResNetBlock(1, br2, 128, 3)
-    br2 = ResNetBlock(1, br2, 128, 3)
+    br2 = ResNetBlock(1, norm_inp, 64, 3, True, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 64, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 64, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 128, 3, True, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 128, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 128, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 256, 3, True, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 256, 3, activation=layers.LeakyReLU(negative_slope=0.25))
+    br2 = ResNetBlock(1, br2, 256, 3, activation=layers.LeakyReLU(negative_slope=0.25))
     
-    att = MyAtt(depth=128, num_heads=8, seq_len=16)(br1, br2, br2)
+    att = MyAtt(depth=256, num_heads=8, seq_len=16)(br1, br2, br2)
     se_att = SEBlock()(att)
     flat = layers.GlobalAvgPool1D()(se_att)
-    flat = layers.Dense(128, activation="relu")
+    flat = layers.Dense(512)(flat)
+    flat = layers.BatchNormalization()(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
