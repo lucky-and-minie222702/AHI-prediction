@@ -13,6 +13,7 @@ def create_model():
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 512, 3, True)
     en = ResNetBlock(1, en, 512, 3)
+    en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
     en = layers.Dense(128, activation="tanh")(en)
@@ -102,7 +103,8 @@ if "train" in sys.argv:
         },
     )
     
-    decoder.summary()
+    # decoder.summary()
+    show_params(decoder, "autoencoder")
     sequences = np.load(path.join("patients", "merged_ECG.npy"))
     print(f"Train size: {len(sequences)}")
     rpa, rri = calc_ecg(sequences)

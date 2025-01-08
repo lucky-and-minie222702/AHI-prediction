@@ -4,7 +4,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG_ah(name: str):    
     # after encoder
-    inp = layers.Input(shape=(64, 1))  
+    inp = layers.Input(shape=(128, 1))  
     norm_inp = layers.Normalization()(inp)
     
     # branch 1
@@ -23,7 +23,7 @@ def create_model_ECG_ah(name: str):
     br2 = ResNetBlock(1, br2, 128, 3)
     br2 = ResNetBlock(1, br2, 128, 3)
     
-    att = MyAtt(depth=128, num_heads=8, seq_len=16)(br1, br2, br2)
+    att = MyAtt(depth=128, num_heads=8, seq_len=32)(br1, br2, br2)
     se_att = SEBlock()(att)
     flat = layers.GlobalAvgPool1D()(se_att)
     flat = layers.Dense(128, activation="relu")
