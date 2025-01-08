@@ -86,9 +86,9 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
-annotations = np.concatenate([
-    annotations, annotations, annotations,
-])
+# annotations = np.concatenate([
+#     annotations, annotations, annotations,
+# ])
 
 if "train" in sys.argv:
     indices = np.arange(len(annotations))

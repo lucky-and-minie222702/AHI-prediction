@@ -4,41 +4,23 @@ from sklearn.utils.class_weight import compute_class_weight
 from itertools import groupby
 
 def create_model_SpO2_ah(name: str):
-    inp = layers.Input(shape=(None, 1))
-    conv = layers.Normalization()(inp)
+    inp = layers.Input(shape=(30, 1))
+    x = layers.Normalization()(inp)
     
-    conv = ResNetBlock(1, conv, 64, 5, True)
-    conv = ResNetBlock(1, conv, 64, 5)
-    conv = ResNetBlock(1, conv, 64, 5)
+    x = layers.Conv1D(filters=64, kernel_size=5)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv1D(filters=64, kernel_size=5)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Conv1D(filters=64, kernel_size=5)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
     
-    conv = ResNetBlock(1, conv, 128, 3, True)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
-    
-    conv = ResNetBlock(1, conv, 256, 3, True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    
-    conv = ResNetBlock(1, conv, 512, 3, True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
-    
-
-    x = layers.GlobalAvgPool1D()(conv)
-
-    x = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(x)
-    x = layers.LSTM(64)(x)
+    x = MyMultiHeadRelativeAttention(depth=64, num_heads=4, max_relative_position=5)(x) 
     x = layers.Flatten()(x)
-    
-    x = layers.Dense(128, activation="relu")(x)
 
-    out = layers.Dense(1)(x)
+    out = layers.Dense(1, activation="sigmoid")(x)
 
     model = Model(
         inputs = inp,
@@ -53,13 +35,12 @@ def create_model_SpO2_ah(name: str):
 
 model = create_model_SpO2_ah("SpO2_ah")
 name = sys.argv[sys.argv.index("id")+1]
-save_path = path.join("res", f"model_SpO2_ah{name if name != '1' else ''}.weights.h5")
+save_path = path.join("res", f"model_SpO2_ah_{name}.weights.h5")
 
 model.compile(
     optimizer = "Adam",
-    loss =  "mse",
-    metrics = ["mae"]
-    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    loss =  "binary_crossentropy",
+    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -97,25 +78,6 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 
-annotations = np.concatenate([
-    annotations, annotations, annotations
-])
-
-annotations = np.array([x for x in annotations for _ in range(5)]).flatten()
-
-sequences = divide_signal([sequences], win_size=3600, step_size=1800)[0]
-annotations = divide_signal([annotations], win_size=3600, step_size=1800)[0]
-
-ann = []
-for seg in annotations:
-    tmp = 0
-    for key, group in groupby(seg):
-        if key == 1:
-            tmp += 1
-    ann.append(tmp)
-
-annotations = np.array(ann) / 10
-
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
     train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))
@@ -127,22 +89,22 @@ if "train" in sys.argv:
     X_test = sequences[test_indices]
     y_test = annotations[test_indices]
 
-    # if "balance" in sys.argv:
-    #     # Train set
-    #     balance = balancing_data(y_train, majority_weight)
-    #     combined_balance = np.unique(balance)
+    if "balance" in sys.argv:
+        # Train set
+        balance = balancing_data(y_train, majority_weight)
+        combined_balance = np.unique(balance)
 
-    #     X_train = X_train[combined_balance]
-    #     y_train = y_train[combined_balance]
+        X_train = X_train[combined_balance]
+        y_train = y_train[combined_balance]
 
-    # print("Dataset:")
-    # print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
+    print("Dataset:")
+    print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
-    # class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
-    # class_weight = dict(enumerate(class_weights))
-    # sample_weights = np.array([class_weights[int(label)] for label in y_train])
+    class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+    class_weight = dict(enumerate(class_weights))
+    sample_weights = np.array([class_weights[int(label)] for label in y_train])
 
     print(f"\nTrain size: {X_train.shape[0]}")
 
@@ -152,7 +114,7 @@ if "train" in sys.argv:
         epochs = max_epochs,
         batch_size = batch_size,
         validation_data = (X_val, y_val),
-        # class_weight = class_weight,
+        class_weight = class_weight,
         callbacks = [
             cb_timer,
             cb_early_stopping,
@@ -167,31 +129,31 @@ y_test = annotations[test_indices]
 
 model.load_weights(save_path)
 
-# if "balance" in sys.argv:
-    # # Test set
-    # balance = balancing_data(y_test, majority_weight)
-    # combined_balance = np.unique(balance)
+if "balance" in sys.argv:
+    # Test set
+    balance = balancing_data(y_test, majority_weight)
+    combined_balance = np.unique(balance)
 
-    # X_test = X_test[combined_balance]
-    # y_test = y_test[combined_balance]
+    X_test = X_test[combined_balance]
+    y_test = y_test[combined_balance]
 
-# class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
-# class_weight = dict(enumerate(class_weights))
-# sample_weights = np.array([class_weights[int(label)] for label in y_test])
+class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
+class_weight = dict(enumerate(class_weights))
+sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
-# print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
+print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 
 scores = model.evaluate(
     X_test, 
     y_test,
-    # sample_weight = sample_weights,
+    sample_weight = sample_weights,
     batch_size = batch_size, 
     return_dict = True
 )
 
 y_test = annotations[test_indices]
-# if "balance" in sys.argv:
-    # y_test = y_test[combined_balance]
+if "balance" in sys.argv:
+    y_test = y_test[combined_balance]
     
 print("\nSUMMARY\n")
 
@@ -211,23 +173,23 @@ for metric, score in scores.items():
 
 raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
 
-# for d in range(1, 10):
-#     threshold = d / 10
-#     print(f"Threshold 0.{d}")
-#     print(f"Threshold 0.{d}", file=f)
-#     arr = np.array([np.squeeze(x) for x in raw_pred])
-#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-#     cm = confusion_matrix(y_test, pred)
-#     print("Confusion matrix:\n", cm)
-#     print("Confusion matrix:\n", cm, file=f)
-#     print(calc_cm(cm))
-#     print(calc_cm(cm), file=f)
+for d in range(1, 10):
+    threshold = d / 10
+    print(f"Threshold 0.{d}")
+    print(f"Threshold 0.{d}", file=f)
+    arr = np.array([np.squeeze(x) for x in raw_pred])
+    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+    cm = confusion_matrix(y_test, pred)
+    print("Confusion matrix:\n", cm)
+    print("Confusion matrix:\n", cm, file=f)
+    print(calc_cm(cm))
+    print(calc_cm(cm), file=f)
 
-print("Real - Prediction:")
-print("Real - Prediction:", file=f)
-for i, ans in enumerate(y_test):
-    print(ans * 10, raw_pred[i] * 10)
-    print(ans * 10, raw_pred[i] * 10, file=f)
+# print("Real - Prediction:")
+# print("Real - Prediction:", file=f)
+# for i, ans in enumerate(y_test):
+#     print(ans * 10, raw_pred[i] * 10)
+#     print(ans * 10, raw_pred[i] * 10, file=f)
     
     
 f.close()

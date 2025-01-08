@@ -49,7 +49,7 @@ if gpus:
 else:
     print("No GPU detected. Using CPU.")
 
-def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False):
+def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False, activation = layers.Activation('relu')):
     if not transpose:
         if dimension == 1:
             Conv = layers.Conv1D
@@ -76,29 +76,29 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
 
     x = Conv(filters, kernel_size, strides=strides, padding='same')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation('relu')(x)
+    x = activation(x)
 
     x = Conv(filters, kernel_size, strides=1, padding='same')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation('relu')(x)
+    x = activation(x)
 
     x = Conv(filters * factor, kernel_size, strides=1, padding='same')(x)
-    x = layers.BatchNormalization()(x)
+    x = activation(x)
 
     if strides != 1 or shortcut.shape[-1] != filters * factor:
         shortcut = Conv(filters * factor, kernel_size, strides=strides, padding='same')(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
-    x = layers.Activation('relu')(x)
+    x = activation(x)(x)
     return x
 
 
 class SEBlock(layers.Layer):
-    def __init__(self, reduction_ratio: int = 2, layers_activation = layers.Activation("relu"), scores_actiation = layers.Activation("sigmoid"), **kwargs):
+    def __init__(self, reduction_ratio: int = 2, activation = layers.Activation("relu"), scores_actiation = layers.Activation("sigmoid"), **kwargs):
         super(SEBlock, self).__init__(**kwargs)
         self.reduction_ratio = reduction_ratio
-        self.la = layers_activation
+        self.la = activation  # layers activation
         self.sa = scores_actiation
 
     def build(self, input_shape):
