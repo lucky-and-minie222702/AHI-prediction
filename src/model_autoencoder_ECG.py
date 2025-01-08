@@ -15,7 +15,7 @@ def create_model():
     en = ResNetBlock(1, en, 64, 3, True)
     en = ResNetBlock(1, en, 64, 3)
     en = layers.Conv1D(filters=1, kernel_size=3, padding="same")(en)
-    en = layers.Flatten()
+    en = layers.Flatten()(en)
     en = layers.Dense(128, activation="tanh")(en)
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
