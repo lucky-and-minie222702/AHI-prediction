@@ -1,7 +1,6 @@
 from data_functions import *
 from model_functions import *
 
-# rpa = 10 (max 120 beats, rri = 9)
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     en = layers.Normalization()(inp)

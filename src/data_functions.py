@@ -169,7 +169,7 @@ def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 50, max_
     rpa_res = []
     t = np.linspace(0, duration, fs * duration)
     for sig in signals:
-        peaks, _ = find_peaks(sig, height=0.5, distance=fs * 0.5)  # minimum 0.5s between beats <=> max 120 bpm
+        peaks, _ = find_peaks(sig, height=0.6, distance=fs * 0.6)  # minimum 0.6s between beats <=> max 100 bpm
 
         r_peaks_time = t[peaks]
         rri = np.diff(r_peaks_time) 
