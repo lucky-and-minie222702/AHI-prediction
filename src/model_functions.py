@@ -163,7 +163,6 @@ class MyAtt(layers.Layer):
         V = self.split_heads(V, batch_size)
         
         attention_output, w = self.scaled_dot_product_attention(Q, K, V)
-        print(w.shape, V.shape, attention_output.shape)
         
         # merge heads
         attention_output = tf.transpose(attention_output, perm=[0, 2, 1, 3])
