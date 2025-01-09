@@ -24,9 +24,12 @@ def create_model():
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
-    en = layers.Dense(1122)(en)
+    en = layers.Dense(1280)(en)
+    en = layers.BatchNormalization()(en)
+    en = layers.LeakyReLU(negative_slope=0.25)(en)
+    en = layers.Dense(1683)(en)
     
-    expanded_en = layers.Reshape((187, 6))(en)
+    expanded_en = layers.Reshape((187, 9))(en)
     de = ResNetBlock(1, expanded_en, 512, 3, True, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
@@ -132,7 +135,7 @@ autoencoder.compile(
 )
 
 # autoencoder.summary()
-# show_params(autoencoder, "autoencoder")
+show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 print(sequences.shape)
