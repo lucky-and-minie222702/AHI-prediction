@@ -123,10 +123,10 @@ autoencoder.compile(
 show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
-print(f"Train size: {len(sequences)}")
 
 if "train" in sys.argv:
     rpa, rri = calc_ecg(sequences)
+    print(f"Train size: {len(sequences)}")
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = autoencoder.fit(
         sequences,
@@ -158,5 +158,5 @@ if "encode" in sys.argv:
     del autoencoder
     encoder.load_weights(save_path)
     encoded_ECG = encoder.predict(sequences, batch_size=batch_size).squeeze()
-    np.save(path.join("patients", "merged_ECG.npy"))
+    np.save(path.join("patients", "merged_ECG.npy"), encoded_ECG)
     print("Encoding done!")
