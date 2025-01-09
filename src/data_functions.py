@@ -164,12 +164,13 @@ def calc_time(start: str, end: str) -> int:
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
 
-def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 50, max_rpa: int = 50):
+def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 45, max_rpa: int = 45):
     rri_res = []
     rpa_res = []
     t = np.linspace(0, duration, fs * duration)
     for sig in signals:
-        peaks, _ = find_peaks(sig, height=0.6, distance=fs * 0.6)  # minimum 0.6s between beats <=> max 100 bpm
+        _, info = nk.ecg_process(sig, sampling_rate=100)
+        peaks = info["ECG_R_Peaks"]
 
         r_peaks_time = t[peaks]
         rri = np.diff(r_peaks_time) 

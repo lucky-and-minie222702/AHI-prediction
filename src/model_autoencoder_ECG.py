@@ -14,13 +14,23 @@ def create_model():
     en = ResNetBlock(1, en, 256, 5, True)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
+    en = ResNetBlock(1, en, 512, 3, True)
+    en = ResNetBlock(1, en, 512, 3)
+    en = ResNetBlock(1, en, 512, 3)
+    en = ResNetBlock(1, en, 1024, 3, True)
+    en = ResNetBlock(1, en, 1024, 3)
+    en = ResNetBlock(1, en, 1024, 3)
+
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
-    en = layers.Dense(256)(en)
+    en = layers.Dense(1496)(en)
     
-    expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
-    de = ResNetBlock(1, expanded_en, 256, 5, True, True)
+    expanded_en = layers.Reshape((187, 8))(en)
+    de = ResNetBlock(1, expanded_en, 512, 3, True, True)
+    de = ResNetBlock(1, de, 512, 3, False, True)
+    de = ResNetBlock(1, de, 512, 3, False, True)
+    de = ResNetBlock(1, de, 256, 5, True, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 128, 7, True, True)
@@ -31,16 +41,17 @@ def create_model():
     de = ResNetBlock(1, de, 64, 9, False, True)
     
     de = layers.Conv1D(filters=32, kernel_size=3)(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.BatchNormalization()(de)
     de = layers.Conv1D(filters=16, kernel_size=3)(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.BatchNormalization()(de)
     de = layers.Conv1D(filters=8, kernel_size=3)(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.BatchNormalization()(de)
     de = SEBlock()(de)
 
     de = layers.Flatten()(de)
-    de = layers.Dense(3072)
-    de = layers.BatchNormalization()(de)
     de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
@@ -54,7 +65,8 @@ def create_model():
     de_rpa = ResNetBlock(1, de_rpa, 256, 7)
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
-    de_rpa = layers.Dense(50, name="rpa")(de_rpa)
+    de_rpa = layers.Dense(128, activation=layers.LeakyReLU(negative_slope=0.25))(de_rpa)
+    de_rpa = layers.Dense(45, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
@@ -67,7 +79,8 @@ def create_model():
     de_rri = ResNetBlock(1, de_rri, 256, 7)
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
-    de_rri = layers.Dense(50, name="rri")(de_rri)
+    de_rri = layers.Dense(128, activation=layers.LeakyReLU(negative_slope=0.25))(de_rri)
+    de_rri = layers.Dense(45, name="rri")(de_rri)
     
     autoencoder = Model(
         inputs = inp,
@@ -76,13 +89,13 @@ def create_model():
     
     encoder = Model(
         inputs = inp,
-        outputs = en,
+        outputs = expanded_en,
     )
     
     return autoencoder, encoder
 
 save_path = path.join("res", "model_auto_encoder_ECG.weights.h5")
-max_epochs = 1 if "test_save" in sys.argv else 150
+max_epochs = 1 if "test_save" in sys.argv else 100
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
@@ -132,6 +145,7 @@ if "train" in sys.argv:
         validation_split = 0.2,
         callbacks = [
             cb_timer,
+            cb_early_stopping,
         ]        
     )
     
