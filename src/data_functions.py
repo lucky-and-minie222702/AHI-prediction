@@ -2,6 +2,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from scipy.signal import find_peaks
 import neurokit2 as nk
+from biosppy.signals import ecg
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
@@ -164,17 +165,20 @@ def calc_time(start: str, end: str) -> int:
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
 
-def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 45, max_rpa: int = 45):
+def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 60, max_rpa: int = 60):
     rri_res = []
     rpa_res = []
     t = np.linspace(0, duration, fs * duration)
     for sig in signals:
         peaks = nk.ecg_findpeaks(sig, sampling_rate=100)["ECG_R_Peaks"]
-        peaks = np.array(peaks)
 
-        r_peaks_time = t[peaks]
-        rri = np.diff(r_peaks_time) 
-        rpa = sig[peaks]
+        if len(peaks) > 0:
+            r_peaks_time = t[peaks]
+            rri = np.diff(r_peaks_time) 
+            rpa = sig[peaks]
+        else:
+            rri = []
+            rpa = []
         
         max_rri = max(max_rri, len(rri))
         max_rpa = max(max_rpa, len(rpa))
@@ -184,6 +188,7 @@ def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 45, max_
     
     rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
     rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
+    # print(max_rri, max_rpa)
     
     return rpa_res, rri_res
 

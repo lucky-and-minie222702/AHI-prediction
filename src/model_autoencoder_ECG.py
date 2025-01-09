@@ -66,7 +66,7 @@ def create_model():
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
     de_rpa = layers.Dense(128, activation=layers.LeakyReLU(negative_slope=0.25))(de_rpa)
-    de_rpa = layers.Dense(45, name="rpa")(de_rpa)
+    de_rpa = layers.Dense(60, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
@@ -80,7 +80,7 @@ def create_model():
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
     de_rri = layers.Dense(128, activation=layers.LeakyReLU(negative_slope=0.25))(de_rri)
-    de_rri = layers.Dense(45, name="rri")(de_rri)
+    de_rri = layers.Dense(60, name="rri")(de_rri)
     
     autoencoder = Model(
         inputs = inp,
@@ -129,12 +129,12 @@ autoencoder.compile(
 )
 
 # autoencoder.summary()
-show_params(autoencoder, "autoencoder")
+# show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
+rpa, rri = calc_ecg(sequences)
 
 if "train" in sys.argv:
-    rpa, rri = calc_ecg(sequences)
     print(f"Train size: {len(sequences)}")
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = autoencoder.fit(
