@@ -89,7 +89,7 @@ def create_model():
     
     encoder = Model(
         inputs = inp,
-        outputs = expanded_en,
+        outputs = en,
     )
     
     return autoencoder, encoder

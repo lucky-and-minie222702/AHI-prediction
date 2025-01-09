@@ -170,6 +170,7 @@ def calc_ecg(signals, fs: int = 100, duration: int = 30, max_rri: int = 45, max_
     t = np.linspace(0, duration, fs * duration)
     for sig in signals:
         peaks = nk.ecg_findpeaks(sig, sampling_rate=100)["ECG_R_Peaks"]
+        peaks = np.array(peaks)
 
         r_peaks_time = t[peaks]
         rri = np.diff(r_peaks_time) 
