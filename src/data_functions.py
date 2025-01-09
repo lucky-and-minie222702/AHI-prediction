@@ -2,7 +2,6 @@ import numpy as np
 from datetime import datetime, timedelta
 from scipy.signal import find_peaks
 import neurokit2 as nk
-from biosppy.signals import ecg
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
