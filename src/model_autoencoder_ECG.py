@@ -24,9 +24,9 @@ def create_model():
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
-    en = layers.Dense(1496)(en)
+    en = layers.Dense(1122)(en)
     
-    expanded_en = layers.Reshape((187, 8))(en)
+    expanded_en = layers.Reshape((187, 6))(en)
     de = ResNetBlock(1, expanded_en, 512, 3, True, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
@@ -52,6 +52,8 @@ def create_model():
     de = SEBlock()(de)
 
     de = layers.Flatten()(de)
+    de = layers.Dense(3000)(de)
+    de = layers.BatchNormalization()(de)
     de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
@@ -106,6 +108,7 @@ if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
     monitor = "val_ecg_loss",
+    mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
     patience = 5,
