@@ -171,6 +171,7 @@ if "train" in sys.argv:
         callbacks = [
             cb_timer,
             cb_early_stopping,
+            SaveEncoderCallback(encoder, save_path),
         ]        
     )
     

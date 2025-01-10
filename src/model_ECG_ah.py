@@ -24,6 +24,7 @@ def create_model_ECG_ah(name: str):
     flat = layers.GlobalAvgPool1D()(se_conv)
     flat = layers.Dense(512)(flat)
     flat = layers.BatchNormalization()(flat)
+    flat = layers.LeakyReLU(negative_slope=0.25)(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
