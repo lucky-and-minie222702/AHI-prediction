@@ -151,7 +151,6 @@ autoencoder.compile(
 show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
-print(sequences.shape)
 rpa, rri = calc_ecg(sequences)
 
 best = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm

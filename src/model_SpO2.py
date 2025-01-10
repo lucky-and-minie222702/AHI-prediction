@@ -78,6 +78,10 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 
+best = np.min(sequences, axis=1) >= 0.7
+sequences = sequences[best]
+annotations = annotations[best]
+
 if "train" in sys.argv:
     indices = np.arange(len(annotations))
     train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))

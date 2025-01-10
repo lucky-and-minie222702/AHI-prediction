@@ -90,7 +90,14 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 )
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
+rpa, rri = calc_ecg(sequences)
+
+best = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+rpa = rpa[best]
+rri = rri[best]
+sequences = sequences[best]
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
+annotations = annotations[best]
 # annotations = np.concatenate([
 #     annotations, annotations, annotations,
 # ])

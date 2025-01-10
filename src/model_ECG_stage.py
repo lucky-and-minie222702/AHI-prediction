@@ -69,7 +69,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 15
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -90,7 +90,14 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 )
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
+rpa, rri = calc_ecg(sequences)
+
+best = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+rpa = rpa[best]
+rri = rri[best]
+sequences = sequences[best]
 stages  = np.load(path.join("patients", "merged_stages.npy"))
+stages = stages[best]
 # stages = np.concatenate([
 #     stages, stages, stages,
 # ])
