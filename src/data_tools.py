@@ -48,7 +48,7 @@ if sys.argv[1] == "merge":
     sequences_ECG = np.vstack(
         [sequences_ECG, sequences_ECG + np.random.normal(0.0, 0.005, sequences_ECG.shape), add_baseline_wander(sequences_ECG, frequency=0.05, amplitude=0.05, sampling_rate=100, flat_rate=0.5)]
     )
-    sequences_SpO2 = np.concatenate(
+    sequences_SpO2 = np.vstack(
         [sequences_SpO2, sequences_SpO2 + np.random.normal(0.0, 0.0025, sequences_SpO2.shape), sequences_SpO2 + np.random.normal(0.0, 0.005, sequences_SpO2.shape)]
     )
     

@@ -90,9 +90,11 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 )
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
+spo2 = np.load(path.join("patients", "merged_SpO2.npy"))
 rpa, rri = calc_ecg(sequences)
 
-best = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+best= np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+
 rpa = rpa[best]
 rri = rri[best]
 sequences = sequences[best]
