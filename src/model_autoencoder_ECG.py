@@ -159,6 +159,11 @@ sequences = np.load(path.join("patients", "merged_ECG.npy"))
 print(sequences.shape)
 rpa, rri = calc_ecg(sequences)
 
+best = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+rpa = rpa[best]
+rri = rri[best]
+sequences = sequences[best]
+
 if "train" in sys.argv:
     print(f"Train size: {len(sequences)}")
     # sequences = pad_sequences(sequences, maxlen=3008)
