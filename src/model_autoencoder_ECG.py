@@ -31,12 +31,9 @@ def create_model():
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
-    en = layers.Dense(1280)(en)
-    en = layers.BatchNormalization()(en)
-    en = layers.LeakyReLU(negative_slope=0.25)(en)
-    en = layers.Dense(1683)(en)
+    en = layers.Dense(1500)(en)
     
-    expanded_en = layers.Reshape((187, 9))(en)
+    expanded_en = layers.Reshape((150, 10))(en)
     de = ResNetBlock(1, expanded_en, 512, 3, True, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
@@ -58,20 +55,17 @@ def create_model():
     de = ResNetBlock(1, de, 64, 9, False, True)
     
     de = layers.Conv1D(filters=32, kernel_size=3)(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.BatchNormalization()(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.Conv1D(filters=16, kernel_size=3)(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.BatchNormalization()(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.Conv1D(filters=8, kernel_size=3)(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.BatchNormalization()(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = SEBlock()(de)
 
     de = layers.Flatten()(de)
-    de = layers.Dense(3000)(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
@@ -85,7 +79,6 @@ def create_model():
     de_rpa = ResNetBlock(1, de_rpa, 256, 7)
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
-    de_rpa = layers.Dense(128, activation=layers.LeakyReLU(negative_slope=0.25))(de_rpa)
     de_rpa = layers.Dense(60, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
@@ -99,7 +92,6 @@ def create_model():
     de_rri = ResNetBlock(1, de_rri, 256, 7)
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
-    de_rri = layers.Dense(128, activation=layers.LeakyReLU(negative_slope=0.25))(de_rri)
     de_rri = layers.Dense(60, name="rri")(de_rri)
     
     autoencoder = Model(
@@ -121,7 +113,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 50
+early_stopping_epoch = 70
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
