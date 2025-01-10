@@ -158,6 +158,8 @@ rpa = rpa[best]
 rri = rri[best]
 sequences = sequences[best]
 
+print(sequences.shape)
+
 if "train" in sys.argv:
     print(f"Train size: {len(sequences)}")
     # sequences = pad_sequences(sequences, maxlen=3008)
