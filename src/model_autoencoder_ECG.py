@@ -5,7 +5,7 @@ def create_model():
     inp = layers.Input(shape=(3000, 1))
     en = layers.Normalization()(inp)
     
-    en = layers.Conv1D(filters=64, kernel_size=11)(en)
+    en = layers.Conv1D(filters=64, kernel_size=11, strides=2)(en)
     en = layers.BatchNormalization()(en)
     en = layers.LeakyReLU(negative_slope=0.25)(en)
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
