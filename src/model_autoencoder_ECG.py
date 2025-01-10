@@ -4,9 +4,6 @@ from model_functions import *
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     en = layers.Normalization()(inp)
-    
-    en = ResNetBlock(1, en, 32, 11, True)
-    en = ResNetBlock(1, en, 32, 11)
 
     en = ResNetBlock(1, en, 64, 9, True)
     en = ResNetBlock(1, en, 64, 9)
