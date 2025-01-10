@@ -280,15 +280,11 @@ class MyMultiHeadRelativeAttention(layers.Layer):
         return output
     
 class SaveEncoderCallback(tf.keras.callbacks.Callback):
-    def __init__(self, encoder, save_dir: str):
+    def __init__(self, encoder, save_path: str):
         super(SaveEncoderCallback, self).__init__()
         self.encoder = encoder
-        self.save_dir = save_dir
-
-        # check existence
-        os.makedirs(save_dir, exist_ok=True)
+        self.save_path = save_path
 
     def on_epoch_end(self, epoch, logs=None):
-        save_path = os.path.join(self.save_dir, f'encoder_epoch_{epoch + 1}.h5')
-        self.encoder.save(save_path)
-        # print(f"Encoder saved at: {save_path}")
+        if epoch % 5 == 0:
+            self.encoder.save(self.save_path)
