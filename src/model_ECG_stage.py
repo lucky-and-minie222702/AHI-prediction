@@ -4,36 +4,35 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG_stage(name: str):    
     # after encoder
-    inp = layers.Input(shape=(128, 1))  
+    inp = layers.Input(shape=(1504, 1))  
     norm_inp = layers.Normalization()(inp)
     
-    # branch 1
-    br1 = ResNetBlock(1, norm_inp, 64, 3, True)
-    br1 = ResNetBlock(1, br1, 64, 3)
-    br1 = ResNetBlock(1, br1, 64, 3)
-    br1 = ResNetBlock(1, br1, 128, 3, True)
-    br1 = ResNetBlock(1, br1, 128, 3)
-    br1 = ResNetBlock(1, br1, 128, 3)
-    br1 = ResNetBlock(1, br1, 256, 3, True)
-    br1 = ResNetBlock(1, br1, 256, 3)
-    br1 = ResNetBlock(1, br1, 256, 3)
+    conv = ResNetBlock(1, norm_inp, 64, 3, True)
+    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
-    # branch 2
-    br2 = ResNetBlock(1, norm_inp, 64, 3, True)
-    br2 = ResNetBlock(1, br2, 64, 3)
-    br2 = ResNetBlock(1, br2, 64, 3)
-    br2 = ResNetBlock(1, br2, 128, 3, True)
-    br2 = ResNetBlock(1, br2, 128, 3)
-    br2 = ResNetBlock(1, br2, 128, 3)
-    br2 = ResNetBlock(1, br2, 256, 3, True)
-    br2 = ResNetBlock(1, br2, 256, 3)
-    br2 = ResNetBlock(1, br2, 256, 3)
+    conv = ResNetBlock(1, conv, 128, 3, True)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     
-    att = MyAtt(depth=256, num_heads=8, seq_len=16)(br1, br2, br2)
-    se_att = SEBlock()(att)
-    flat = layers.GlobalAvgPool1D()(se_att)
+    conv = ResNetBlock(1, conv, 256, 3, True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+
+    conv = ResNetBlock(1, conv, 512, 3, True)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    conv = ResNetBlock(1, conv, 1024, 3, True)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    
+    se_conv = SEBlock()(conv)
+    flat = layers.GlobalAvgPool1D()(se_conv)
     flat = layers.Dense(512)(flat)
     flat = layers.BatchNormalization()(flat)
+    flat = layers.LeakyReLU(negative_slope=0.25)(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
