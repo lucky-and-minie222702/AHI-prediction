@@ -93,7 +93,10 @@ sequences = np.load(path.join("patients", "merged_ECG.npy"))
 spo2 = np.load(path.join("patients", "merged_SpO2.npy"))
 rpa, rri = calc_ecg(sequences)
 
-best= np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+best_ecg = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+best_spo2 = np.min(spo2, axis=1) >= 0.6
+
+best = np.array([e and s for e, s in zip(best_ecg, best_spo2)])
 
 rpa = rpa[best]
 rri = rri[best]
