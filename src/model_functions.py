@@ -287,4 +287,4 @@ class SaveEncoderCallback(tf.keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         if epoch % 5 == 0:
-            self.encoder.save(self.save_path)
+            self.encoder.save_weights(self.save_path)

@@ -27,13 +27,14 @@ def create_model():
     
     en = ResNetBlock(1, en, 1024, 3, True)
     en = ResNetBlock(1, en, 1024, 3)
+    en = ResNetBlock(1, en, 1024, 3)
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Flatten()(en)
-    en = layers.Dense(1500)(en)
+    en = layers.Dense(1504)(en)
     
-    expanded_en = layers.Reshape((150, 10))(en)
+    expanded_en = layers.Reshape((188, 8))(en)
     de = ResNetBlock(1, expanded_en, 512, 3, True, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
