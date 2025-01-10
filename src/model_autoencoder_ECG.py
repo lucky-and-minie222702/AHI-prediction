@@ -4,21 +4,31 @@ from model_functions import *
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     en = layers.Normalization()(inp)
+    
+    en = ResNetBlock(1, en, 32, 11, True)
+    en = ResNetBlock(1, en, 32, 11)
 
     en = ResNetBlock(1, en, 64, 9, True)
     en = ResNetBlock(1, en, 64, 9)
-    en = ResNetBlock(1, en, 64, 9)    
+    en = ResNetBlock(1, en, 64, 9) 
+       
     en = ResNetBlock(1, en, 128, 7, True)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
+    en = ResNetBlock(1, en, 128, 7)
+    en = ResNetBlock(1, en, 128, 7)
+    
     en = ResNetBlock(1, en, 256, 5, True)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
+    en = ResNetBlock(1, en, 256, 5)
+    en = ResNetBlock(1, en, 256, 5)
+    
     en = ResNetBlock(1, en, 512, 3, True)
     en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
+    
     en = ResNetBlock(1, en, 1024, 3, True)
-    en = ResNetBlock(1, en, 1024, 3)
     en = ResNetBlock(1, en, 1024, 3)
 
     en = SEBlock()(en)
@@ -33,12 +43,19 @@ def create_model():
     de = ResNetBlock(1, expanded_en, 512, 3, True, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
     de = ResNetBlock(1, de, 512, 3, False, True)
+    
     de = ResNetBlock(1, de, 256, 5, True, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
+    de = ResNetBlock(1, de, 256, 5, False, True)
+    de = ResNetBlock(1, de, 256, 5, False, True)
+    
     de = ResNetBlock(1, de, 128, 7, True, True)
     de = ResNetBlock(1, de, 128, 7, False, True)
     de = ResNetBlock(1, de, 128, 7, False, True)
+    de = ResNetBlock(1, de, 128, 7, False, True)
+    de = ResNetBlock(1, de, 128, 7, False, True)
+    
     de = ResNetBlock(1, de, 64, 9, True, True)
     de = ResNetBlock(1, de, 64, 9, False, True)
     de = ResNetBlock(1, de, 64, 9, False, True)
@@ -57,6 +74,7 @@ def create_model():
     de = layers.Flatten()(de)
     de = layers.Dense(3000)(de)
     de = layers.BatchNormalization()(de)
+    de = layers.LeakyReLU(negative_slope=0.25)(de)
     de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)

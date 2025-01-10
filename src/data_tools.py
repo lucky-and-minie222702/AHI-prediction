@@ -17,7 +17,7 @@ if sys.argv[1] == "merge":
     sequences_SpO2 = []
 
     for i in range(1, 26):
-        if i == 1:
+        if i == 11:
             continue
         seq_ECG = np.load(path.join("patients", f"patients_{i}_ECG.npy"))
         seq_SpO2 = np.load(path.join("patients", f"patients_{i}_SpO2.npy"))
