@@ -100,7 +100,7 @@ balance = balancing_data(annotations, 1.0)
 combined_balance = np.unique(balance)
 
 sequences_ECG = sequences_ECG[combined_balance]
-sequences_Spo2 = sequences_SpO2[combined_balance]
+sequences_SpO2 = sequences_SpO2[combined_balance]
 annotations = annotations[combined_balance]
 
 pred_ECG = model_ECG.predict(sequences_ECG, batch_size=128).squeeze()
