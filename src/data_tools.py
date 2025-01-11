@@ -44,6 +44,16 @@ if sys.argv[1] == "merge":
     
     sequences_ECG = scaler.fit_transform(sequences_ECG.T).T  # scale
     
+    rpa, rri = calc_ecg(sequences_ECG)
+    best_ecg = np.count_nonzero(rpa, axis=1) >= 15  # min 30 bpm
+    best_spo2 = np.min(sequences_SpO2, axis=1) >= 0.6
+    best = np.array([e and s for e, s in zip(best_ecg, best_spo2)])
+    
+    sequences_ECG = sequences_ECG[best]
+    sequences_SpO2 = sequences_SpO2[best]
+    annotations = annotations[best]
+    stages = stages[best]
+    
     # augment
     sequences_ECG = np.vstack(
         [sequences_ECG, sequences_ECG + np.random.normal(0.0, 0.005, sequences_ECG.shape), add_baseline_wander(sequences_ECG, frequency=0.05, amplitude=0.05, sampling_rate=100, flat_rate=0.5)]
