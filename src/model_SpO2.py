@@ -10,15 +10,19 @@ def create_model_SpO2_ah(name: str):
     x = layers.Conv1D(filters=64, kernel_size=5)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = layers.Conv1D(filters=64, kernel_size=5)(x)
+    x = layers.Conv1D(filters=128, kernel_size=3)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = layers.Conv1D(filters=64, kernel_size=5)(x)
+    x = layers.Conv1D(filters=256, kernel_size=3)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
+    x = SEBlock()(x)
     
-    x = MyMultiHeadRelativeAttention(depth=64, num_heads=4, max_relative_position=5)(x) 
+    # x = MyMultiHeadRelativeAttention(depth=64, num_heads=4, max_relative_position=5)(x) 
     x = layers.Flatten()(x)
+    x = layers.Dense(1024)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
 
     out = layers.Dense(1, activation="sigmoid")(x)
 
