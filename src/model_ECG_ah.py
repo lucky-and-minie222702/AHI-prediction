@@ -98,8 +98,6 @@ best_spo2 = np.min(spo2, axis=1) >= 0.6
 
 best = np.array([e and s for e, s in zip(best_ecg, best_spo2)])
 
-rpa = rpa[best]
-rri = rri[best]
 sequences = sequences[best]
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 annotations = annotations[best]
