@@ -20,6 +20,7 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
 
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
@@ -70,7 +71,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 25
+early_stopping_epoch = 35
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -91,13 +92,7 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 )
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
-spo2 = np.load(path.join("patients", "merged_SpO2.npy"))
-
-best = np.min(spo2, axis=1) >= 0.6
-
-sequences = sequences[best]
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
-annotations = annotations[best]
 # annotations = np.concatenate([
 #     annotations, annotations, annotations,
 # ])
