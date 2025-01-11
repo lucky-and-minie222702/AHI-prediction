@@ -113,13 +113,13 @@ def create_model():
     return autoencoder, encoder
 
 save_path = path.join("res", "model_auto_encoder_ECG.weights.h5")
-max_epochs = 1 if "test_save" in sys.argv else 150
+max_epochs = 1 if "test_save" in sys.argv else 300
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 70
+early_stopping_epoch = 200
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -127,7 +127,7 @@ cb_early_stopping = cbk.EarlyStopping(
     mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 5,
+    patience = 7,
 )
 cb_timer = TimingCallback()
 
