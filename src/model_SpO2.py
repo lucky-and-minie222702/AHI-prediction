@@ -13,7 +13,7 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 64, 5)
     x = SEBlock()(x)
     
-    x = MyMultiHeadRelativeAttention(depth=64, num_heads=4, max_relative_position=5)(x) 
+    x = MyMultiHeadRelativeAttention(depth=64, num_heads=4, max_relative_position=10)(x) 
     x = layers.Flatten()(x)
     x = layers.Dense(1024)(x)
     x = layers.BatchNormalization()(x)
