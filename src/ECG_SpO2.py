@@ -103,8 +103,8 @@ sequences_ECG = sequences_ECG[combined_balance]
 sequences_SpO2 = sequences_SpO2[combined_balance]
 annotations = annotations[combined_balance]
 
-pred_ECG = model_ECG.predict(sequences_ECG, batch_size=128).squeeze()
-pred_SpO2 = model_SpO2.predict(sequences_SpO2, batch_size=128).squeeze()
+pred_ECG = model_ECG.predict(sequences_ECG, batch_size=128).flatten()
+pred_SpO2 = model_SpO2.predict(sequences_SpO2, batch_size=128).flatten()
 
 for i in range(1, 10):
     we = round(i / 10, 1)
