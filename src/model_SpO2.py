@@ -65,7 +65,7 @@ if "ese" in sys.argv:
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 7,
+    patience = 5,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     save_path, 
@@ -82,9 +82,6 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
 
-best = np.min(sequences, axis=1) >= 0.7
-sequences = sequences[best]
-annotations = annotations[best]
 
 if "train" in sys.argv:
     # indices = np.arange(len(annotations))
