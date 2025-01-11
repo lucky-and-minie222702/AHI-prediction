@@ -7,6 +7,8 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(30, 1))
     x = layers.Normalization()(inp)
     
+    x = layers.LSTM(units=32, return_sequences=True)(x)
+    
     x = ResNetBlock(1, x, 64, 5, True)
     x = ResNetBlock(1, x, 64, 5)
     x = ResNetBlock(1, x, 64, 5)
