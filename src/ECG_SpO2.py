@@ -44,7 +44,7 @@ def create_model_ECG_ah():
     return model
 
 
-def create_model_SpO2_ah(name: str):
+def create_model_SpO2_ah():
     inp = layers.Input(shape=(30, 1))
     x = layers.Normalization()(inp)
     
