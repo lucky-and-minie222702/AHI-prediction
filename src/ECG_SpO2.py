@@ -96,6 +96,13 @@ sequences_ECG = np.load(path.join("patients", "merged_ECG.npy"))[test_indices]
 sequences_SpO2 = np.load(path.join("patients", "merged_SpO2.npy"))[test_indices]
 annotations  = np.load(path.join("patients", "merged_anns.npy"))[test_indices]
 
+balance = balancing_data(annotations, 1.0)
+combined_balance = np.unique(balance)
+
+sequences_ECG = sequences_ECG[combined_balance]
+sequences_Spo2 = sequences_SpO2[combined_balance]
+annotations = annotations[combined_balance]
+
 pred_ECG = model_ECG.predict(sequences_ECG, batch_size=128).squeeze()
 pred_SpO2 = model_SpO2.predict(sequences_SpO2, batch_size=128).squeeze()
 
