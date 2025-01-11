@@ -92,8 +92,8 @@ model_SpO2.load_weights(save_path_SpO2)
 
 test_indices = np.load(path.join("patients", "test_indices_ECG_ah.npy"))
 
-sequences_SpO2 = np.load(path.join("patients", "merged_ECG.npy"))[test_indices]
-sequences_ECG = np.load(path.join("patients", "merged_SpO2.npy"))[test_indices]
+sequences_ECG = np.load(path.join("patients", "merged_ECG.npy"))[test_indices]
+sequences_SpO2 = np.load(path.join("patients", "merged_SpO2.npy"))[test_indices]
 annotations  = np.load(path.join("patients", "merged_anns.npy"))[test_indices]
 
 pred_ECG = model_ECG.predict(sequences_ECG).squeeze()
