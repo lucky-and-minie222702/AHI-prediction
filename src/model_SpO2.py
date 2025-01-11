@@ -7,24 +7,22 @@ def create_model_SpO2_ah(name: str):
     inp = layers.Input(shape=(30, 1))
     x = layers.Normalization()(inp)
     
-    x = layers.LSTM(units=32, return_sequences=True)(x)
-    
     x = ResNetBlock(1, x, 64, 5, True)
-    x = ResNetBlock(1, x, 64, 5)
     x = ResNetBlock(1, x, 64, 5)
     
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
-    x = ResNetBlock(1, x, 128, 3)
     
     x = ResNetBlock(1, x, 256, 3, True)
-    x = ResNetBlock(1, x, 256, 3)
-    x = ResNetBlock(1, x, 256, 3)
+    x = ResNetBlock(1, x, 256, 3) 
+
+    x = ResNetBlock(1, x, 512, 3, True)
+    x = ResNetBlock(1, x, 512, 3) 
 
     x = SEBlock()(x)
+    x = layers.GlobalAvgPool1D()(x)
     
-    x = layers.Flatten()(x)
-    x = layers.Dense(1024)(x)
+    x = layers.Dense(256)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
 
