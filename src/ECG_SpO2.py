@@ -110,9 +110,7 @@ for i in range(1, 10):
     we = round(i / 10, 1)
     ws = round(1 - we, 1)
     
-    pred_ECG *= we
-    pred_SpO2 *= ws
-    pred = pred_ECG + pred_SpO2
+    pred = pred_ECG * we + pred_SpO2 * ws
     pred = np.round(pred)
     print(np.unique(pred, return_counts=True))
     
