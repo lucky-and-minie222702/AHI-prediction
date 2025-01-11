@@ -4,27 +4,18 @@ from sklearn.utils.class_weight import compute_class_weight
 from itertools import groupby
 
 def create_model_SpO2_ah(name: str):
-    inp = layers.Input(shape=(30, 1))
+    inp = layers.Input(shape=(30,))
     x = layers.Normalization()(inp)
     
-    x = ResNetBlock(1, x, 64, 5, True)
-    x = ResNetBlock(1, x, 64, 5)
-    
-    x = ResNetBlock(1, x, 128, 3, True)
-    x = ResNetBlock(1, x, 128, 3)
-    
-    x = ResNetBlock(1, x, 256, 3, True)
-    x = ResNetBlock(1, x, 256, 3) 
-
-    x = ResNetBlock(1, x, 512, 3, True)
-    x = ResNetBlock(1, x, 512, 3) 
-
-    x = SEBlock()(x)
-    x = layers.GlobalAvgPool1D()(x)
-    
-    x = layers.Dense(256)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    shortcut = layers.Dense(64, activation="relu")(x)
+    shortcut = layers.Dropout(rate=0.25)(shortcut)
+    x = layers.Dense(128, activation="relu")(shortcut)
+    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Dense(64, activation="relu")(x)
+    x = layers.Dropout(rate=0.25)(x)
+    x = layers.Add()([x, shortcut])
 
     out = layers.Dense(1, activation="sigmoid")(x)
 
