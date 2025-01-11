@@ -113,8 +113,8 @@ for i in range(1, 10):
     pred_ECG *= we
     pred_SpO2 *= ws
     pred = pred_ECG + pred_SpO2
-    print(np.unique(pred, return_counts=True))
     pred = np.round(pred)
+    print(np.unique(pred, return_counts=True))
     
     accuracy = np.sum(pred == annotations) / len(annotations)
     print(f"we: {we} - ws: {ws} - acc: {accuracy}")
