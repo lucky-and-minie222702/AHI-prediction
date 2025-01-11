@@ -101,7 +101,7 @@ pred_SpO2 = model_SpO2.predict(sequences_SpO2, batch_size=128).squeeze()
 
 for i in range(1, 10):
     we = round(i / 10, 1)
-    ws = round(1 - i, 1)
+    ws = round(1 - we, 1)
     
     pred_ECG *= we
     pred_SpO2 *= ws
