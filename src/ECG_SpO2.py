@@ -96,8 +96,8 @@ sequences_ECG = np.load(path.join("patients", "merged_ECG.npy"))[test_indices]
 sequences_SpO2 = np.load(path.join("patients", "merged_SpO2.npy"))[test_indices]
 annotations  = np.load(path.join("patients", "merged_anns.npy"))[test_indices]
 
-pred_ECG = model_ECG.predict(sequences_ECG).squeeze()
-pred_SpO2 = model_SpO2.predict(sequences_SpO2).squeeze()
+pred_ECG = model_ECG.predict(sequences_ECG, batch_size=128).squeeze()
+pred_SpO2 = model_SpO2.predict(sequences_SpO2, batch_size=128).squeeze()
 
 for i in range(1, 10):
     we = round(i / 10, 1)
