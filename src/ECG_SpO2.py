@@ -3,16 +3,24 @@ from data_functions import *
 
 def create_model_ECG_ah():    
     # after encoder
-    inp = layers.Input(shape=(1504, 1))  
-    norm_inp = layers.Normalization()(inp)
+    inp = layers.Input(shape=(1504, 1)) 
+    reshaped_inp = layers.Reshape((188, 8))(inp)
+    norm_inp = layers.Normalization()(reshaped_inp)
     
     conv = ResNetBlock(1, norm_inp, 64, 3, True)
     conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 128, 3, True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 256, 3, True)
     conv = ResNetBlock(1, conv, 256, 3)
@@ -20,20 +28,34 @@ def create_model_ECG_ah():
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
 
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 1024, 3, True)
     conv = ResNetBlock(1, conv, 1024, 3)
     conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     se_conv = SEBlock()(conv)
     flat = layers.GlobalAvgPool1D()(se_conv)
-    flat = layers.Dense(512)(flat)
+    flat = layers.Dense(1024)(flat)
     flat = layers.BatchNormalization()(flat)
     flat = layers.LeakyReLU(negative_slope=0.25)(flat)
+    flat = layers.Dropout(rate=0.1)(flat)
+    flat = layers.Dense(1024)(flat)
+    flat = layers.BatchNormalization()(flat)
+    flat = layers.LeakyReLU(negative_slope=0.25)(flat)
+    flat = layers.Dropout(rate=0.1)(flat)
     out = layers.Dense(1, activation="sigmoid")(flat)
     
     model = Model(
@@ -106,14 +128,17 @@ annotations = annotations[combined_balance]
 pred_ECG = model_ECG.predict(sequences_ECG, batch_size=128).flatten()
 pred_SpO2 = model_SpO2.predict(sequences_SpO2, batch_size=128).flatten()            
 
+f = open(path.join("history", "merged_ECG_SpO2_logs.txt"), "w")
+
 for i in range(1, 10):
     we = round(i / 10, 1)
     ws = round(1 - we, 1)
     
     pred = pred_ECG * we + pred_SpO2 * ws
     pred = np.round(pred)
-    print(np.unique(pred, return_counts=True))
+    # print(np.unique(pred, return_counts=True))
     
     accuracy = np.sum(pred == annotations) / len(annotations)
     print(f"we: {we} - ws: {ws} - acc: {accuracy}")
+    print(f"we: {we} - ws: {ws} - acc: {accuracy}", file=f)
     
