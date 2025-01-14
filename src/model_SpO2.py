@@ -9,24 +9,28 @@ def create_model_SpO2_ah(name: str):
     
     x = ResNetBlock(1, x, 64, 3, True)
     x = ResNetBlock(1, x, 64, 3)
-    x = ResNetBlock(1, x, 64, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
-    x = ResNetBlock(1, x, 128, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     x = ResNetBlock(1, x, 256, 3, True)
-    x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3) 
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
 
     x = ResNetBlock(1, x, 512, 3, True)
     x = ResNetBlock(1, x, 512, 3)
-    x = ResNetBlock(1, x, 512, 3) 
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
 
     x = SEBlock()(x)
     x = layers.GlobalAvgPool1D()(x)
     
-    x = layers.Dense(256)(x)
+    x = layers.Dense(512)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
 
