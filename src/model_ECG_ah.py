@@ -11,7 +11,7 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
     
-    conv = layers.Dropout(rate=0.1)(conv)
+    conv = layers.Dropout(rate=0.25)(conv)
     
     conv = ResNetBlock(1, conv, 128, 3, True)
     conv = ResNetBlock(1, conv, 128, 3)
@@ -19,7 +19,7 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
     
-    conv = layers.Dropout(rate=0.1)(conv)
+    conv = layers.Dropout(rate=0.25)(conv)
     
     conv = ResNetBlock(1, conv, 256, 3, True)
     conv = ResNetBlock(1, conv, 256, 3)
@@ -29,7 +29,7 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     
-    conv = layers.Dropout(rate=0.1)(conv)
+    conv = layers.Dropout(rate=0.25)(conv)
 
     conv = ResNetBlock(1, conv, 512, 3, True)
     conv = ResNetBlock(1, conv, 512, 3)
@@ -37,13 +37,13 @@ def create_model_ECG_ah(name: str):
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
     
-    conv = layers.Dropout(rate=0.1)(conv)
+    conv = layers.Dropout(rate=0.25)(conv)
     
     conv = ResNetBlock(1, conv, 1024, 3, True)
     conv = ResNetBlock(1, conv, 1024, 3)
     conv = ResNetBlock(1, conv, 1024, 3)
     
-    conv = layers.Dropout(rate=0.1)(conv)
+    conv = layers.Dropout(rate=0.25)(conv)
     
     se_conv = SEBlock()(conv)
     flat = layers.GlobalAvgPool1D()(se_conv)
@@ -86,7 +86,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 50
+early_stopping_epoch = 40
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
