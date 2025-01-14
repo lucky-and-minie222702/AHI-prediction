@@ -10,22 +10,22 @@ def create_model_SpO2_ah(name: str):
     x = ResNetBlock(1, x, 64, 3, True)
     x = ResNetBlock(1, x, 64, 3)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    x = layers.SpatialDropout1D(rate=0.1)(x)
     
     x = ResNetBlock(1, x, 128, 3, True)
     x = ResNetBlock(1, x, 128, 3)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    x = layers.SpatialDropout1D(rate=0.1)(x)
     
     x = ResNetBlock(1, x, 256, 3, True)
     x = ResNetBlock(1, x, 256, 3) 
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    x = layers.SpatialDropout1D(rate=0.1)(x)
 
     x = ResNetBlock(1, x, 512, 3, True)
     x = ResNetBlock(1, x, 512, 3)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    x = layers.SpatialDropout1D(rate=0.1)(x)
 
     x = SEBlock()(x)
     x = layers.GlobalAvgPool1D()(x)
@@ -176,8 +176,8 @@ print("\nSUMMARY\n")
 
 f = open(path.join("history", f"{name}_logs_SpO2_ah.txt"), "w")
 t = sum(cb_timer.logs)
-print(f"Total training time: {convert_seconds(t)}")
-print(f"Total training time: {convert_seconds(t)}", file=f)
+print(f"Total training time: {xert_seconds(t)}")
+print(f"Total training time: {xert_seconds(t)}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}\n")
 print(f"Total epochs: {len(cb_timer.logs)}\n", file=f)
 
