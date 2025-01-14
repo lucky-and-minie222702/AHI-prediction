@@ -36,7 +36,6 @@ def create_model():
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
-    en = layers.Flatten()(en)
     en = layers.Dense(1504)(en)
     
     expanded_en = layers.Reshape((188, 8))(en)
