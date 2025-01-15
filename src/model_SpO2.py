@@ -159,6 +159,7 @@ class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
 print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
+print(f"\nTest size: {X_test.shape[0]}")
 
 scores = model.evaluate(
     X_test, 
