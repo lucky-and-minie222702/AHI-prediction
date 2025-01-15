@@ -176,8 +176,8 @@ print("\nSUMMARY\n")
 
 f = open(path.join("history", f"{name}_logs_SpO2_ah.txt"), "w")
 t = sum(cb_timer.logs)
-print(f"Total training time: {xert_seconds(t)}")
-print(f"Total training time: {xert_seconds(t)}", file=f)
+print(f"Total training time: {convert_seconds(t)}")
+print(f"Total training time: {convert_seconds(t)}", file=f)
 print(f"Total epochs: {len(cb_timer.logs)}\n")
 print(f"Total epochs: {len(cb_timer.logs)}\n", file=f)
 
