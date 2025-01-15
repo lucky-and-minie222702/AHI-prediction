@@ -147,7 +147,7 @@ def calc_stats(data: np.ndarray | list[np.ndarray]):
         stats["var"] = np.var(d)
         stats["range"] = np.max(d) - stats["min"]
         
-        res.append(stats)
+        res.append(list(stats.values()))
         
     return res
 
