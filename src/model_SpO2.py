@@ -4,41 +4,28 @@ from sklearn.utils.class_weight import compute_class_weight
 from itertools import groupby
 
 def create_model_SpO2_ah(name: str):
-    inp = layers.Input(shape=(30, 1))
+    inp = layers.Input(shape=(64, 1))
     x = layers.Normalization()(inp)
     
-    x = ResNetBlock(1, x, 64, 5, True)
-    x = ResNetBlock(1, x, 64, 5)
+    x = ResNetBlock(1, x, 64, 3)
+    x = ResNetBlock(1, x, 64, 3)
     
-    x = layers.SpatialDropout1D(rate=0.1)(x)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-
-    x_stats = ResNetBlock(1, x, 128, 3, True)
-    x_stats = ResNetBlock(1, x_stats, 128, 3)
-    x_stats = ResNetBlock(1, x_stats, 128, 3)
-    x_stats = layers.SpatialDropout1D(rate=0.1)(x_stats)
-    x_stats = SEBlock()(x_stats)
-    x_stats = layers.GlobalAvgPool1D()(x_stats)
-    x_stats = layers.Dense(128)(x_stats)
-    x_stats = layers.BatchNormalization()(x_stats)
-    x_stats = layers.Activation("relu")(x_stats)
-    x_stats = layers.Dense(7, activation="sigmoid")(x_stats)
-
-    
-    x = ResNetBlock(1, x, 128, 3, True)
+    x = ResNetBlock(1, x, 128, 3)
     x = ResNetBlock(1, x, 128, 3)
     
-    x = layers.SpatialDropout1D(rate=0.1)(x)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    x = ResNetBlock(1, x, 256, 3, True)
+    x = ResNetBlock(1, x, 256, 3)
     x = ResNetBlock(1, x, 256, 3) 
     
-    x = layers.SpatialDropout1D(rate=0.1)(x)    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
 
-    x = ResNetBlock(1, x, 512, 3, True)
+    x = ResNetBlock(1, x, 512, 3)
     x = ResNetBlock(1, x, 512, 3)
     
-    x = layers.SpatialDropout1D(rate=0.1)(x)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
 
     x = SEBlock()(x)
     x = layers.GlobalAvgPool1D()(x)
@@ -51,7 +38,7 @@ def create_model_SpO2_ah(name: str):
 
     model = Model(
         inputs = inp,
-        outputs = [out, x_stats],
+        outputs = out,
         name = name
     )
 
@@ -104,7 +91,6 @@ lr_scheduler = cbk.ReduceLROnPlateau(
 
 sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 annotations  = np.load(path.join("patients", "merged_anns.npy"))
-stats = np.array(calc_stats(sequences))
 
 
 if "train" in sys.argv:
@@ -116,10 +102,7 @@ if "train" in sys.argv:
     test_indices = np.load(path.join("patients", "test_indices_ECG_ah.npy"))
         
     X_train = sequences[train_indices]
-    y_stats_train = stats[train_indices]
     y_train = annotations[train_indices]
-
-    y_stats_test = stats[test_indices]
     X_test = sequences[test_indices]
     y_test = annotations[test_indices]
 
@@ -129,13 +112,12 @@ if "train" in sys.argv:
         combined_balance = np.unique(balance)
 
         X_train = X_train[combined_balance]
-        y_stats_train = y_stats_train[combined_balance]
         y_train = y_train[combined_balance]
 
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
 
-    X_train, X_val, y_stats_train, y_stats_val, y_train, y_val = train_test_split(X_train, y_stats_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
     class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
     class_weight = dict(enumerate(class_weights))
@@ -145,10 +127,10 @@ if "train" in sys.argv:
 
     hist = model.fit(
         X_train,
-        [y_train, y_stats_train],
+        y_train,
         epochs = max_epochs,
         batch_size = batch_size,
-        validation_data = (X_val, [y_val, y_stats_val]),
+        validation_data = (X_val, y_val),
         class_weight = class_weight,
         callbacks = [
             cb_timer,
@@ -160,7 +142,6 @@ if "train" in sys.argv:
 
 test_indices = np.load(path.join("patients", "test_indices_ECG_ah.npy"))
 X_test = sequences[test_indices]
-y_stats_test = stats[test_indices]
 y_test = annotations[test_indices]
 
 model.load_weights(save_path)
@@ -172,18 +153,16 @@ if "balance" in sys.argv:
 
     X_test = X_test[combined_balance]
     y_test = y_test[combined_balance]
-    y_stats_train = y_stats_train[combined_balance]
 
 class_weights = compute_class_weight('balanced', classes=np.unique(y_test), y=y_test)
 class_weight = dict(enumerate(class_weights))
 sample_weights = np.array([class_weights[int(label)] for label in y_test])
 
 print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
-print(f"\nTest size: {X_test.shape[0]}")
 
 scores = model.evaluate(
     X_test, 
-    [y_test, y_stats_test],
+    y_test,
     sample_weight = sample_weights,
     batch_size = batch_size, 
     return_dict = True
@@ -210,7 +189,6 @@ for metric, score in scores.items():
     print(f"{metric}: {score}", file=f)
 
 raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
-raw_pred = np.array([x[0] for x in raw_pred])
 
 for d in range(1, 10):
     threshold = d / 10
