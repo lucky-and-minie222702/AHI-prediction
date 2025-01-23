@@ -77,6 +77,7 @@ def create_model():
 
     de = layers.Flatten()(de)
     de = layers.Dense(600)(de)
+    de = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(de)
     de = layers.Conv1D(filters=5, kernel_size=3, padding="same", activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
