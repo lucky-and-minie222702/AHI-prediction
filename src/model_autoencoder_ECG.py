@@ -38,8 +38,7 @@ def create_model():
     en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     en = layers.Conv1D(filters=3, kernel_size=3, padding="same")(en)
     en = layers.BatchNormalization()(en)
-    en = layers.Activation("sigmoid")(en)
-    en = layers.Flatten(name="ecg")(en)
+    en = layers.Flatten()(en)
     
     expanded_en = layers.Reshape((36, 100))(en)
     de = ResNetBlock(1, expanded_en, 64, 3, True, True)
