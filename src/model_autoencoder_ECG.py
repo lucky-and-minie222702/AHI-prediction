@@ -8,7 +8,6 @@ def create_model():
     en = layers.Conv1D(filters=32, kernel_size=11, strides=2)(en)
     en = layers.BatchNormalization()(en)
     en = layers.LeakyReLU(negative_slope=0.25)(en)
-    en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
     en = ResNetBlock(1, en, 64, 9, True)
     en = ResNetBlock(1, en, 64, 9)
