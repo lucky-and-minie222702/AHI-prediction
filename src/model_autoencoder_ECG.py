@@ -83,7 +83,7 @@ def create_model():
     de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
-    de_rpa = layers.Dense(60, name="rpa")(de_rpa)
+    de_rpa = layers.Dense(120, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
@@ -97,7 +97,7 @@ def create_model():
     de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
-    de_rri = layers.Dense(60, name="rri")(de_rri)
+    de_rri = layers.Dense(120, name="rri")(de_rri)
     
     autoencoder = Model(
         inputs = inp,
@@ -151,7 +151,6 @@ show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 rpa, rri = calc_ecg(sequences)
-sequences = np.reshape(sequences, (-1, 600, 5))
 
 print(sequences.shape)
 
@@ -160,7 +159,7 @@ if "train" in sys.argv:
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = autoencoder.fit(
         sequences,
-        [np.reshape(sequences, (-1, 3000)), rpa, rri],
+        [sequences, rpa, rri],
         epochs = max_epochs,
         batch_size = batch_size,
         validation_split = 0.2,
