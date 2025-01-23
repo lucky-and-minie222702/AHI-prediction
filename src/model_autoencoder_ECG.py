@@ -69,7 +69,7 @@ def create_model():
     de = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(de)
     de = layers.Conv1D(filters=10, kernel_size=3, padding="same")(de)
     de = layers.BatchNormalization()(de)
-    de = layers.Activation("sigmoid")
+    de = layers.Activation("sigmoid")(de)
     de = layers.Flatten(name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
