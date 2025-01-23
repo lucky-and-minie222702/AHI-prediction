@@ -12,33 +12,23 @@ def create_model():
     en = ResNetBlock(1, en, 64, 9, True)
     en = ResNetBlock(1, en, 64, 9)
     en = ResNetBlock(1, en, 64, 9)
-    
-    en = layers.SpatialDropout1D(rate=0.1)(en) 
        
     en = ResNetBlock(1, en, 128, 7, True)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
     
-    en = layers.SpatialDropout1D(rate=0.1)(en)
-    
     en = ResNetBlock(1, en, 256, 5, True)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
     
-    en = layers.SpatialDropout1D(rate=0.1)(en)
-    
     en = ResNetBlock(1, en, 512, 3, True)
     en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     
-    en = layers.SpatialDropout1D(rate=0.1)(en)
-    
     en = ResNetBlock(1, en, 1024, 3, True)
     en = ResNetBlock(1, en, 1024, 3)
-    
-    en = layers.SpatialDropout1D(rate=0.1)(en)
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
@@ -49,36 +39,26 @@ def create_model():
     de = ResNetBlock(1, de, 64, 3, False, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
     
-    de = layers.SpatialDropout1D(rate=0.1)(de)
-    
     de = ResNetBlock(1, de, 128, 3, True, True)
     de = ResNetBlock(1, de, 128, 3, False, True)
     de = ResNetBlock(1, de, 128, 3, False, True)
     de = ResNetBlock(1, de, 128, 3, False, True)
-    
-    de = layers.SpatialDropout1D(rate=0.1)(de)
     
     de = ResNetBlock(1, de, 256, 5, True, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     
-    de = layers.SpatialDropout1D(rate=0.1)(de)
-    
     de = ResNetBlock(1, de, 512, 7, False, True)
     de = ResNetBlock(1, de, 512, 7, False, True)
     de = ResNetBlock(1, de, 512, 7, False, True)
-    
-    de = layers.SpatialDropout1D(rate=0.1)(de)
     
     de = layers.Conv1D(filters=1, kernel_size=3)(de)
     de = layers.BatchNormalization()(de)
     de = layers.LeakyReLU(negative_slope=0.25)(de)
 
     de = layers.Flatten()(de)
-    de = layers.Dense(600)(de)
-    de = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(de)
-    de = layers.Conv1D(filters=5, kernel_size=3, padding="same", activation="sigmoid", name="ecg")(de)
+    de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
@@ -169,7 +149,7 @@ if "train" in sys.argv:
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = autoencoder.fit(
         sequences,
-        [sequences, rpa, rri],
+        [np.reshape(sequences, (-1, 3000)), rpa, rri],
         epochs = max_epochs,
         batch_size = batch_size,
         validation_split = 0.2,
