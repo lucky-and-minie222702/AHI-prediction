@@ -12,6 +12,9 @@ def create_model():
     en = ResNetBlock(1, en, 128, 3)
     en = ResNetBlock(1, en, 128, 3)
     en = layers.SpatialDropout1D(rate=0.1)(en)
+    en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Dense(64)(en)
@@ -82,7 +85,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 220
+early_stopping_epoch = 200
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(

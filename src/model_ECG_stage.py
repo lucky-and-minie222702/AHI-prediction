@@ -4,8 +4,8 @@ from sklearn.utils.class_weight import compute_class_weight
 
 def create_model_ECG_stage(name: str):    
     # after encoder
-    inp = layers.Input(shape=(1860, 1)) 
-    reshaped_inp = layers.Reshape((93, 20))(inp)
+    inp = layers.Input(shape=(1880, 1)) 
+    reshaped_inp = layers.Reshape((188, 10))(inp)
     norm_inp = layers.Normalization()(reshaped_inp)
     
     conv = ResNetBlock(1, norm_inp, 64, 3, True)

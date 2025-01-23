@@ -6,7 +6,7 @@ def create_model():
     en = layers.Normalization()(inp)
     en = layers.Reshape((600, 5))(en)
     
-    en = layers.Conv1D(filters=64, kernel_size=11, strides=2)(en)
+    en = layers.Conv1D(filters=32, kernel_size=11, strides=2)(en)
     en = layers.BatchNormalization()(en)
     en = layers.LeakyReLU(negative_slope=0.25)(en)
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
@@ -21,12 +21,10 @@ def create_model():
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
-    en = ResNetBlock(1, en, 128, 7)
     
     en = layers.SpatialDropout1D(rate=0.1)(en)
     
     en = ResNetBlock(1, en, 256, 5, True)
-    en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
@@ -41,15 +39,14 @@ def create_model():
     
     en = ResNetBlock(1, en, 1024, 3, True)
     en = ResNetBlock(1, en, 1024, 3)
-    en = ResNetBlock(1, en, 1024, 3)
     
     en = layers.SpatialDropout1D(rate=0.1)(en)
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(1860)(en)
+    en = layers.Dense(1880)(en)
     
-    expanded_en = layers.Reshape((93, 20))(en)
+    expanded_en = layers.Reshape((188, 10))(en)
     de = ResNetBlock(1, expanded_en, 64, 3, True, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
@@ -60,7 +57,6 @@ def create_model():
     de = ResNetBlock(1, de, 128, 3, False, True)
     de = ResNetBlock(1, de, 128, 3, False, True)
     de = ResNetBlock(1, de, 128, 3, False, True)
-    de = ResNetBlock(1, de, 128, 3, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
@@ -68,19 +64,12 @@ def create_model():
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
     de = ResNetBlock(1, de, 256, 5, False, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
     de = ResNetBlock(1, de, 512, 7, False, True)
     de = ResNetBlock(1, de, 512, 7, False, True)
     de = ResNetBlock(1, de, 512, 7, False, True)
-    
-    de = layers.SpatialDropout1D(rate=0.1)(de)
-    
-    de = ResNetBlock(1, de, 1024, 9, True, True)
-    de = ResNetBlock(1, de, 1024, 9, False, True)
-    de = ResNetBlock(1, de, 1024, 9, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
@@ -93,14 +82,12 @@ def create_model():
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
-    de_rpa = ResNetBlock(1, de_rpa, 64, 3)
     de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
     de_rpa = ResNetBlock(1, de_rpa, 128, 5, True)
     de_rpa = ResNetBlock(1, de_rpa, 128, 5)
     de_rpa = ResNetBlock(1, de_rpa, 128, 5)
     de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
     de_rpa = ResNetBlock(1, de_rpa, 256, 7, True)
-    de_rpa = ResNetBlock(1, de_rpa, 256, 7)
     de_rpa = ResNetBlock(1, de_rpa, 256, 7)
     de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
     de_rpa = SEBlock()(de_rpa)
@@ -109,14 +96,12 @@ def create_model():
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
-    de_rri = ResNetBlock(1, de_rri, 64, 3)
     de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
     de_rri = ResNetBlock(1, de_rri, 128, 5, True)
     de_rri = ResNetBlock(1, de_rri, 128, 5)
     de_rri = ResNetBlock(1, de_rri, 128, 5)
     de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
     de_rri = ResNetBlock(1, de_rri, 256, 7, True)
-    de_rri = ResNetBlock(1, de_rri, 256, 7)
     de_rri = ResNetBlock(1, de_rri, 256, 7)
     de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
     de_rri = SEBlock()(de_rri)
@@ -142,7 +127,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 220
+early_stopping_epoch = 200
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
