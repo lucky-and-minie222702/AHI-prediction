@@ -46,9 +46,9 @@ def create_model():
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(1674)(en)
+    en = layers.Dense(1860)(en)
     
-    expanded_en = layers.Reshape((93, 18))(en)
+    expanded_en = layers.Reshape((93, 20))(en)
     de = ResNetBlock(1, expanded_en, 1024, 3, True, True)
     de = ResNetBlock(1, de, 1024, 3, False, True)
     de = ResNetBlock(1, de, 1024, 3, False, True)
@@ -148,7 +148,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 220
+early_stopping_epoch = 200
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -156,7 +156,7 @@ cb_early_stopping = cbk.EarlyStopping(
     mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 5,
+    patience = 7,
 )
 cb_timer = TimingCallback()
 
