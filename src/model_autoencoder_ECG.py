@@ -2,9 +2,8 @@ from data_functions import *
 from model_functions import *
 
 def create_model():
-    inp = layers.Input(shape=(3000, 1))
+    inp = layers.Input(shape=(600, 5))
     en = layers.Normalization()(inp)
-    en = layers.Reshape((600, 5))(en)
     
     en = layers.Conv1D(filters=32, kernel_size=11, strides=2)(en)
     en = layers.BatchNormalization()(en)
@@ -159,6 +158,7 @@ autoencoder.compile(
 show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
+sequences = np.reshape(sequences, (-1, 600, 5))
 rpa, rri = calc_ecg(sequences)
 
 print(sequences.shape)
