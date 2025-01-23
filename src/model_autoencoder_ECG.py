@@ -38,7 +38,7 @@ def create_model():
     en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     en = layers.Conv1D(filters=3, kernel_size=3, padding="same")(en)
     en = layers.BatchNormalization()(en)
-    en = layers.Activation("sigmoid")
+    en = layers.Activation("sigmoid")(en)
     en = layers.Flatten(name="ecg")(en)
     
     expanded_en = layers.Reshape((36, 100))(en)
@@ -74,28 +74,28 @@ def create_model():
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
-    de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
+
     de_rpa = ResNetBlock(1, de_rpa, 128, 5, True)
     de_rpa = ResNetBlock(1, de_rpa, 128, 5)
     de_rpa = ResNetBlock(1, de_rpa, 128, 5)
-    de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
+
     de_rpa = ResNetBlock(1, de_rpa, 256, 7, True)
     de_rpa = ResNetBlock(1, de_rpa, 256, 7)
-    de_rpa = layers.SpatialDropout1D(rate=0.1)(de_rpa)
+    
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
     de_rpa = layers.Dense(120, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
-    de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
+
     de_rri = ResNetBlock(1, de_rri, 128, 5, True)
     de_rri = ResNetBlock(1, de_rri, 128, 5)
     de_rri = ResNetBlock(1, de_rri, 128, 5)
-    de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
+
     de_rri = ResNetBlock(1, de_rri, 256, 7, True)
     de_rri = ResNetBlock(1, de_rri, 256, 7)
-    de_rri = layers.SpatialDropout1D(rate=0.1)(de_rri)
+
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
     de_rri = layers.Dense(120, name="rri")(de_rri)
