@@ -2,12 +2,13 @@ from data_functions import *
 from model_functions import *
 
 def create_model():
-    inp = layers.Input(shape=(600, 5))
+    inp = layers.Input(shape=(6000, 1))
     en = layers.Normalization()(inp)
     
     en = layers.Conv1D(filters=32, kernel_size=11, strides=2)(en)
     en = layers.BatchNormalization()(en)
     en = layers.LeakyReLU(negative_slope=0.25)(en)
+    en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
     en = ResNetBlock(1, en, 64, 9, True)
     en = ResNetBlock(1, en, 64, 9)
@@ -29,12 +30,17 @@ def create_model():
     
     en = ResNetBlock(1, en, 1024, 3, True)
     en = ResNetBlock(1, en, 1024, 3)
+    en = ResNetBlock(1, en, 1024, 3)
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(1850)(en)
+    en = layers.Dense(1200)(en)
+    en = layers.Conv1D(filters=3, kernel_size=3, padding="same")(en)
+    en = layers.BatchNormalization()(en)
+    en = layers.Activation("sigmoid")
+    en = layers.Flatten(name="ecg")(en)
     
-    expanded_en = layers.Reshape((37, 50))(en)
+    expanded_en = layers.Reshape((36, 100))(en)
     de = ResNetBlock(1, expanded_en, 64, 3, True, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
@@ -60,7 +66,9 @@ def create_model():
     de = layers.Flatten()(de)
     de = layers.Dense(600)(de)
     de = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(de)
-    de = layers.Conv1D(filters= 5, kernel_size=3, padding="same", activation="sigmoid")
+    de = layers.Conv1D(filters=10, kernel_size=3, padding="same")(de)
+    de = layers.BatchNormalization()(de)
+    de = layers.Activation("sigmoid")
     de = layers.Flatten(name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)

@@ -11,6 +11,8 @@ max_ECG_len = 0
 max_SpO2_len = 0
 records = [f"ucddb{i:0{3}d}" for i in range(2, 29) if i not in [4, 16]]
 AHIs = []
+max_dur = 0
+durs = []
 
 for i in range(len(records)):
     print(f"Preprocessing patient {i+1}:")
@@ -83,6 +85,9 @@ for i in range(len(records)):
     time = list(map(lambda x: calc_time(start_sleep, x), time))
     duration = list(map(lambda x: ith_int(x, 1)[1], [x.split() for x in content]))
     
+    durs.extend(duration)
+    max_dur = max(max(duration), max_dur)
+    
     annotations = []
     idx = 0
     enough = False
@@ -113,4 +118,6 @@ for i in range(len(records)):
 print("\nMax ECG sequence lenght:", max_ECG_len)
 print("Max SpO2 sequence lenght:", max_SpO2_len, "\n")
 AHIs = np.array(AHIs)
-print("Mean AHI:", np.mean(AHIs), "\nMedian AHI:", np.median(AHIs),  "\nStandard deviation AHI:", np.std(AHIs), "\nMax AHI:", np.max(AHIs), "\nMin AHI:", np.min(AHIs))
+print(" | Mean AHI:", np.mean(AHIs), "\n | Median AHI:", np.median(AHIs), "\n | Standard deviation AHI:", np.std(AHIs), "\n | Max AHI:", np.max(AHIs), "\n | Min AHI:", np.min(AHIs))
+print(f"\nMax Apnea/Hyponea duration: {max_dur} (s)")
+print(f"Mean duration: {sum(durs) / len(durs)}")

@@ -4,7 +4,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from itertools import groupby
 
 def create_model_SpO2_ah(name: str):
-    inp = layers.Input(shape=(48, 1))
+    inp = layers.Input(shape=(96, 1))
     x = layers.Normalization()(inp)
     
     x = ResNetBlock(1, x, 64, 3)

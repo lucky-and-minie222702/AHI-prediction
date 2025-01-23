@@ -3,32 +3,33 @@ from model_functions import *
 from scipy.signal import find_peaks
 
 def create_model():
-    inp = layers.Input(shape=(30, 1))
+    inp = layers.Input(shape=(60, 1))
     en = layers.Normalization()(inp)
     
     en = ResNetBlock(1, en, 64, 3)
     en = ResNetBlock(1, en, 64, 3)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
+    
     en = ResNetBlock(1, en, 128, 3)
     en = ResNetBlock(1, en, 128, 3)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
+    en = ResNetBlock(1, en, 128, 3)
+    
     en = ResNetBlock(1, en, 256, 3)
     en = ResNetBlock(1, en, 256, 3)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
+    
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(64)(en)
+    en = layers.Dense(128)(en)
     en = layers.Activation("relu")(en)
-    en = layers.Dense(48)(en)
+    en = layers.Dense(96)(en)
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     
     de = ResNetBlock(1, expanded_en, 64, 3)
     de = ResNetBlock(1, de, 64, 3)
-    de = layers.SpatialDropout1D(rate=0.1)(de)
+
     de = ResNetBlock(1, de, 128, 3)
     de = ResNetBlock(1, de, 128, 3)
-    de = layers.SpatialDropout1D(rate=0.1)(de)
+
     de = SEBlock()(de)
     de = layers.GlobalAvgPool1D()(de)
     de = layers.Dense(64)(de)
@@ -38,7 +39,7 @@ def create_model():
     de_stats = ResNetBlock(1, expanded_en, 64, 3)
     de_stats = ResNetBlock(1, de_stats, 64, 3)
     de_stats = ResNetBlock(1, de_stats, 64, 3)
-    de_stats = layers.SpatialDropout1D(rate=0.1)(de_stats)
+
     de_stats = SEBlock()(de_stats)
     de_stats = layers.GlobalAvgPool1D()(de_stats)
     de_stats = layers.Dense(32)(de_stats)
@@ -48,7 +49,7 @@ def create_model():
     de_peaks = ResNetBlock(1, expanded_en, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
-    de_peaks = layers.SpatialDropout1D(rate=0.1)(de_peaks)
+
     de_peaks = SEBlock()(de_peaks)
     de_peaks = layers.GlobalAvgPool1D()(de_peaks)
     de_peaks = layers.Dense(32)(de_peaks)
@@ -58,7 +59,7 @@ def create_model():
     de_drops = ResNetBlock(1, expanded_en, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
-    de_drops = layers.SpatialDropout1D(rate=0.1)(de_drops)
+
     de_drops = SEBlock()(de_drops)
     de_drops = layers.GlobalAvgPool1D()(de_drops)
     de_drops = layers.Dense(32)(de_drops)
