@@ -32,9 +32,9 @@ def create_model():
 
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(1880)(en)
+    en = layers.Dense(1850)(en)
     
-    expanded_en = layers.Reshape((188, 10))(en)
+    expanded_en = layers.Reshape((37, 50))(en)
     de = ResNetBlock(1, expanded_en, 64, 3, True, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
     de = ResNetBlock(1, de, 64, 3, False, True)
@@ -53,12 +53,14 @@ def create_model():
     de = ResNetBlock(1, de, 512, 7, False, True)
     de = ResNetBlock(1, de, 512, 7, False, True)
     
-    de = layers.Conv1D(filters=1, kernel_size=3)(de)
+    de = layers.Conv1D(filters=1, kernel_size=3, padding="same")(de)
     de = layers.BatchNormalization()(de)
     de = layers.LeakyReLU(negative_slope=0.25)(de)
 
     de = layers.Flatten()(de)
-    de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
+    de = layers.Dense(600)(de)
+    de = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(de)
+    de = layers.Conv1D(filters= 5, kernel_size=3, padding="same", activation="sigmoid", name="ecg")
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
@@ -149,7 +151,7 @@ if "train" in sys.argv:
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = autoencoder.fit(
         sequences,
-        [np.reshape(sequences, (-1, 3000)), rpa, rri],
+        [sequences, rpa, rri],
         epochs = max_epochs,
         batch_size = batch_size,
         validation_split = 0.2,
