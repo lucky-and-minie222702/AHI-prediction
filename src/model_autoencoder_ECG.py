@@ -76,7 +76,8 @@ def create_model():
     de = layers.LeakyReLU(negative_slope=0.25)(de)
 
     de = layers.Flatten()(de)
-    de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
+    de = layers.Dense(600)(de)
+    de = layers.Conv1D(filters=5, kernel_size=3, padding="same", activation="sigmoid", name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
