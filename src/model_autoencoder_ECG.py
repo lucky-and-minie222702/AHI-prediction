@@ -158,8 +158,8 @@ autoencoder.compile(
 show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
-sequences = np.reshape(sequences, (-1, 600, 5))
 rpa, rri = calc_ecg(sequences)
+sequences = np.reshape(sequences, (-1, 600, 5))
 
 print(sequences.shape)
 
