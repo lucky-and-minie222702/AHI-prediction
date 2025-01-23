@@ -35,6 +35,7 @@ def create_model():
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Dense(1200)(en)
+    en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     en = layers.Conv1D(filters=3, kernel_size=3, padding="same")(en)
     en = layers.BatchNormalization()(en)
     en = layers.Activation("sigmoid")
