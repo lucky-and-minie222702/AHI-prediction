@@ -4,6 +4,7 @@ from model_functions import *
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     en = layers.Normalization()(inp)
+    en = layers.Reshape((600, 5))(en)
     
     en = layers.Conv1D(filters=64, kernel_size=11, strides=2)(en)
     en = layers.BatchNormalization()(en)
@@ -49,15 +50,17 @@ def create_model():
     en = layers.Dense(1860)(en)
     
     expanded_en = layers.Reshape((93, 20))(en)
-    de = ResNetBlock(1, expanded_en, 1024, 3, True, True)
-    de = ResNetBlock(1, de, 1024, 3, False, True)
-    de = ResNetBlock(1, de, 1024, 3, False, True)
+    de = ResNetBlock(1, expanded_en, 64, 3, True, True)
+    de = ResNetBlock(1, de, 64, 3, False, True)
+    de = ResNetBlock(1, de, 64, 3, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
-    de = ResNetBlock(1, de, 512, 3, True, True)
-    de = ResNetBlock(1, de, 512, 3, False, True)
-    de = ResNetBlock(1, de, 512, 3, False, True)
+    de = ResNetBlock(1, de, 128, 3, True, True)
+    de = ResNetBlock(1, de, 128, 3, False, True)
+    de = ResNetBlock(1, de, 128, 3, False, True)
+    de = ResNetBlock(1, de, 128, 3, False, True)
+    de = ResNetBlock(1, de, 128, 3, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
@@ -69,30 +72,21 @@ def create_model():
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
-    de = ResNetBlock(1, de, 128, 7, True, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
+    de = ResNetBlock(1, de, 512, 7, False, True)
+    de = ResNetBlock(1, de, 512, 7, False, True)
+    de = ResNetBlock(1, de, 512, 7, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
-    de = ResNetBlock(1, de, 64, 9, True, True)
-    de = ResNetBlock(1, de, 64, 9, False, True)
-    de = ResNetBlock(1, de, 64, 9, False, True)
+    de = ResNetBlock(1, de, 1024, 9, True, True)
+    de = ResNetBlock(1, de, 1024, 9, False, True)
+    de = ResNetBlock(1, de, 1024, 9, False, True)
     
     de = layers.SpatialDropout1D(rate=0.1)(de)
     
-    de = layers.Conv1D(filters=32, kernel_size=3)(de)
+    de = layers.Conv1D(filters=1, kernel_size=3)(de)
     de = layers.BatchNormalization()(de)
     de = layers.LeakyReLU(negative_slope=0.25)(de)
-    de = layers.Conv1D(filters=16, kernel_size=3)(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
-    de = layers.Conv1D(filters=8, kernel_size=3)(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
-    de = SEBlock()(de)
 
     de = layers.Flatten()(de)
     de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
@@ -148,7 +142,7 @@ if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 230
+early_stopping_epoch = 220
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -156,7 +150,7 @@ cb_early_stopping = cbk.EarlyStopping(
     mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 7,
+    patience = 8,
 )
 cb_timer = TimingCallback()
 
