@@ -8,41 +8,58 @@ def create_model():
     
     en = ResNetBlock(1, en, 64, 3)
     en = ResNetBlock(1, en, 64, 3)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 128, 3)
     en = ResNetBlock(1, en, 128, 3)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = SEBlock()(en)
     en = layers.GlobalAvgPool1D()(en)
     en = layers.Dense(64)(en)
+    en = layers.Activation("relu")(en)
+    en = layers.Dense(48)(en)
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     
     de = ResNetBlock(1, expanded_en, 64, 3)
     de = ResNetBlock(1, de, 64, 3)
+    de = layers.SpatialDropout1D(rate=0.1)(de)
     de = ResNetBlock(1, de, 128, 3)
     de = ResNetBlock(1, de, 128, 3)
+    de = layers.SpatialDropout1D(rate=0.1)(de)
     de = SEBlock()(de)
     de = layers.GlobalAvgPool1D()(de)
+    de = layers.Dense(64)(de)
+    de = layers.Activation("relu")(de)
     de = layers.Dense(30, activation="sigmoid", name="spo2")(de)
     
     de_stats = ResNetBlock(1, expanded_en, 64, 3)
     de_stats = ResNetBlock(1, de_stats, 64, 3)
     de_stats = ResNetBlock(1, de_stats, 64, 3)
+    de_stats = layers.SpatialDropout1D(rate=0.1)(de_stats)
     de_stats = SEBlock()(de_stats)
     de_stats = layers.GlobalAvgPool1D()(de_stats)
+    de_stats = layers.Dense(32)(de_stats)
+    de_stats = layers.Activation("relu")(de_stats)
     de_stats = layers.Dense(7, activation="sigmoid", name="stats")(de_stats)
     
     de_peaks = ResNetBlock(1, expanded_en, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
+    de_peaks = layers.SpatialDropout1D(rate=0.1)(de_peaks)
     de_peaks = SEBlock()(de_peaks)
     de_peaks = layers.GlobalAvgPool1D()(de_peaks)
+    de_peaks = layers.Dense(32)(de_peaks)
+    de_peaks = layers.Activation("relu")(de_peaks)
     de_peaks = layers.Dense(14, activation="sigmoid", name="peaks")(de_peaks)
     
     de_drops = ResNetBlock(1, expanded_en, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
+    de_drops = layers.SpatialDropout1D(rate=0.1)(de_drops)
     de_drops = SEBlock()(de_drops)
     de_drops = layers.GlobalAvgPool1D()(de_drops)
+    de_drops = layers.Dense(32)(de_drops)
+    de_drops = layers.Activation("relu")(de_drops)
     de_drops = layers.Dense(14, activation="sigmoid", name="drops")(de_drops)
     
     
@@ -59,13 +76,13 @@ def create_model():
     return autoencoder, encoder
 
 save_path = path.join("res", "model_auto_encoder_SpO2.weights.h5")
-max_epochs = 1 if "test_save" in sys.argv else 200
+max_epochs = 1 if "test_save" in sys.argv else 300
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 100
+early_stopping_epoch = 220
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -73,7 +90,7 @@ cb_early_stopping = cbk.EarlyStopping(
     mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 7,
+    patience = 5,
 )
 cb_timer = TimingCallback()
 
@@ -100,8 +117,8 @@ show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 stats = np.array(calc_stats(sequences))
-peaks = np.array([find_peaks(x)[0] for x in sequences])
-drops = np.array([-find_peaks(-x)[0] for x in sequences])
+peaks = np.array([x[find_peaks(x)[0]] for x in sequences])
+drops = np.array([x[find_peaks(-x)[0]] for x in sequences])
 
 print(sequences.shape)
 
