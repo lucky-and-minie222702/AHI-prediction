@@ -2,7 +2,7 @@ from data_functions import *
 from model_functions import *
 
 def create_model():
-    inp = layers.Input(shape=(6000, 1))
+    inp = layers.Input(shape=(600, 10))
     en = layers.Normalization()(inp)
     
     en = layers.Conv1D(filters=32, kernel_size=11, strides=2)(en)
@@ -13,8 +13,10 @@ def create_model():
     en = ResNetBlock(1, en, 64, 9, True)
     en = ResNetBlock(1, en, 64, 9)
     en = ResNetBlock(1, en, 64, 9)
+    en = ResNetBlock(1, en, 64, 9)
        
     en = ResNetBlock(1, en, 128, 7, True)
+    en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
@@ -23,8 +25,10 @@ def create_model():
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
     en = ResNetBlock(1, en, 256, 5)
+    en = ResNetBlock(1, en, 256, 5)
     
     en = ResNetBlock(1, en, 512, 3, True)
+    en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     
@@ -33,53 +37,49 @@ def create_model():
     en = ResNetBlock(1, en, 1024, 3)
 
     en = SEBlock()(en)
-    en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(1200)(en)
-    en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
-    en = layers.Conv1D(filters=3, kernel_size=3, padding="same")(en)
-    en = layers.BatchNormalization()(en)
     en = layers.Flatten()(en)
-    
-    expanded_en = layers.Reshape((36, 100))(en)
-    de = ResNetBlock(1, expanded_en, 64, 3, True, True)
-    de = ResNetBlock(1, de, 64, 3, False, True)
-    de = ResNetBlock(1, de, 64, 3, False, True)
-    
-    de = ResNetBlock(1, de, 128, 3, True, True)
-    de = ResNetBlock(1, de, 128, 3, False, True)
-    de = ResNetBlock(1, de, 128, 3, False, True)
-    de = ResNetBlock(1, de, 128, 3, False, True)
-    
-    de = ResNetBlock(1, de, 256, 5, True, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
-    
-    de = ResNetBlock(1, de, 512, 7, False, True)
-    de = ResNetBlock(1, de, 512, 7, False, True)
-    de = ResNetBlock(1, de, 512, 7, False, True)
-    
-    de = layers.Conv1D(filters=1, kernel_size=3, padding="same")(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.LeakyReLU(negative_slope=0.25)(de)
+    en = layers.Reshape((640, 8))(en)
+    expanded_en = layers.Conv1D(filters=6, kernel_size=3, padding="same")(en)
 
-    de = layers.Flatten()(de)
-    de = layers.Dense(600)(de)
-    de = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(de)
-    de = layers.Conv1D(filters=10, kernel_size=3, padding="same")(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.Activation("sigmoid")(de)
-    de = layers.Flatten(name="ecg")(de)
+    de = ResNetBlock(1, expanded_en, 64, 3, True)
+    de = ResNetBlock(1, de, 64, 3)
+    de = ResNetBlock(1, de, 64, 3)
+    de = ResNetBlock(1, de, 64, 3)
+    
+    de = ResNetBlock(1, de, 128, 3, True)
+    de = ResNetBlock(1, de, 128, 3)
+    de = ResNetBlock(1, de, 128, 3)
+    de = ResNetBlock(1, de, 128, 3)
+    de = ResNetBlock(1, de, 128, 3)
+    
+    de = ResNetBlock(1, de, 256, 3, True)
+    de = ResNetBlock(1, de, 256, 3)
+    de = ResNetBlock(1, de, 256, 3)
+    de = ResNetBlock(1, de, 256, 3)
+    de = ResNetBlock(1, de, 256, 3)
+    
+    de = ResNetBlock(1, de, 512, 3, True)
+    de = ResNetBlock(1, de, 512, 3)
+    de = ResNetBlock(1, de, 512, 3)
+    de = ResNetBlock(1, de, 512, 3)
+    
+    de = layers.Dense(256)(de)
+    de = layers.LeakyReLU(negative_slope=0.2)(de)
+    de = layers.Dense(150)(de)
+    de = layers.LeakyReLU(negative_slope=0.2)(de)
+    de = layers.Reshape((600, 10), name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
+    de_rpa = ResNetBlock(1, de_rpa, 64, 3)
 
-    de_rpa = ResNetBlock(1, de_rpa, 128, 5, True)
-    de_rpa = ResNetBlock(1, de_rpa, 128, 5)
-    de_rpa = ResNetBlock(1, de_rpa, 128, 5)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3, True)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3)
 
-    de_rpa = ResNetBlock(1, de_rpa, 256, 7, True)
-    de_rpa = ResNetBlock(1, de_rpa, 256, 7)
+    de_rpa = ResNetBlock(1, de_rpa, 256, 3, True)
+    de_rpa = ResNetBlock(1, de_rpa, 256, 3)
+    de_rpa = ResNetBlock(1, de_rpa, 256, 3)
     
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
@@ -87,13 +87,15 @@ def create_model():
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
+    de_rri = ResNetBlock(1, de_rri, 64, 3)
 
-    de_rri = ResNetBlock(1, de_rri, 128, 5, True)
-    de_rri = ResNetBlock(1, de_rri, 128, 5)
-    de_rri = ResNetBlock(1, de_rri, 128, 5)
+    de_rri = ResNetBlock(1, de_rri, 128, 3, True)
+    de_rri = ResNetBlock(1, de_rri, 128, 3)
+    de_rri = ResNetBlock(1, de_rri, 128, 3)
 
-    de_rri = ResNetBlock(1, de_rri, 256, 7, True)
-    de_rri = ResNetBlock(1, de_rri, 256, 7)
+    de_rri = ResNetBlock(1, de_rri, 256, 3, True)
+    de_rri = ResNetBlock(1, de_rri, 256, 3)
+    de_rri = ResNetBlock(1, de_rri, 256, 3)
 
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
@@ -106,7 +108,7 @@ def create_model():
     
     encoder = Model(
         inputs = inp,
-        outputs = en,
+        outputs = expanded_en,
     )
     
     return autoencoder, encoder
@@ -151,7 +153,7 @@ show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_ECG.npy"))
 rpa, rri = calc_ecg(sequences)
-
+sequences = np.reshape(sequences, (-1, 600, 10))
 print(sequences.shape)
 
 if "train" in sys.argv:
