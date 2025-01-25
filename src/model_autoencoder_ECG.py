@@ -63,9 +63,18 @@ def create_model():
     de = ResNetBlock(1, de, 512, 3)
     de = ResNetBlock(1, de, 512, 3)
     
-    de = layers.Dense(256)(de)
+    de = ResNetBlock(1, de, 1024, 3, True)
+    de = ResNetBlock(1, de, 1024, 3)
+    de = ResNetBlock(1, de, 1024, 3)
+    
+    de = layers.Dense(512)(de)
+    de = layers.BatchNormalization()(de)
     de = layers.LeakyReLU(negative_slope=0.2)(de)
-    de = layers.Dense(150)(de)
+    de = layers.Dense(406)(de)
+    de = layers.BatchNormalization()(de)
+    de = layers.LeakyReLU(negative_slope=0.2)(de)
+    de = layers.Dense(300)(de)
+    de = layers.BatchNormalization()(de)
     de = layers.LeakyReLU(negative_slope=0.2)(de)
     de = layers.Reshape((600, 10), name="ecg")(de)
     
@@ -74,6 +83,7 @@ def create_model():
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
 
     de_rpa = ResNetBlock(1, de_rpa, 128, 3, True)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3)
     de_rpa = ResNetBlock(1, de_rpa, 128, 3)
     de_rpa = ResNetBlock(1, de_rpa, 128, 3)
 
@@ -90,6 +100,7 @@ def create_model():
     de_rri = ResNetBlock(1, de_rri, 64, 3)
 
     de_rri = ResNetBlock(1, de_rri, 128, 3, True)
+    de_rri = ResNetBlock(1, de_rri, 128, 3)
     de_rri = ResNetBlock(1, de_rri, 128, 3)
     de_rri = ResNetBlock(1, de_rri, 128, 3)
 
@@ -114,13 +125,13 @@ def create_model():
     return autoencoder, encoder
 
 save_path = path.join("res", "model_auto_encoder_ECG.weights.h5")
-max_epochs = 1 if "test_save" in sys.argv else 300
+max_epochs = 1 if "test_save" in sys.argv else 500
 batch_size = 64
 if "batch_size" in sys.argv:
     batch_size = int(sys.argv[sys.argv.index("batch_size")+1])
 
 # callbacks
-early_stopping_epoch = 200
+early_stopping_epoch = 300
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -128,7 +139,7 @@ cb_early_stopping = cbk.EarlyStopping(
     mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 8,
+    patience = 7,
 )
 cb_timer = TimingCallback()
 

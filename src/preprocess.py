@@ -44,6 +44,7 @@ for i in range(len(records)):
             
             # start time to label
             start_sleep = str(edf_file.getStartdatetime())[11:]
+            print(start_sleep)
             
         for key, value in signals.items():
             np.save(path.join("patients", f"patients_{i+1}_{key}"), value)
