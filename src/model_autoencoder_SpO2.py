@@ -8,11 +8,13 @@ def create_model():
     
     en = ResNetBlock(1, en, 64, 3)
     en = ResNetBlock(1, en, 64, 3)
+    en = ResNetBlock(1, en, 64, 3)
     
     en = ResNetBlock(1, en, 128, 3)
     en = ResNetBlock(1, en, 128, 3)
     en = ResNetBlock(1, en, 128, 3)
     
+    en = ResNetBlock(1, en, 256, 3)
     en = ResNetBlock(1, en, 256, 3)
     en = ResNetBlock(1, en, 256, 3)
     
@@ -26,15 +28,22 @@ def create_model():
     
     de = ResNetBlock(1, expanded_en, 64, 3)
     de = ResNetBlock(1, de, 64, 3)
+    de = ResNetBlock(1, de, 64, 3)
 
     de = ResNetBlock(1, de, 128, 3)
     de = ResNetBlock(1, de, 128, 3)
+    de = ResNetBlock(1, de, 128, 3)
+    
+    de = ResNetBlock(1, de, 256, 3)
+    de = ResNetBlock(1, de, 256, 3)
+    de = ResNetBlock(1, de, 256, 3)
 
     de = SEBlock()(de)
     de = layers.GlobalAvgPool1D()(de)
-    de = layers.Dense(64)(de)
+    de = layers.Dense(128)(de)
+    de = layers.BatchNormalization()(de)
     de = layers.Activation("relu")(de)
-    de = layers.Dense(30, activation="sigmoid", name="spo2")(de)
+    de = layers.Dense(60, activation="sigmoid", name="spo2")(de)
     
     de_stats = ResNetBlock(1, expanded_en, 64, 3)
     de_stats = ResNetBlock(1, de_stats, 64, 3)
@@ -49,22 +58,30 @@ def create_model():
     de_peaks = ResNetBlock(1, expanded_en, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
+    
+    de_peaks = ResNetBlock(1, de_peaks, 128, 3)
+    de_peaks = ResNetBlock(1, de_peaks, 128, 3)
+    de_peaks = ResNetBlock(1, de_peaks, 128, 3)
 
     de_peaks = SEBlock()(de_peaks)
     de_peaks = layers.GlobalAvgPool1D()(de_peaks)
-    de_peaks = layers.Dense(32)(de_peaks)
+    de_peaks = layers.Dense(64)(de_peaks)
     de_peaks = layers.Activation("relu")(de_peaks)
-    de_peaks = layers.Dense(14, activation="sigmoid", name="peaks")(de_peaks)
+    de_peaks = layers.Dense(30, activation="sigmoid", name="peaks")(de_peaks)
     
     de_drops = ResNetBlock(1, expanded_en, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
+    
+    de_drops = ResNetBlock(1, de_drops, 128, 3)
+    de_drops = ResNetBlock(1, de_drops, 128, 3)
+    de_drops = ResNetBlock(1, de_drops, 128, 3)
 
     de_drops = SEBlock()(de_drops)
     de_drops = layers.GlobalAvgPool1D()(de_drops)
-    de_drops = layers.Dense(32)(de_drops)
+    de_drops = layers.Dense(64)(de_drops)
     de_drops = layers.Activation("relu")(de_drops)
-    de_drops = layers.Dense(14, activation="sigmoid", name="drops")(de_drops)
+    de_drops = layers.Dense(30, activation="sigmoid", name="drops")(de_drops)
     
     
     autoencoder = Model(
@@ -121,8 +138,8 @@ show_params(autoencoder, "autoencoder")
 
 sequences = np.load(path.join("patients", "merged_SpO2.npy"))
 stats = np.array(calc_stats(sequences))
-peaks = np.array([x[find_peaks(x)[0]] for x in sequences])
-drops = np.array([x[find_peaks(-x)[0]] for x in sequences])
+peaks = np.array(pad_sequences([x[find_peaks(x)[0]] for x in sequences], maxlen=30))
+drops = np.array(pad_sequences([x[find_peaks(-x)[0]] for x in sequences], maxlen=30))
 
 print(sequences.shape)
 
