@@ -201,6 +201,7 @@ if "train" in sys.argv:
 if "encode" in sys.argv:
     del autoencoder
     sequences = np.load(path.join("patients", "merged_ECG.npy"))
+    sequences = np.reshape(sequences, (-1, 600, 10))
     encoder.load_weights(save_path)
     encoded_ECG = encoder.predict(sequences, batch_size=batch_size).squeeze()
     np.save(path.join("patients", "merged_ECG.npy"), encoded_ECG)
