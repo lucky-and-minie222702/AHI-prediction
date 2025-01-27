@@ -38,10 +38,10 @@ if sys.argv[1] == "merge":
     annotations = divide_signal(annotations, win_size=60, step_size=5)
     stages = divide_signal(stages, win_size=60, step_size=5)
     annotations = np.array(
-        [1 if np.count_nonzero(x) == 10 else 0 for x in annotations]
+        [1 if np.count_nonzero(x) >= 10 else 0 for x in annotations]
     )
     stages = np.array(
-        [1 if np.count_nonzero(x) == 10 else 0 for x in stages]
+        [1 if np.count_nonzero(x) >= 10 else 0 for x in stages]
     )
 
     
