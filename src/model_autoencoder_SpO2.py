@@ -111,7 +111,7 @@ cb_early_stopping = cbk.EarlyStopping(
     mode = "min",
     restore_best_weights = True,
     start_from_epoch = early_stopping_epoch,
-    patience = 8,
+    patience = 7,
 )
 cb_timer = TimingCallback()
 
