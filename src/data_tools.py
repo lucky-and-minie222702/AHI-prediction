@@ -36,7 +36,9 @@ if sys.argv[1] == "merge":
     sequences_ECG = divide_signal(sequences_ECG, win_size=6000, step_size=500)  # 30s, step 5s
     sequences_SpO2 = divide_signal(sequences_SpO2, win_size=60, step_size=5)  # 30s, step 5s
     annotations = divide_signal(annotations, win_size=60, step_size=5)
-    annotations = np.round(np.mean(annotations, axis=-1))
+    annotations = np.array(
+        [1 if np.count_nonzero(x == 1) == 10 else 0 for x in annotations]
+    )
     stages = divide_signal(stages, win_size=60, step_size=5)
     stages = np.round(np.mean(stages, axis=1))
     
@@ -50,7 +52,9 @@ if sys.argv[1] == "merge":
     sequences_ECG = sequences_ECG[best]
     sequences_SpO2 = sequences_SpO2[best]
     annotations = annotations[best]
-    stages = stages[best]
+    stages = np.array(
+        [1 if np.count_nonzero(x == 1) == 10 else 0 for x in stages]
+    )
     
     # augment
     sequences_ECG = np.vstack(
