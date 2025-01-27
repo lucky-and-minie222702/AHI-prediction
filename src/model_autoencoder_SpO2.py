@@ -6,15 +6,15 @@ def create_model():
     inp = layers.Input(shape=(60, 1))
     en = layers.Normalization()(inp)
     
-    en = ResNetBlock(1, en, 64, 3)
+    en = ResNetBlock(1, en, 64, 3, True)
     en = ResNetBlock(1, en, 64, 3)
     en = ResNetBlock(1, en, 64, 3)
     
-    en = ResNetBlock(1, en, 128, 3)
+    en = ResNetBlock(1, en, 128, 3, True)
     en = ResNetBlock(1, en, 128, 3)
     en = ResNetBlock(1, en, 128, 3)
     
-    en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3, True)
     en = ResNetBlock(1, en, 256, 3)
     en = ResNetBlock(1, en, 256, 3)
     
@@ -26,15 +26,15 @@ def create_model():
     
     expanded_en = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(en)
     
-    de = ResNetBlock(1, expanded_en, 64, 3)
+    de = ResNetBlock(1, expanded_en, 64, 3, True)
     de = ResNetBlock(1, de, 64, 3)
     de = ResNetBlock(1, de, 64, 3)
 
-    de = ResNetBlock(1, de, 128, 3)
+    de = ResNetBlock(1, de, 128, 3, True)
     de = ResNetBlock(1, de, 128, 3)
     de = ResNetBlock(1, de, 128, 3)
     
-    de = ResNetBlock(1, de, 256, 3)
+    de = ResNetBlock(1, de, 256, 3, True)
     de = ResNetBlock(1, de, 256, 3)
     de = ResNetBlock(1, de, 256, 3)
 
@@ -55,11 +55,11 @@ def create_model():
     de_stats = layers.Activation("relu")(de_stats)
     de_stats = layers.Dense(7, activation="sigmoid", name="stats")(de_stats)
     
-    de_peaks = ResNetBlock(1, expanded_en, 64, 3)
+    de_peaks = ResNetBlock(1, expanded_en, 64, 3, True)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
     de_peaks = ResNetBlock(1, de_peaks, 64, 3)
     
-    de_peaks = ResNetBlock(1, de_peaks, 128, 3)
+    de_peaks = ResNetBlock(1, de_peaks, 128, 3, True)
     de_peaks = ResNetBlock(1, de_peaks, 128, 3)
     de_peaks = ResNetBlock(1, de_peaks, 128, 3)
 
@@ -69,11 +69,11 @@ def create_model():
     de_peaks = layers.Activation("relu")(de_peaks)
     de_peaks = layers.Dense(30, activation="sigmoid", name="peaks")(de_peaks)
     
-    de_drops = ResNetBlock(1, expanded_en, 64, 3)
+    de_drops = ResNetBlock(1, expanded_en, 64, 3, True)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
     de_drops = ResNetBlock(1, de_drops, 64, 3)
     
-    de_drops = ResNetBlock(1, de_drops, 128, 3)
+    de_drops = ResNetBlock(1, de_drops, 128, 3, True)
     de_drops = ResNetBlock(1, de_drops, 128, 3)
     de_drops = ResNetBlock(1, de_drops, 128, 3)
 
