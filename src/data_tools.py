@@ -40,21 +40,22 @@ if sys.argv[1] == "merge":
         [1 if np.count_nonzero(x == 1) == 10 else 0 for x in annotations]
     )
     stages = divide_signal(stages, win_size=60, step_size=5)
-    stages = np.round(np.mean(stages, axis=1))
+    stages = np.array(
+        [1 if np.count_nonzero(x == 1) == 10 else 0 for x in stages]
+    )
+    
     
     sequences_ECG = scaler.fit_transform(sequences_ECG.T).T  # scale
     
     rpa, rri = calc_ecg(sequences_ECG)
-    best_ecg = np.count_nonzero(rpa, axis=1) >= 40  # min 40 bpm
-    best_spo2 = np.min(sequences_SpO2, axis=1) >= 0.7
+    best_ecg = np.count_nonzero(rpa, axis=1) >= 45  # min 45 bpm
+    best_spo2 = np.min(sequences_SpO2, axis=1) >= 0.8
     best = np.array([e and s for e, s in zip(best_ecg, best_spo2)])
     
     sequences_ECG = sequences_ECG[best]
     sequences_SpO2 = sequences_SpO2[best]
     annotations = annotations[best]
-    stages = np.array(
-        [1 if np.count_nonzero(x == 1) == 10 else 0 for x in stages]
-    )
+    stages = stages[best]
     
     # augment
     sequences_ECG = np.vstack(
