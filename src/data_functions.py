@@ -198,3 +198,28 @@ def calc_percentile(arr: np.ndarray, num: float) -> float:
     
     percentile = (count / len(arr)) * 100
     return percentile
+
+def fill_missing_with_mean(data):
+    for i in range(len(data)):
+        if data[i] is None:  # Detect missing values (None)
+            # Find the starting and ending indices around the missing value
+            start = i - 1
+            while start >= 0 and data[start] is None:
+                start -= 1
+            
+            end = i + 1
+            while end < len(data) and data[end] is None:
+                end += 1
+            
+            # Get the values at the start and end positions
+            start_value = data[start] if start >= 0 else None
+            end_value = data[end] if end < len(data) else None
+            
+            # Calculate the mean of the valid values
+            surrounding_values = [val for val in [start_value, end_value] if val is not None]
+            mean_value = np.mean(surrounding_values) if surrounding_values else 0
+            
+            # Replace the missing value with the calculated mean
+            data[i] = mean_value
+    
+    return data

@@ -119,10 +119,12 @@ annotations  = np.load(path.join("patients", "merged_anns.npy"))
 # ])
 
 if "train" in sys.argv:
-    indices = np.arange(len(annotations))
-    train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))
-    np.save(path.join("patients", "train_indices_ECG_ah"), train_indices)
-    np.save(path.join("patients", "test_indices_ECG_ah"), test_indices)
+    # indices = np.arange(len(annotations))
+    # train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=random.randint(69, 69696969))
+    # np.save(path.join("patients", "train_indices_ECG_ah"), train_indices)
+    # np.save(path.join("patients", "test_indices_ECG_ah"), test_indices)
+    train_indices = np.load(path.join("patients", "train_indices_ah.npy"))
+    test_indices = np.load(path.join("patients", "test_indices_ah.npy"))
         
     X_train = sequences[train_indices]
     y_train = annotations[train_indices]
