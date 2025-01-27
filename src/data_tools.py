@@ -43,8 +43,8 @@ if sys.argv[1] == "merge":
     sequences_ECG = scaler.fit_transform(sequences_ECG.T).T  # scale
     
     rpa, rri = calc_ecg(sequences_ECG)
-    best_ecg = np.count_nonzero(rpa, axis=1) >= 30  # min 30 bpm
-    best_spo2 = np.min(sequences_SpO2, axis=1) >= 0.6
+    best_ecg = np.count_nonzero(rpa, axis=1) >= 40  # min 40 bpm
+    best_spo2 = np.min(sequences_SpO2, axis=1) >= 0.7
     best = np.array([e and s for e, s in zip(best_ecg, best_spo2)])
     
     sequences_ECG = sequences_ECG[best]

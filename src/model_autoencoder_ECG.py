@@ -38,8 +38,7 @@ def create_model():
 
     en = SEBlock()(en)
     en = layers.Flatten()(en)
-    en = layers.Reshape((640, 8))(en)
-    expanded_en = layers.Conv1D(filters=6, kernel_size=3, padding="same")(en)
+    expanded_en = layers.Reshape((640, 8))(en)
 
     de = ResNetBlock(1, expanded_en, 64, 3, True)
     de = ResNetBlock(1, de, 64, 3)
@@ -76,7 +75,7 @@ def create_model():
     de = layers.Dense(300)(de)
     de = layers.BatchNormalization()(de)
     de = layers.LeakyReLU(negative_slope=0.2)(de)
-    de = layers.Reshape((600, 10), name="ecg")(de)
+    de = layers.Flatten(name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
@@ -172,7 +171,7 @@ if "train" in sys.argv:
     # sequences = pad_sequences(sequences, maxlen=3008)
     hist = autoencoder.fit(
         sequences,
-        [sequences, rpa, rri],
+        [np.reshape(sequences, (-1, 6000)), rpa, rri],
         epochs = max_epochs,
         batch_size = batch_size,
         validation_split = 0.2,
