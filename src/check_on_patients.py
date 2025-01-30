@@ -123,12 +123,16 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
             subarray = arr[i:j]
             mean_value = sum(subarray) / len(subarray)
 
+            if len(subarray) == min_length and round(mean_value) == 0:
+                break
+
             if round(mean_value) == 1:
                 if i >= last_end + min_separation:
                     count += 1
                     last_end = j
                     i = j + min_separation - 1
                     break 
+            
         i += 1 
         print(f" => {i}/{n-min_length}", end="\r")
     print()
