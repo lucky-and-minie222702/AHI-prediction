@@ -156,6 +156,8 @@ for patient_id in range(1, 29):
     
     segmented_ecg = encoder.predict(segmented_ecg, batch_size=256, verbose=False)
     
+    print(f"Analysing paatient {patient_id}...")
+    
     # ah
     ahs = [np.argmax(x) for x in model_ah.predict(segmented_ecg, batch_size=256, verbose=False).squeeze()]
     # stage
