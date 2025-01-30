@@ -47,15 +47,13 @@ def create_model_ECG_stage(name: str):
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     se_conv = SEBlock()(conv)
-    rnn = layers.LSTM(128)(se_conv)
-    
-    flat = layers.Flatten()(rnn)
+
     flat = layers.GlobalAvgPool1D()(se_conv)
-    flat = layers.Dense(128)(flat)
+    flat = layers.Dense(1024)(flat)
     flat = layers.BatchNormalization()(flat)
     flat = layers.LeakyReLU(negative_slope=0.25)(flat)
     flat = layers.Dropout(rate=0.1)(flat)
-    flat = layers.Dense(128)(flat)
+    flat = layers.Dense(1024)(flat)
     flat = layers.BatchNormalization()(flat)
     flat = layers.LeakyReLU(negative_slope=0.25)(flat)
     flat = layers.Dropout(rate=0.1)(flat)
