@@ -162,6 +162,7 @@ for patient_id in range(1, 29):
     
     # ah
     raw_pred = model_ah.predict(segmented_ecg, batch_size=256, verbose=False)
+    print(raw_pred.shape)
     ahs = [np.argmax(x) for x in raw_pred]
     # stage
     model_stage.predict(segmented_ecg, batch_size=256, verbose=False)
