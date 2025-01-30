@@ -155,12 +155,12 @@ for patient_id in range(1, 29):
     segmented_ecg = np.reshape(segmented_ecg, (-1, 600, 10))
     
     segmented_ecg = encoder.predict(segmented_ecg, batch_size=256, verbose=False)
-    print(segmented_ecg.shape)
 
     ahs = []
     wakes =[]
     next = False
     for seg in segmented_ecg:
+        print(seg.shape, segmented_ecg.shape)
         # ah
         pred = np.argmax(model_ah.predict(seg, batch_size=256, verbose=False).squeeze())
         ahs.append(pred)
