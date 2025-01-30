@@ -113,12 +113,10 @@ def encoder_structure():
     
     return encoder
 
-def count_valid_subarrays(arr, min_length: int, min_separation: int = 0, min_last_zero: int = None) -> int:
+def count_valid_subarrays(arr, min_length: int, min_separation: int = 0, min_last_zero: int = 0) -> int:
     n = len(arr)
     count = 0
     i = 0
-    
-    min_last_zero = min_separation * 2
 
     durs = []    
     while i <= n - min_length:
@@ -177,9 +175,9 @@ for patient_id in range(1, 29):
     wakes = [np.argmax(x) for x in raw_pred]
 
     print("counting ah...")
-    ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=1)[0]
+    ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=5)[0]
     print("counting sleeptime...")
-    wakes_count, wakes_dur = count_valid_subarrays(wakes, min_length=30, min_separation=0)
+    wakes_count, wakes_dur = count_valid_subarrays(wakes, min_length=30, min_separation=10)
 
     sleep_time = (len(full_ecg) / 100)
     for w in wakes_dur:
