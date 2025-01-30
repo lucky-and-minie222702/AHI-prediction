@@ -134,8 +134,8 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
                 i += j + min_separation
                 break
 
-        # print(f" => {i}/{n-min_length}", end="\r")
-    # print()
+        print(f" => {i}/{n-min_length}", end="\r")
+    print()
     return count, durs
 
 
