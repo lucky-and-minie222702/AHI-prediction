@@ -180,7 +180,7 @@ for patient_id in range(1, 29):
     wakes_count = count_valid_subarrays(wakes, min_length=30, min_separation=0)
 
     sleep_time = (len(full_ecg) / 100)
-    sleep_time -= wakes*30
+    sleep_time -= sum(wakes)*30
 
     ahi = ahs_count / (sleep_time * 60 * 60)
 
