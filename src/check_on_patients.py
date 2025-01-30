@@ -113,10 +113,12 @@ def encoder_structure():
     
     return encoder
 
-def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
+def count_valid_subarrays(arr, min_length: int, min_separation: int = 0, min_last_zero: int = None) -> int:
     n = len(arr)
     count = 0
     i = 0
+    
+    min_last_zero = min_separation * 2
 
     durs = []    
     while i <= n - min_length:
@@ -128,13 +130,10 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
                 i += 1
                 break
 
-            if round(mean_value) == 0 or sum(subarray[-min_separation-1:-1:]) == 0:
+            if round(mean_value) == 0 or sum(subarray[-min_last_zero-1:-1:]) == 0:
                 count += 1
-                durs.append(i-j)
-                if  sum(subarray[-min_separation-1:-1:]) == 0:
-                    i = j
-                else:
-                    i = j + min_separation
+                durs.append(j-i)
+                i = j + min_separation
                 break
 
         print(f" => {i}/{n-min_length}", end="\r")
