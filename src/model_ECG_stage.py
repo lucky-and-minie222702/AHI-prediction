@@ -47,16 +47,19 @@ def create_model_ECG_stage(name: str):
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     se_conv = SEBlock()(conv)
+    rnn = layers.LSTMCell(128)(se_conv)
+    
+    flat = layers.Flatten()(rnn)
     flat = layers.GlobalAvgPool1D()(se_conv)
-    flat = layers.Dense(1024)(flat)
+    flat = layers.Dense(128)(flat)
     flat = layers.BatchNormalization()(flat)
     flat = layers.LeakyReLU(negative_slope=0.25)(flat)
     flat = layers.Dropout(rate=0.1)(flat)
-    flat = layers.Dense(1024)(flat)
+    flat = layers.Dense(128)(flat)
     flat = layers.BatchNormalization()(flat)
     flat = layers.LeakyReLU(negative_slope=0.25)(flat)
     flat = layers.Dropout(rate=0.1)(flat)
-    out = layers.Dense(1, activation="sigmoid")(flat)
+    out = layers.Dense(2, activation="softmax")(flat)
     
     model = Model(
         inputs = inp,
@@ -75,9 +78,9 @@ save_path = path.join("res", f"model_ECG_stage_{name}.weights.h5")
 
 model.compile(
     optimizer = "Adam",
-    loss =  "binary_crossentropy",
-    # metrics = ["accuracy"]
-    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    loss =  "categorical_crossentropy",
+    metrics = ["accuracy"]
+    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -216,19 +219,25 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size)
+raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
+pred = [np.argmax(x) for x in raw_pred]
+cm = confusion_matrix(y_test, pred)
+print("Confusion matrix:\n", cm)
+print("Confusion matrix:\n", cm, file=f)
+print(calc_cm(cm))
+print(calc_cm(cm), file=f)
 
-for d in range(1, 10):
-    threshold = d / 10
-    print(f"Threshold 0.{d}")
-    print(f"Threshold 0.{d}", file=f)
-    arr = np.array([np.squeeze(x) for x in raw_pred])
-    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-    cm = confusion_matrix(y_test, pred)
-    print("Confusion matrix:\n", cm)
-    print("Confusion matrix:\n", cm, file=f)
-    print(calc_cm(cm))
-    print(calc_cm(cm), file=f)
+# for d in range(1, 10):
+#     threshold = d / 10
+#     print(f"Threshold 0.{d}")
+#     print(f"Threshold 0.{d}", file=f)
+#     arr = np.array([np.squeeze(x) for x in raw_pred])
+#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+#     cm = confusion_matrix(y_test, pred)
+#     print("Confusion matrix:\n", cm)
+#     print("Confusion matrix:\n", cm, file=f)
+#     print(calc_cm(cm))
+#     print(calc_cm(cm), file=f)
 
 f.close()
 

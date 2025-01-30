@@ -28,13 +28,14 @@ def create_model_SpO2_ah(name: str):
     x = layers.SpatialDropout1D(rate=0.1)(x)
 
     x = SEBlock()(x)
-    x = layers.GlobalAvgPool1D()(x)
+    x = layers.LSTMCell(128)(x)
     
-    x = layers.Dense(512)(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(128)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
 
-    out = layers.Dense(1, activation="sigmoid")(x)
+    out = layers.Dense(2, activation="softmax")(x)
 
     model = Model(
         inputs = inp,
@@ -53,8 +54,9 @@ save_path = path.join("res", f"model_SpO2_ah_{name}.weights.h5")
 
 model.compile(
     optimizer = "Adam",
-    loss =  "binary_crossentropy",
-    metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
+    loss =  "categorical_crossentropy",
+    metrics = ["accuracy"],
+    # metrics = [metrics.BinaryAccuracy(name = f"threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
     # metrics = [metrics.Precision(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)] + 
     #           [metrics.Recall(name = f"precision_threshold_0.{t}", threshold = t/10) for t in range(1, 10)],
 )
@@ -69,7 +71,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 35
+early_stopping_epoch = 50
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -189,18 +191,24 @@ for metric, score in scores.items():
     print(f"{metric}: {score}", file=f)
 
 raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
+pred = [np.argmax(x) for x in raw_pred]
+cm = confusion_matrix(y_test, pred)
+print("Confusion matrix:\n", cm)
+print("Confusion matrix:\n", cm, file=f)
+print(calc_cm(cm))
+print(calc_cm(cm), file=f)
 
-for d in range(1, 10):
-    threshold = d / 10
-    print(f"Threshold 0.{d}")
-    print(f"Threshold 0.{d}", file=f)
-    arr = np.array([np.squeeze(x) for x in raw_pred])
-    pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
-    cm = confusion_matrix(y_test, pred)
-    print("Confusion matrix:\n", cm)
-    print("Confusion matrix:\n", cm, file=f)
-    print(calc_cm(cm))
-    print(calc_cm(cm), file=f)
+# for d in range(1, 10):
+#     threshold = d / 10
+#     print(f"Threshold 0.{d}")
+#     print(f"Threshold 0.{d}", file=f)
+#     arr = np.array([np.squeeze(x) for x in raw_pred])
+#     pred =  np.where(arr % 1 >= threshold, np.ceil(arr), np.floor(arr))
+#     cm = confusion_matrix(y_test, pred)
+#     print("Confusion matrix:\n", cm)
+#     print("Confusion matrix:\n", cm, file=f)
+#     print(calc_cm(cm))
+#     print(calc_cm(cm), file=f)
 
 # print("Real - Prediction:")
 # print("Real - Prediction:", file=f)
