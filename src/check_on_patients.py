@@ -64,9 +64,6 @@ def ECG_structure(name: str):
         outputs = out,
         name = name
     )
-
-    show_params(model, name)
-    # model.summary()
         
     return model
 
@@ -157,17 +154,17 @@ for patient_id in range(1, 29):
     segmented_ecg = scaler.fit_transform(segmented_ecg.T).T  # scale
     segmented_ecg = np.reshape(segmented_ecg, (-1, 600, 10))
     
-    segmented_ecg = encoder.predict(segmented_ecg).squeeze()
+    segmented_ecg = encoder.predict(segmented_ecg, batch_size=256, verbose=False)
 
     ahs = []
     wakes =[]
     next = False
     for seg in segmented_ecg:
         # ah
-        pred = np.argmax(model_ah.predict(seg).squeeze())
+        pred = np.argmax(model_ah.predict(seg, batch_size=256, verbose=False).squeeze())
         ahs.append(pred)
         # stage
-        pred = np.argmax(model_stage.predict(seg).squeeze())
+        pred = np.argmax(model_stage.predict(seg, batch_size=256, verbose=False).squeeze())
         wakes.append(pred)
 
     ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=3)
