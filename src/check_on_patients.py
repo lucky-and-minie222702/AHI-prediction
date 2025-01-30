@@ -156,14 +156,17 @@ for patient_id in range(1, 29):
     segmented_ecg = scaler.fit_transform(segmented_ecg.T).T  # scale
     segmented_ecg = np.reshape(segmented_ecg, (-1, 600, 10))
     
-    segmented_ecg = encoder.predict(segmented_ecg, batch_size=256, verbose=False)
+    print("encoding...")
+    segmented_ecg = encoder.predict(segmented_ecg, batch_size=256)
     
     print(f"Analysing paatient {patient_id}...")
     
     # ah
+    print("counting ah...")
     raw_pred = model_ah.predict(segmented_ecg, batch_size=256)
     ahs = [np.argmax(x) for x in raw_pred]
     # stage
+    print("counting sleeptime...")
     model_stage.predict(segmented_ecg, batch_size=256,)
     wakes = [np.argmax(x) for x in raw_pred]
 
