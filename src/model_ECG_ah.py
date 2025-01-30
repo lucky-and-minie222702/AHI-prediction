@@ -143,7 +143,6 @@ if "train" in sys.argv:
 
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
-    y_train = to_categorical(y_train, num_classes=2)
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
@@ -153,9 +152,8 @@ if "train" in sys.argv:
 
     print(f"\nTrain size: {X_train.shape[0]}")
 
-    # y_train = to_categorical(y_train, num_classes=2)
-    # y_test = to_categorical(y_test, num_classes=2)
-    # y_val = to_categorical(y_val, num_classes=2)
+    y_train = to_categorical(y_train, num_classes=2)
+    y_val = to_categorical(y_val, num_classes=2)
 
     hist = model.fit(
         X_train,
