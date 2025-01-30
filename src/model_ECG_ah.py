@@ -143,6 +143,7 @@ if "train" in sys.argv:
 
     print("Dataset:")
     print(f"Train set: [0]: {np.count_nonzero(y_train == 0)}  |  [1]: {np.count_nonzero(y_train == 1)}")
+    y_train = to_categorical(y_train, num_classes=2)
 
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=random.randint(69, 69696969))
 
@@ -171,6 +172,13 @@ if "train" in sys.argv:
         ]
     )
 
+    for key, value in hist.history.items():
+        data = np.array(value)
+        his_path = path.join("history", f"{name}_{key}_SpO2_ah")
+        np.save(his_path, data)
+
+    print("Saving history done!")
+
 test_indices = np.load(path.join("patients", "test_indices_ah.npy"))
 X_test = sequences[test_indices]
 y_test = annotations[test_indices]
@@ -192,6 +200,8 @@ sample_weights = np.array([class_weights[int(label)] for label in y_test])
 print(f"Test set: [0]: {np.count_nonzero(y_test == 0)}  |  [1]: {np.count_nonzero(y_test == 1)}")
 print(f"\nTest size: {X_test.shape[0]}")
 
+y_test = to_categorical(y_test, num_classes=2)
+
 scores = model.evaluate(
     X_test, 
     y_test,
@@ -199,10 +209,6 @@ scores = model.evaluate(
     batch_size = batch_size, 
     return_dict = True
 )
-
-y_test = annotations[test_indices]
-if "balance" in sys.argv:
-    y_test = y_test[combined_balance]
 
 print("\nSUMMARY\n")
 
@@ -241,11 +247,3 @@ print(calc_cm(cm), file=f)
 #     print(calc_cm(cm), file=f)
 
 f.close()
-
-if "train" in sys.argv:
-    for key, value in hist.history.items():
-        data = np.array(value)
-        his_path = path.join("history", f"{name}_{key}_ECG_ah")
-        np.save(his_path, data)
-
-    print("Saving history done!")
