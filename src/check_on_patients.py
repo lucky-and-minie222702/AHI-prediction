@@ -182,7 +182,7 @@ for patient_id in range(1, 29):
     sleep_time = (len(full_ecg) / 100)
     sleep_time -= wakes_count*30
 
-    ahi = ahs_count / (sleep_time * 60 * 60)
+    ahi = ahs_count / (sleep_time / 60 / 60)
 
     print(f"Patient {patient_id}:")    
     print(f"Sleep time: {convert_seconds(sleep_time)}")
