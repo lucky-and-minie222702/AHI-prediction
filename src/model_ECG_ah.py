@@ -223,7 +223,7 @@ for metric, score in scores.items():
     print(f"{metric}: {score}")
     print(f"{metric}: {score}", file=f)
 
-raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
+raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size)
 pred = [np.argmax(x) for x in raw_pred]
 y_test = [np.argmax(x) for x in y_test]
 cm = confusion_matrix(y_test, pred)

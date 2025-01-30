@@ -161,11 +161,10 @@ for patient_id in range(1, 29):
     print(f"Analysing paatient {patient_id}...")
     
     # ah
-    raw_pred = model_ah.predict(segmented_ecg, batch_size=256, verbose=False)
-    print(raw_pred.shape)
+    raw_pred = model_ah.predict(segmented_ecg, batch_size=256)
     ahs = [np.argmax(x) for x in raw_pred]
     # stage
-    model_stage.predict(segmented_ecg, batch_size=256, verbose=False)
+    model_stage.predict(segmented_ecg, batch_size=256,)
     wakes = [np.argmax(x) for x in raw_pred]
 
     ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=3)
