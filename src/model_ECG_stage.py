@@ -47,7 +47,7 @@ def create_model_ECG_stage(name: str):
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     se_conv = SEBlock()(conv)
-    rnn = layers.LSTMCell(128)(se_conv)
+    rnn = layers.LSTM(128)(se_conv)
     
     flat = layers.Flatten()(rnn)
     flat = layers.GlobalAvgPool1D()(se_conv)
