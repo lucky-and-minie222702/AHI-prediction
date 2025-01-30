@@ -117,26 +117,24 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
     n = len(arr)
     count = 0
     i = 0
-    last_end = -min_separation
+
+    durs = []    
     while i <= n - min_length:
         for j in range(i + min_length, n + 1):
             subarray = arr[i:j]
             mean_value = sum(subarray) / len(subarray)
 
             if len(subarray) == min_length and round(mean_value) == 0:
+                i += 1
                 break
 
-            if round(mean_value) == 1:
-                if i >= last_end + min_separation:
-                    count += 1
-                    last_end = j
-                    i = j + min_separation - 1
-                    break 
-            
-        i += 1 
+            if round(mean_value) == 0:
+                durs.append(i-j)
+                i += j + min_separation
+
         # print(f" => {i}/{n-min_length}", end="\r")
     # print()
-    return count
+    return count, durs
 
 
 model_ah = ECG_structure("ah")
@@ -175,12 +173,13 @@ for patient_id in range(1, 29):
     wakes = [np.argmax(x) for x in raw_pred]
 
     print("counting ah...")
-    ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=10)
+    ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=1)[0]
     print("counting sleeptime...")
-    wakes_count = count_valid_subarrays(wakes, min_length=30, min_separation=0)
+    wakes_count, wakes_dur = count_valid_subarrays(wakes, min_length=30, min_separation=0)
 
     sleep_time = (len(full_ecg) / 100)
-    sleep_time -= wakes_count*30
+    for w in wakes_dur:
+        sleep_time -= w
 
     ahi = ahs_count / (sleep_time / 60 / 60)
 
