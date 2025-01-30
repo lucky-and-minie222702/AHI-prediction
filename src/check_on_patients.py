@@ -147,9 +147,10 @@ model_stage.load_weights(path.join("res", f"model_ECG_stage_{model_id}.weights.h
 encoder.load_weights(path.join("res", "model_auto_encoder_ECG.weights.h5"))
 
 patients_folder = path.join("test_data", "30benhnhannumpy")
+res_file = "test_patients_results.txt"
+f = open(res_file, "w")
 
-for patients_id in range(1, 29):
-    res_file = path.join("test_on_patients_results", f"benhnhan{patient_id}.txt")
+for patient_id in range(1, 29):
     full_ecg = np.load(path.join(patients_folder, f"benhnhan{patient_id}ecg.npy"))
     segmented_ecg = divide_signal(full_ecg, win_size=6000, step_size=100)
     scaler = MinMaxScaler()
@@ -175,10 +176,12 @@ for patients_id in range(1, 29):
 
     ahi = ahs_count / (sleep_time * 60 * 60)
 
-    f = open(res_file, "w")
+    print(f"Patient {patient_id}:")    
     print(f"Sleep time: {convert_seconds(sleep_time)}")
     print(f"AH count: {ahs_count}")
     print(f"AHI: {ahi}")
-    f.close()
+    print("="*30)
+
+    print(f"Done patient {patient_id}!")
     
-    print(f"Done patient {patients_id}")
+f.close()
