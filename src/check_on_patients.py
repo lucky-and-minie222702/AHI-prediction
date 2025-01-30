@@ -131,7 +131,10 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
             if round(mean_value) == 0 or sum(subarray[-min_separation-1:-1:]) == 0:
                 count += 1
                 durs.append(i-j)
-                i += j + min_separation
+                if  sum(subarray[-min_separation-1:-1:]) == 0:
+                    i = j
+                else:
+                    i = j + min_separation
                 break
 
         print(f" => {i}/{n-min_length}", end="\r")
