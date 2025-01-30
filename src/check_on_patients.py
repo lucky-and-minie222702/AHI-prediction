@@ -155,6 +155,8 @@ for patient_id in range(1, 29):
     segmented_ecg = divide_signal(full_ecg, win_size=6000, step_size=100)
     scaler = MinMaxScaler()
     segmented_ecg = scaler.fit_transform(segmented_ecg.T).T  # scale
+    segmented_ecg = np.reshape(segmented_ecg, (-1, 600, 10))
+    
     segmented_ecg = encoder.predict(segmented_ecg).squeeze()
 
     ahs = []
