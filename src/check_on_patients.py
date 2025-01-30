@@ -155,6 +155,7 @@ for patient_id in range(1, 29):
     segmented_ecg = np.reshape(segmented_ecg, (-1, 600, 10))
     
     segmented_ecg = encoder.predict(segmented_ecg, batch_size=256, verbose=False)
+    print(segmented_ecg.shape)
 
     ahs = []
     wakes =[]
