@@ -125,15 +125,15 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0, min_las
             mean_value = sum(subarray) / len(subarray)
 
             if len(subarray) == min_length and round(mean_value) == 0:
-                i += 1
                 break
 
             if round(mean_value) == 0 or sum(subarray[-min_last_zero-1:-1:]) == 0:
                 count += 1
                 durs.append(j-i)
-                i = j + min_separation
+                i = j + min_separation - 1
                 break
-
+        
+        i += 1
         print(f" => {i}/{n-min_length}", end="\r")
     print()
     return count, durs
