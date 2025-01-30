@@ -130,7 +130,7 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
                     i = j + min_separation - 1
                     break 
         i += 1 
-        print(f"{i}/{n-min_length}", end="\r")
+        print(f" => {i}/{n-min_length}", end="\r")
     print()
     return count
 
@@ -184,6 +184,12 @@ for patient_id in range(1, 29):
     print(f"Sleep time: {convert_seconds(sleep_time)}")
     print(f"AH count: {ahs_count}")
     print(f"AHI: {ahi}")
+    print("="*30)
+    
+    print(f"Patient {patient_id}:", file=f)    
+    print(f"Sleep time: {convert_seconds(sleep_time)}", file=f)
+    print(f"AH count: {ahs_count}", file=f)
+    print(f"AHI: {ahi}", file=f)
     print("="*30)
 
     print(f"Done patient {patient_id}!")
