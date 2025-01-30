@@ -93,7 +93,7 @@ if "mw" in sys.argv:
     majority_weight = float(sys.argv[sys.argv.index("mw")+1])
 
 # callbacks
-early_stopping_epoch = 50
+early_stopping_epoch = 100
 if "ese" in sys.argv:
     early_stopping_epoch = int(sys.argv[sys.argv.index("ese")+1])
 cb_early_stopping = cbk.EarlyStopping(
@@ -225,6 +225,7 @@ for metric, score in scores.items():
 
 raw_pred = model.predict(X_test, verbose=False, batch_size=batch_size).squeeze()
 pred = [np.argmax(x) for x in raw_pred]
+y_test = [np.argmax(x) for x in y_test]
 cm = confusion_matrix(y_test, pred)
 print("Confusion matrix:\n", cm)
 print("Confusion matrix:\n", cm, file=f)
