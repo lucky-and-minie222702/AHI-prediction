@@ -180,7 +180,7 @@ for patient_id in range(1, 29):
     wakes_count = count_valid_subarrays(wakes, min_length=30, min_separation=0)
 
     sleep_time = (len(full_ecg) / 100)
-    sleep_time -= sum(wakes)*30
+    sleep_time -= wakes_count*30
 
     ahi = ahs_count / (sleep_time * 60 * 60)
 
@@ -194,7 +194,7 @@ for patient_id in range(1, 29):
     print(f"Sleep time: {convert_seconds(sleep_time)}", file=f)
     print(f"AH count: {ahs_count}", file=f)
     print(f"AHI: {ahi}", file=f)
-    print("="*30)
+    print("="*30, file=f)
 
     print(f"Done patient {patient_id}!")
     
