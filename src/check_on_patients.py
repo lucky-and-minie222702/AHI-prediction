@@ -130,8 +130,8 @@ def count_valid_subarrays(arr, min_length: int, min_separation: int = 0) -> int:
                     i = j + min_separation - 1
                     break 
         i += 1 
-        print(f"{i}/{n-min_length}", end="r")
-    print("\n")
+        print(f"{i}/{n-min_length}", end="\r")
+    print()
     return count
 
 
@@ -162,15 +162,17 @@ for patient_id in range(1, 29):
     print(f"Analysing paatient {patient_id}...")
     
     # ah
-    print("counting ah...")
+    print("predicting ah...")
     raw_pred = model_ah.predict(segmented_ecg, batch_size=256)
     ahs = [np.argmax(x) for x in raw_pred]
     # stage
-    print("counting sleeptime...")
-    model_stage.predict(segmented_ecg, batch_size=256,)
+    print("predicting sleeptime...")
+    model_stage.predict(segmented_ecg, batch_size=256)
     wakes = [np.argmax(x) for x in raw_pred]
 
+    print("counting ah...")
     ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=3)
+    print("counting sleeptime...")
     wakes_count = count_valid_subarrays(wakes, min_length=30, min_separation=0)
 
     sleep_time = (len(full_ecg) / 100)
