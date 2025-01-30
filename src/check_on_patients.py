@@ -155,18 +155,11 @@ for patient_id in range(1, 29):
     segmented_ecg = np.reshape(segmented_ecg, (-1, 600, 10))
     
     segmented_ecg = encoder.predict(segmented_ecg, batch_size=256, verbose=False)
-
-    ahs = []
-    wakes =[]
-    next = False
-    for seg in segmented_ecg:
-        print(seg.shape, segmented_ecg.shape)
-        # ah
-        pred = np.argmax(model_ah.predict(seg, batch_size=256, verbose=False).squeeze())
-        ahs.append(pred)
-        # stage
-        pred = np.argmax(model_stage.predict(seg, batch_size=256, verbose=False).squeeze())
-        wakes.append(pred)
+    
+    # ah
+    ahs = [np.argmax(x) for x in model_ah.predict(segmented_ecg, batch_size=256, verbose=False).squeeze()]
+    # stage
+    wakes = [np.argmax(x) for x in model_stage.predict(segmented_ecg, batch_size=256, verbose=False).squeeze()]
 
     ahs_count = count_valid_subarrays(ahs, min_length=10, min_separation=3)
     wakes_count = count_valid_subarrays(wakes, min_length=30, min_separation=0)
