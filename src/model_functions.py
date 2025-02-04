@@ -1,14 +1,3 @@
-import os
-import sys
-if "disable_XLA" in sys.argv:
-    os.environ['TF_XLA_FLAGS'] = '--tf_xla_auto_jit=2'
-if "lazy_loading" in sys.argv:
-    os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-if "disable_GPU" in sys.argv:
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-if "no_logs" in sys.argv:
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import numpy as np
 import keras
 import sys
@@ -41,14 +30,6 @@ from timeit import default_timer as timer
 import random
 
 # check for available GPUs
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    print(f"GPUs detected: {len(gpus)}")
-    for gpu in gpus:
-        print(f"GPU: {gpu.name}")
-else:
-    print("No GPU detected. Using CPU.")
-
 def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False, activation = layers.LeakyReLU(negative_slope=0.25)):
     if not transpose:
         if dimension == 1:
@@ -203,15 +184,6 @@ def show_params(model: Model, name: str):
     params = model.count_params()
     print(" | Total params :", "{:,}".format(params).replace(",", " "))
     print(" | Size         :", convert_bytes(params * 4))
-
-def weighted_binary_crossentropy(weights: dict | list[int]):
-    def loss_fn(y_true: int, y_pred: float):
-        # prevent 0
-        y_pred = K.clip(y_pred, K.epsilon(), 1 - K.epsilon())
-        bce = - (weights[1] * y_true * K.log(y_pred) + weights[0] * (1 - y_true) * K.log(1 - y_pred))
-        return K.mean(bce)
-    return loss_fn
-
 
 # Attention mechanism  
 class MyMultiHeadRelativeAttention(layers.Layer):
