@@ -30,7 +30,7 @@ from timeit import default_timer as timer
 import random
 
 # check for available GPUs
-def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False, activation = layers.LeakyReLU(negative_slope=0.25)):
+def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False, activation = layers.Activation("relu")):
     if not transpose:
         if dimension == 1:
             Conv = layers.Conv1D
@@ -163,27 +163,6 @@ class TimingCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch: int, logs = {}):
         self.logs.append(timer()-self.starttime)
 
- 
-def convert_bytes(byte_size: int) -> str:
-    units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
-    size = byte_size
-    unit_index = 0
-    while size >= 1024 and unit_index < len(units) - 1:
-        size /= 1024
-        unit_index += 1
-    return f"{size:.2f} {units[unit_index]}"
-
-def convert_seconds(total_seconds: float) -> str:
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
-    return f"{int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds"
-
-def show_params(model: Model, name: str):
-    print(f"Model {name}:")
-    params = model.count_params()
-    print(" | Total params :", "{:,}".format(params).replace(",", " "))
-    print(" | Size         :", convert_bytes(params * 4))
 
 # Attention mechanism  
 class MyMultiHeadRelativeAttention(layers.Layer):
@@ -250,13 +229,15 @@ class MyMultiHeadRelativeAttention(layers.Layer):
 
         output = self.output_dense(attention_output)
         return output
-    
+
+  
 class SaveEncoderCallback(tf.keras.callbacks.Callback):
-    def __init__(self, encoder, save_path: str):
+    def __init__(self, encoder, save_path: str, save_after_epoch: int = 1):
         super(SaveEncoderCallback, self).__init__()
         self.encoder = encoder
         self.save_path = save_path
+        self.sae = save_after_epoch
 
     def on_epoch_end(self, epoch, logs):
-        if epoch % 5 == 0:
+        if (epoch + 1) % self.sae == 0:
             self.encoder.save_weights(self.save_path)

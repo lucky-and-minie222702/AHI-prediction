@@ -2,6 +2,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from scipy.signal import find_peaks
 import neurokit2 as nk
+from scipy import signal
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
@@ -94,31 +95,16 @@ def divide_signal(signal, win_size: int, step_size: int = None) -> np.ndarray:
             segments.append(segment)
         
     return np.array(segments)
-
-def balancing_data(data: np.ndarray, majority_weight: float = 1.0) -> np.ndarray:  
-    count0 = np.count_nonzero(data == 0)
-    count1 = len(data) - count0
-    count0 += count0 == count1  # avoid equal
-    minority = [count0, count1].index(min(count0, count1))
-    majority = [count0, count1].index(max(count0, count1))
-    
-    minority_data = np.where(data == minority)[0]
-    majority_data = np.where(data == majority)[0]
-    
-    return np.random.permutation(np.concatenate([
-        minority_data, majority_data[:int(len(minority_data) * majority_weight):]
-    ]))
   
 def calc_cm(cm: np.ndarray | list):
     TP = cm[1][1] 
-    FP = cm[1][0]  
-    FN = cm[0][1]
+    FP = cm[0][1]  
+    FN = cm[1][0]
     TN = cm[0][0]
 
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
-    
-    sensitivity = TP / (TP + FN)
+
     specificity = TN / (TN + FP)
     accuracy = (TP + TN) / (TP + TN + FP + FN)
     
@@ -127,8 +113,7 @@ def calc_cm(cm: np.ndarray | list):
 
     return {
         "precision": precision, 
-        "recall": recall, 
-        "sensitivity": sensitivity, 
+        "recall (sensivity)": recall, 
         "specificity": specificity,
         "accuracy": accuracy,
         "positive_accuracy": Positive_accuracy,
@@ -164,29 +149,29 @@ def calc_time(start: str, end: str) -> int:
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
 
-def calc_ecg(signals, fs: int = 100, duration: int = 60, max_rri: int = 120, max_rpa: int = 120):
+def calc_ecg(signals, splr: int = 100, duration: int = 30, max_rri: int = 60, max_rpa: int = 60):
     rri_res = []
     rpa_res = []
-    t = np.linspace(0, duration, fs * duration)
+    t = np.linspace(0, duration, splr * duration)
     for sig in signals:
-        peaks = nk.ecg_findpeaks(sig, sampling_rate=100)["ECG_R_Peaks"]
+        peaks = nk.ecg_findpeaks(sig, sampling_rate=splr)["ECG_R_Peaks"]
 
         if len(peaks) > 0:
             r_peaks_time = t[peaks]
-            rri = np.diff(r_peaks_time) 
             rpa = sig[peaks]
+            rri = np.diff(r_peaks_time) 
         else:
-            rri = []
             rpa = []
+            rri = []
         
-        max_rri = max(max_rri, len(rri))
         max_rpa = max(max_rpa, len(rpa))
+        max_rri = max(max_rri, len(rri))
         
-        rri_res.append(rri)
         rpa_res.append(rpa)
-    
-    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
+        rri_res.append(rri)
+
     rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
+    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
     # print(max_rri, max_rpa)
     
     return rpa_res, rri_res
@@ -223,3 +208,17 @@ def fill_missing_with_mean(data):
             data[i] = mean_value
     
     return data
+
+# Function to create a bandpass Butterworth filter
+def butter_bandpass(lowcut, highcut, fs, order: int = 4):
+    nyquist = 0.5 * fs  # Nyquist Frequency
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = signal.butter(order, [low, high], btype='band')
+    return b, a
+
+# Function to apply the bandpass filter
+def bandpass_filter(data, lowcut, highcut, fs, order: int = 4):
+    b, a = butter_bandpass(lowcut, highcut, fs, order)
+    y = signal.filtfilt(b, a, data)
+    return y

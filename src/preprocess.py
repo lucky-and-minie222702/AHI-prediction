@@ -1,124 +1,134 @@
-from os import path
-import pyedflib
 import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from scipy.signal import resample
-from data_functions import *
+from os import path
 import neurokit2 as nk
+from scipy import signal
+from data_functions import *
+import sys
 
-scaler = MinMaxScaler()
-max_ECG_len = 0
-max_SpO2_len = 0
-records = [f"ucddb{i:0{3}d}" for i in range(2, 29) if i not in [4, 16]]
-AHIs = []
-max_dur = 0
-durs = []
+def set_prior_none_to_zero(lst: list):
+    for i in range(len(lst)):
+        if lst[i] is not None:
+            break
+        lst[i] = 0
+    return lst
 
-for i in range(len(records)):
-    print(f"Preprocessing patient {i+1}:")
-    edf_file = pyedflib.EdfReader(path.join("database", f"{records[i]}.rec"))
-
+def is_ahi(lst):
     try:
-        channels = ["ECG", "SpO2"]
-        signals = {}
-        
-        sleep_stages = list(map(int, open(path.join("database", f"{records[i]}_stage.txt")).readlines()))
-        total_time = len(sleep_stages)
-        sleep_time = (total_time - sleep_stages.count(0)) * 30  # in seconds
-        print(" | Sleep time:", f"{sleep_time} seconds", f" {(sleep_time / 3600):.2f} hours")
-        
-        for channel in channels:
-            idx = edf_file.getSignalLabels().index(channel)
-            sig = edf_file.readSignal(idx)
-            if channel == "ECG":
-                sig = resample(sig, 100 * len(sig) // 128)  # down from 128 to 100 hz
-                sig = nk.ecg.ecg_clean(sig, sampling_rate=100)  #  clean
-                sig = sig[:total_time * 3000:]  # convert to 30 seconds divisible for total_time
-                max_ECG_len = max(max_ECG_len, len(sig))
-            else:  # SpO2
-                sig = resample(sig, 1 * len(sig) // 8)  # down from 8 to 1 hz
-                sig /= 100  # from 0 -> 1
-                sig = sig[:total_time * 30:]  # convert to 30 seconds divisible for total_time
-                max_SpO2_len = max(max_SpO2_len, len(sig))
-            signals[channel] = sig
-            
-            # start time to label
-            start_sleep = str(edf_file.getStartdatetime())[11:]
-            print(start_sleep)
-            
-        for key, value in signals.items():
-            np.save(path.join("patients", f"patients_{i+1}_{key}"), value)
-
-    except Exception: 
-        print(f"Fail to preprocess patient {i+1}")
-        edf_file.close()
+        a = int(lst[0])
+        h = int(lst[1])
+    except:
+        print(lst)
         exit()
-    
-    edf_file.close()
-    
-    content = open(path.join("database", f"{records[i]}_respevt.txt"), "r").readlines()[3:-1:]
-    
-    ah = list(map(lambda x: x.split()[1], content))
-    apnea_count = sum([1 for x in ah if x.startswith("APNEA")])
-    hyponea_count = sum([1 for x in ah if x.startswith("HYP")])
-    apnea_hyponea_count = apnea_count + hyponea_count
-    
-    AHI = apnea_hyponea_count / (sleep_time / 3600)
-    AI = apnea_count / (sleep_time / 3600)
-    HI = hyponea_count / (sleep_time / 3600)
-    print(" | => AHI:", AHI)
-    print(" | => Apnea index:", AI)
-    print(" | => Hyponea index:", HI)
-    
-    f = open(path.join("patients", f"patients_{i+1}_AHI.txt"), "w")
-    print(AHI, file=f)
-    print(AI, file=f)
-    print(HI, file=f)
-    f.close()
-    
-    AHIs.append(AHI)
-    
-    # ANNOTATION for each 1 seconds (not timestep)
+    return a + h > 0
 
-    # parse times
-    content = open(path.join("database", f"{records[i]}_respevt.txt"), "r").readlines()[3:-1:]
-    time = list(map(lambda x: x[:8:], content))
-    time = list(map(lambda x: calc_time(start_sleep, x), time))
-    duration = list(map(lambda x: ith_int(x, 1)[1], [x.split() for x in content]))
+p_list = open(path.join("database", "benhnhanlist.txt"), "r").readlines()[2::]
+
+info_file = open(path.join("data", "info.txt"), "w")
+p_list = list(map(lambda x: x.split(), p_list))
+for order, name, ahi in p_list:
+    no_spo2 = False
+    if "*" in order:
+        order = order[:-1:]
+        no_spo2 = True
+    order = int(order)
+    print(ahi, file=info_file)
+info_file.close()
+
+for order, name, ahi in p_list:
+    no_spo2 = False
+    if "*" in order:
+        order = order[:-1:]
+        no_spo2 = True
+    order = int(order)
+    # buffer
+    buffer = 300  # in seconds
+    start_time = []
     
-    durs.extend(duration)
-    max_dur = max(max(duration), max_dur)
+    print(f"Patient {order}:")
     
-    annotations = []
-    idx = 0
-    enough = False
-    for t in range(1, total_time * 30 + 1, 1):
-        if not enough:
-            if t - (time[idx] + duration[idx]) > 0:
-                idx += 1
-                if idx == len(time):
-                    annotations.append(0)
-                    enough = True
-                    continue
-            
-            if t - time[idx] >= 1:
-                annotations.append(1)
-            else:
-                annotations.append(0)
+    # label
+    content = open(path.join("database", f"benhnhan{order}label.txt")).readlines()[2::]
+    start_time.append(content[0][:8:])
+    content = list(map(lambda x: x.split() + (["Nothing"] if len(x.split()) == 4 else []), content))
+    content = list(map(lambda x: x[2::], content))
+    wake = [1 if x[-1] == "Wake" else 0 for x in content]
+    wake = np.array(wake)
+    
+    ahi_events = [is_ahi(x) for x in content]
+    ahi_events = np.array(ahi_events)
+    
+    label = np.stack([ahi_events, wake], axis=1)
+    
+    # label = content
+    print(" => Loading Label")
+    
+    # ecg
+    content = open(path.join("database", f"benhnhan{order}ecg.txt")).readlines()[2::]
+    time_ecg = [x[:11:] for x in content]
+    content = content[time_ecg.count(time_ecg[0])::]
+    start_time.append(content[0][:8:])
+    content = list(map(lambda x: float(x.split()[-1]) if len(x.split()) == 3 else None, content))
+    content = set_prior_none_to_zero(content)
+    content = fill_missing_with_mean(content)
+    content = np.array(content)
+    # content = nk.ecg.ecg_clean(content, sampling_rate=200)
+    content = signal.resample(content, int(len(content) / 200 * 100))  # to 100hz
+    ecg = content
+    print(" => Loading ECG")
+    
+    # hr
+    content = open(path.join("database", f"benhnhan{order}hr.txt")).readlines()[2::]
+    start_time.append(content[0][:8:])
+    content = list(map(lambda x: float(x.split()[-1]) if len(x.split()) == 3 else None, content))
+    content = set_prior_none_to_zero(content)
+    content = fill_missing_with_mean(content)
+    content = np.array(content)
+    hr = content
+    print(" => Loading HR")
+    
+    # spo2
+    spo2 = None
+    if no_spo2:
+        print(" => No SpO2!")
+        sys.stdout.flush()
+    else:
+        content = open(path.join("database", f"benhnhan{order}spo2.txt")).readlines()[2::]
+        start_time.append(content[0][:8:])
+        content = list(map(lambda x: float(x.split()[-1]) if len(x.split()) == 3 else None, content))
+        content = set_prior_none_to_zero(content)
+        content = fill_missing_with_mean(content)
+        content = np.array(content)
+        spo2 = content
+        print(" => Loading SpO2")
+    
+    sigs = [label, ecg, hr]
+    if spo2 is not None:
+        sigs.append(spo2)
+    sig_labels = ["Label", "ECG", "HR", "SpO2"]
+    sig_splr = [1, 100, 1, 1]
+    ideal_len = len(label) - buffer * 2
+
+    start_time = list(map(time_to_seconds, start_time))
+    ideal_time = min(start_time)
+    shift_time = [t - ideal_time for t in start_time]
+    for i in range(len(sigs)):
+        sigs[i] = sigs[i][shift_time[i]*sig_splr[i]::]
+        sigs[i] = sigs[i][buffer*sig_splr[i]:-(buffer*sig_splr[i]):]
+        if len(sigs[i]) <= ideal_len*sig_splr[i]:
+            zeros_pad = np.zeros([ideal_len*sig_splr[i] - len(sigs[i])] + ([2] if i == 0 else []))
+            sigs[i] = np.concatenate([sigs[i], zeros_pad]) 
         else:
-            annotations.append(0)
-
-    annotations = np.array(annotations)
-    sleep_stages = list(map(lambda x: 1 if x == 0 else 0, sleep_stages))
-    sleep_stages_1s = np.array([i for i in sleep_stages for _ in range(30)])
-
-    np.save(path.join("patients", f"patients_{i+1}_anns"), annotations)
-    np.save(path.join("patients", f"patients_{i+1}_stages"), sleep_stages_1s)
-
-
-print("\nMax ECG sequence lenght:", max_ECG_len)
-print("Max SpO2 sequence lenght:", max_SpO2_len, "\n")
-AHIs = np.array(AHIs)
-print(" | Mean AHI:", np.mean(AHIs), "\n | Median AHI:", np.median(AHIs), "\n | Standard deviation AHI:", np.std(AHIs), "\n | Max AHI:", np.max(AHIs), "\n | Min AHI:", np.min(AHIs))
-print(f"\nMax Apnea/Hyponea duration: {max_dur} (s)")
-print(f"Mean duration: {sum(durs) / len(durs)}")
+            sigs[i] = sigs[i][:ideal_len*sig_splr[i]:]
+    
+    print(" => Processing...")
+    
+    if not all(len(sigs[0]) // sig_splr[0] == len(sigs[i]) // sig_splr[i] for i in range(len(sigs))):
+        print(f" => Failed!")
+        for i in range(len(sigs)):
+            print(f"{sig_labels[i]}: {len(sigs[i])}", end = " ")
+        print()
+    else:
+        # sigs[0] = np.transpose(sigs[0], (1, 0))
+        for i in range(len(sigs)):
+            np.save(path.join("data", f"benhnhan{order}{sig_labels[i].lower()}"), sigs[i])
+        print(f" => Successful!")
