@@ -31,7 +31,7 @@ for order, name, ahi in p_list:
         order = order[:-1:]
         no_spo2 = True
     order = int(order)
-    print(ahi, file=info_file)
+    print("*" if no_spo2 else "", order, file=info_file, sep="")
 info_file.close()
 
 for order, name, ahi in p_list:
@@ -44,7 +44,7 @@ for order, name, ahi in p_list:
     buffer = 300  # in seconds
     start_time = []
     
-    print(f"Patient {order}:")
+    print(f"Patient {order} - {name}:")
     
     # label
     content = open(path.join("database", f"benhnhan{order}label.txt")).readlines()[2::]

@@ -12,5 +12,5 @@ env = model_framework.TrainingEnv(config={
 })
 env.summary_env()
 
-def create_model():
-    long_inp = layers.Input(shape=)
+# def create_model():
+    # inp = layers.Input(shape=)

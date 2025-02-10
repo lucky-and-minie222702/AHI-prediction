@@ -499,9 +499,10 @@ class TrainingEnv:
             y_test.append(data[test_indices])
             y_val.append(data[val_indices])
         
-        unique_classes, class_counts = np.unique(argmax(y_train[main_output]), return_counts=True)
-        class_weights = {cls: 1.0 / count for cls, count in zip(unique_classes, class_counts)}
-        sample_weight = np.array([class_weights[y] for y in argmax(y_train[main_output])])
+        if not self.__config["regression"]:
+            unique_classes, class_counts = np.unique(argmax(y_train[main_output]), return_counts=True)
+            class_weights = {cls: 1.0 / count for cls, count in zip(unique_classes, class_counts)}
+            sample_weight = np.array([class_weights[y] for y in argmax(y_train[main_output])])
         
         log_file = open(path.join(self.__config["logs_dir"], f"log_{self.__config["model_name"]}_{self.__config["session_id"]}.txt"), "w")
         
@@ -521,7 +522,7 @@ class TrainingEnv:
             batch_size = self.__config["batch_size"],
             validation_data = (X_val if multiple_input else X_val[0], y_val if multiple_output else y_val[0]),
             callbacks = callbacks,
-            sample_weight = sample_weight,
+            sample_weight = sample_weight if not self.__config["regression"] else None,
             verbose = self.__config["verbose"],
         )
         print()

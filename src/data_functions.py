@@ -3,6 +3,13 @@ from datetime import datetime, timedelta
 from scipy.signal import find_peaks
 import neurokit2 as nk
 from scipy import signal
+from itertools import groupby
+
+def count_ones_zeros(binary_seq):
+    groups = ["".join(g) for _, g in groupby(binary_seq)]
+    count_ones = sum(1 for g in groups if g[0] == 1)
+    count_zeros = sum(1 for g in groups if g[0] == 0)
+    return count_ones, count_zeros
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
