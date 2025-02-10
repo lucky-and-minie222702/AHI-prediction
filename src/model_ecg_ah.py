@@ -84,22 +84,22 @@ def create_model():
     conv = ResNetBlock(1, conv, 512, 3)
     
     # bottle-neck
-    conv_bn = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
+    conv_bn = layers.Conv1D(filters=256, kernel_size=3, strides=2, padding="same")(conv)
     conv_bn = layers.BatchNormalization()(conv_bn)
     conv_bn = layers.Activation("relu")(conv_bn)
     
-    rnn = layers.LSTM(96, return_sequences=True)(conv_bn)
-    rnn = layers.LSTM(64, return_sequences=True)(rnn)
-    rnn = layers.LSTM(96, return_sequences=True)(rnn)
+    rnn = layers.LSTM(128, return_sequences=True)(conv_bn)
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
+    rnn = layers.LSTM(128, return_sequences=True)(rnn)
     
     # restore
-    conv_r = layers.Conv1D(filters=128, kernel_size=1, padding="same")(rnn)
+    conv_r = layers.Conv1D(filters=256, kernel_size=3,padding="same")(rnn)
     conv_r = layers.BatchNormalization()(conv_r)
     conv_r = layers.Activation("relu")(conv_r)
-    conv_r = layers.Conv1D(filters=512, kernel_size=1, padding="same")(conv_r)
+    conv_r = layers.Conv1D(filters=512, kernel_size=3, padding="same")(conv_r)
     conv_r = layers.BatchNormalization()(conv_r)
+    conv_r = layers.Add()([conv, conv_r])  # residual connection
     conv_r = layers.Activation("relu")(conv_r)
-    conv_r = layers.Multiply()([conv, conv_r])
     
     se = SEBlock()(conv_r)
     
@@ -145,7 +145,7 @@ model = create_model()
 weights_path = path.join("weights", ".weights.h5")
 model.save_weights(weights_path)
 
-batch_size = 32
+batch_size = 16
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 30,
