@@ -150,7 +150,7 @@ class TrainingEnv:
         - strict_rario: strictly check every ratio option
 
     Configuration includes:
-        - name: name for the model (default = Keras_deep_learning)
+        - model_name: name for the model (default = Keras_deep_learning)
         - batch_size: batch size
         - max_epoch: maximum epoch for training
         - early_stopping_epoch: epoch which the early stoppping callback will monitor
@@ -168,7 +168,6 @@ class TrainingEnv:
         - data_ratio: ratio for [train, val, test] data
         - weights_dir: directory to save best weights for every session
         - logs_dir: directory to save logs for every session
-        - session_id: id for this training session
         - no_logs: do not show any logs from tensorflow
         - disable_GPU: disable GPU, only using CPU
         - disable_XLA: disable XLA (Accelerated Linear Algebra)
@@ -195,7 +194,6 @@ class TrainingEnv:
         "data_ratio": [0.7, 0.2, 0.1],
         "weights_dir": "",
         "logs_dir": "",
-        "session_id": 0,
         "callbacks": [],
         "require_activation": False,
         # tensorflow options
@@ -279,7 +277,7 @@ class TrainingEnv:
             description='Keras training framework',
             epilog="Made for easier training")
         
-        parser.add_argument("-n", "--name", help="name for the model (default = Keras_deep_learning)", type=str)
+        parser.add_argument("-n", "--model_name", help="name for the model (default = Keras_deep_learning)", type=str)
         parser.add_argument("-bs", "--batch_size", help="batch size", type=int)
         parser.add_argument("-me", "--max_epoch", help="maximum epoch for training", type=int)
         parser.add_argument("-ese", "--early_stopping_epoch", help="epoch which the early stoppping callback will monitor", type=int)
@@ -297,17 +295,17 @@ class TrainingEnv:
         parser.add_argument("-dr", "--data_ratio", help="ratio for [train, val, test] data", type=str)
         parser.add_argument("-wd", "--weights_dir", help="directory to save best weights for every session", type=str)
         parser.add_argument("-ld", "--logs_dir", help="directory to save logs for every session", type=str)
-        parser.add_argument("-id", "--session_id", help="id for this training session", type=int)
+        # parser.add_argument("-id", "--session_id", help="id for this training session", type=str)
         parser.add_argument("-nl", "--no_logs", help="do not show any logs from tensorflow", action="store_true")
         parser.add_argument("-dg", "--disable_GPU", help="disable GPU, only using CPU", action="store_true")
         parser.add_argument("-dx", "--disable_XLA", help="disable XLA (Accelerated Linear Algebra)", action="store_true")
         parser.add_argument("-ll", "--lazy_loading", help="enable lazy_loading", action="store_true")
         parser.add_argument("-t", "--train", help="active training mode (only required if require_activation=True)", action="store_true")
             
-            # only use to generate docstring
-            # for action in parser._actions:
-            #     print(f" - {action.dest}: {action.help}")
-            # exit()
+        # only use to generate docstring
+        # for action in parser._actions:
+        #     print(f" - {action.dest}: {action.help}")
+        # exit()
             
         args = parser.parse_known_args()[0]
         args = vars(args)
@@ -330,13 +328,14 @@ class TrainingEnv:
                 os.environ['TF_XLA_FLAGS'] = '--tf_xla_auto_jit=2'
             if self.__config["lazy_loading"]:
                 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
-        assert self.__config["num_classes"] is not None, "Number of classes must be specified"
+
         assert self.__config["max_epoch"] is not None, "Maximum epoch must be specified"
         
         if self.__config["early_stopping_epoch"] is None:
             self.__config["early_stopping_epoch"] = self.__config["max_epoch"] // 2
         
         if not self.__config["regression"]:
+            assert self.__config["num_classes"] is not None, "Number of classes must be specified"
             if self.__config["class_ratio"] is None:
                 self.__config["class_ratio"] = equally_dis(self.__config["num_classes"])
             else:
@@ -359,8 +358,7 @@ class TrainingEnv:
             self.__config["input_files"] = self.__config["input_files"].split(",")
         if isinstance(self.__config["output_files"], str):
             self.__config["output_files"] = self.__config["output_files"].split(",")
-            
-        assert self.__config["session_id"] >= 0, "Session id must not be negative"
+
         
     @property
     def config(self):
@@ -383,14 +381,17 @@ class TrainingEnv:
                 new_val[key] = value
         self.__config.update(new_val)
     
-    def deploy(self, model: keras.Model | keras.Sequential, inputs, outputs, auto_categorize: bool = True, auto_check_num_classes: bool= True, compile_options = None, main_output: int = 0, test_labels = None, test_function_options = {}, require_activation: bool = True):
+    def deploy(self, model: keras.Model | keras.Sequential, inputs, outputs, session_id: str, test: bool = True, save_logs: bool = True, auto_categorize: bool = True, auto_check_num_classes: bool= True, compile_options = None, main_output: int = 0, test_labels = None, test_function_options = {}, require_activation: bool = True) -> str:
         """
         Deploy a keras model into the environment with current configuration and given input, output data
         
         Arguments:
             - model: keras model
             - inputs: input data (does not need of using input_files)
-            - outputs (any): input data (does not need of using output_files)
+            - outputs: input data (does not need of using output_files)
+            - session_id: id for this training session
+            - test: running test after training. Defaults to True
+            - save_logs: saving logs while running training. Defaults to True
             - auto_categorize: Automatically convert main output to one-hot-encoded data. Defaults to True
             - auto_check_num_classes (bool, optional): Automatically check whether the num_classes match the actual number of classes of the main output. Defaults to True
             - compile_options: Compile option to compile model, None means no need to compile. Defaults to None
@@ -399,6 +400,9 @@ class TrainingEnv:
             - test_function_options: Options for the test function. Default to {}. Includes:
                 - num_thresholds: number of thresholds to report, each threshold will be equally divided between 0 and 1 and (always avoid 0 and 1 threshold)
             - require_activation: Require -t or --train flag to active training mode (to run the training code). Defaults to True
+            
+        Return:
+            - Model best weights path
         """
         if require_activation:
             if not self.active_train:
@@ -453,7 +457,7 @@ class TrainingEnv:
             start_from_epoch = self.__config["early_stopping_epoch"],
             patience = self.__config["early_stopping_patience"],
         )
-        weights_path = path.join(self.__config["weights_dir"], f"{self.__config["model_name"]}_{self.__config["session_id"]}.weights.h5")
+        weights_path = path.join(self.__config["weights_dir"], f"{self.__config["model_name"]}_{session_id}.weights.h5")
         cb_checkpoint = cbk.ModelCheckpoint(
             weights_path, 
             save_best_only = True,
@@ -465,9 +469,11 @@ class TrainingEnv:
         cb_history_saver = HistoryAutosaver(
             save_dir = self.__config["logs_dir"],
             model_name = self.__config["model_name"], 
-            session_id = self.__config["session_id"]
+            session_id = session_id
         )
-        callbacks = [cb_early_stopping, cb_checkpoint, cb_timer, cb_history_saver] + self.__config["callbacks"]
+        callbacks = [cb_early_stopping, cb_checkpoint, cb_timer] + self.__config["callbacks"]
+        if save_logs:
+            callbacks.append(cb_history_saver)
         
         indices = np.arange(total_samples)
         if not self.__config["regression"]:
@@ -480,9 +486,10 @@ class TrainingEnv:
         test_indices = indices[train_size:train_size+test_size:]
         val_indices = indices[train_size+test_size:]
         
-        np.save(path.join(self.__config["logs_dir"], f"train_indices_{self.__config["model_name"]}_{self.__config["session_id"]}"), train_indices)
-        np.save(path.join(self.__config["logs_dir"], f"test_indices_{self.__config["model_name"]}_{self.__config["session_id"]}"), test_indices)
-        np.save(path.join(self.__config["logs_dir"], f"val_indices_{self.__config["model_name"]}_{self.__config["session_id"]}"), val_indices)
+        if save_logs:
+            np.save(path.join(self.__config["logs_dir"], f"train_indices_{self.__config["model_name"]}_{session_id}"), train_indices)
+            np.save(path.join(self.__config["logs_dir"], f"test_indices_{self.__config["model_name"]}_{session_id}"), test_indices)
+            np.save(path.join(self.__config["logs_dir"], f"val_indices_{self.__config["model_name"]}_{session_id}"), val_indices)
 
         multiple_input = len(inputs) > 1
         multiple_output = len(outputs) > 1
@@ -504,10 +511,10 @@ class TrainingEnv:
             class_weights = {cls: 1.0 / count for cls, count in zip(unique_classes, class_counts)}
             sample_weight = np.array([class_weights[y] for y in argmax(y_train[main_output])])
         
-        log_file = open(path.join(self.__config["logs_dir"], f"log_{self.__config["model_name"]}_{self.__config["session_id"]}.txt"), "w")
+        log_file = open(path.join(self.__config["logs_dir"], f"log_{self.__config["model_name"]}_{session_id}.txt"), "w")
         
         sys.stdout = Tee(log_file)
-        print(f"Model {self.__config["model_name"]} #{self.__config["session_id"]}")
+        print(f"Model {self.__config["model_name"]}_{session_id}")
         print()
         show_params(model, name=self.__config["model_name"])
         print()
@@ -527,18 +534,21 @@ class TrainingEnv:
         )
         print()
         
-        log_file = open(path.join(self.__config["logs_dir"], f"log_{self.__config["model_name"]}_{self.__config["session_id"]}.txt"), "w")
-        sys.stdout = Tee(log_file)
-        y_pred = model.predict(X_test if multiple_input else X_test[0], batch_size=self.__config["max_epoch"], verbose=0)
-        if multiple_output:
-            y_pred = y_pred[main_output]
+        if test:
+            log_file = open(path.join(self.__config["logs_dir"], f"log_{self.__config["model_name"]}_{session_id}.txt"), "w")
+            sys.stdout = Tee(log_file)
+            y_pred = model.predict(X_test if multiple_input else X_test[0], batch_size=self.__config["max_epoch"], verbose=0)
+            if multiple_output:
+                y_pred = y_pred[main_output]
 
-        t = sum(cb_timer.logs)
-        print(f"SUMMARY AND TEST RESULTS\n")
-        print(f" | Total train time: {convert_seconds(t)}")
-        print(f" | Total epochs: {len(cb_timer.logs)}\n")
-        if self.__config["regression"]:
-            self.default_regression_test_function(y_test[main_output], y_pred, **test_function_options)
-        else:
-            self.default_classification_test_function(argmax(y_test[main_output]), argmax(y_pred), labels=test_labels, binary_classification=self.__config["binary_classification"], **test_function_options)
-        Tee.reset()
+            t = sum(cb_timer.logs)
+            print(f"SUMMARY AND TEST RESULTS\n")
+            print(f" | Total train time: {convert_seconds(t)}")
+            print(f" | Total epochs: {len(cb_timer.logs)}\n")
+            if self.__config["regression"]:
+                self.default_regression_test_function(y_test[main_output], y_pred, **test_function_options)
+            else:
+                self.default_classification_test_function(argmax(y_test[main_output]), argmax(y_pred), labels=test_labels, binary_classification=self.__config["binary_classification"], **test_function_options)
+            Tee.reset()
+            
+        return weights_path

@@ -157,6 +157,9 @@ def calc_time(start: str, end: str) -> int:
     return elapsed_seconds
 
 def calc_ecg(signals, splr: int = 100, duration: int = 30, max_rri: int = 60, max_rpa: int = 60):
+    """
+    Return rpa, rri
+    """
     rri_res = []
     rpa_res = []
     t = np.linspace(0, duration, splr * duration)

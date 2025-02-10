@@ -40,16 +40,26 @@ for order, name, ahi in p_list:
         order = order[:-1:]
         no_spo2 = True
     order = int(order)
+    
     # buffer
     buffer = 300  # in seconds
     start_time = []
-    
+
     print(f"Patient {order} - {name}:")
     
     # label
     content = open(path.join("database", f"benhnhan{order}label.txt")).readlines()[2::]
+    
+    # start sleep scoring
+    start_scoring = -1
+    for s in content:
+        start_scoring += 1
+        if len(s.split()) == 5:
+            break
+    content = content[start_scoring::]
+
     start_time.append(content[0][:8:])
-    content = list(map(lambda x: x.split() + (["Nothing"] if len(x.split()) == 4 else []), content))
+    content = list(map(lambda x: x.split(), content))
     content = list(map(lambda x: x[2::], content))
     wake = [1 if x[-1] == "Wake" else 0 for x in content]
     wake = np.array(wake)
@@ -74,7 +84,7 @@ for order, name, ahi in p_list:
     # content = nk.ecg.ecg_clean(content, sampling_rate=200)
     content = signal.resample(content, int(len(content) / 200 * 100))  # to 100hz
     ecg = content
-    print(" => Loading ECG")
+    print(" => Loading ECG...")
     
     # hr
     content = open(path.join("database", f"benhnhan{order}hr.txt")).readlines()[2::]
@@ -84,12 +94,12 @@ for order, name, ahi in p_list:
     content = fill_missing_with_mean(content)
     content = np.array(content)
     hr = content
-    print(" => Loading HR")
+    print(" => Loading HR...")
     
     # spo2
     spo2 = None
     if no_spo2:
-        print(" => No SpO2!")
+        print(" => No SpO2...")
         sys.stdout.flush()
     else:
         content = open(path.join("database", f"benhnhan{order}spo2.txt")).readlines()[2::]
@@ -99,7 +109,7 @@ for order, name, ahi in p_list:
         content = fill_missing_with_mean(content)
         content = np.array(content)
         spo2 = content
-        print(" => Loading SpO2")
+        print(" => Loading SpO2...")
     
     sigs = [label, ecg, hr]
     if spo2 is not None:
@@ -123,7 +133,7 @@ for order, name, ahi in p_list:
     print(" => Processing...")
     
     if not all(len(sigs[0]) // sig_splr[0] == len(sigs[i]) // sig_splr[i] for i in range(len(sigs))):
-        print(f" => Failed!")
+        print(f" => Status: failed!")
         for i in range(len(sigs)):
             print(f"{sig_labels[i]}: {len(sigs[i])}", end = " ")
         print()
@@ -131,4 +141,4 @@ for order, name, ahi in p_list:
         # sigs[0] = np.transpose(sigs[0], (1, 0))
         for i in range(len(sigs)):
             np.save(path.join("data", f"benhnhan{order}{sig_labels[i].lower()}"), sigs[i])
-        print(f" => Successful!")
+        print(f" => Status: successful!")

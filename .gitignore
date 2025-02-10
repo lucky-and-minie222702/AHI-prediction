@@ -7,4 +7,4 @@ database
 *zip
 *test*
 *.DS_Store
-res
+weights

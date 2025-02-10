@@ -30,7 +30,7 @@ from timeit import default_timer as timer
 import random
 
 # check for available GPUs
-def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, bottle_neck: bool = False, activation = layers.Activation("relu")):
+def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, activation = layers.Activation("relu")):
     if not transpose:
         if dimension == 1:
             Conv = layers.Conv1D
@@ -50,8 +50,6 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
         strides = 1 + change_sample
     else:
         strides = change_sample
-    factor = 4 if bottle_neck else 1
-    kernel_size = 1 if bottle_neck else kernel_size
     
     shortcut = x
 
@@ -63,11 +61,8 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
     x = layers.BatchNormalization()(x)
     x = activation(x)
 
-    x = Conv(filters * factor, kernel_size, strides=1, padding='same')(x)
-    x = activation(x)
-
-    if strides != 1 or shortcut.shape[-1] != filters * factor:
-        shortcut = Conv(filters * factor, kernel_size, strides=strides, padding='same')(shortcut)
+    if strides != 1 or shortcut.shape[-1] != filters:
+        shortcut = Conv(filters, kernel_size, strides=strides, padding='same')(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
