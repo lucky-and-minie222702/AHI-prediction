@@ -131,7 +131,7 @@ def create_model():
     
     model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[out, out_s])
     model.compile(
-        optimizer = "adam",
+        optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = {
             "full": "binary_crossentropy",
             "single": "binary_crossentropy",
@@ -152,7 +152,7 @@ batch_size = 16
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 30,
-    patience = 5,
+    patience = 8,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
@@ -161,6 +161,8 @@ cb_checkpoint = cbk.ModelCheckpoint(
     monitor = "full_val_loss",
     mode = "min",
 )
+
+cb_lr = cbk.ReduceLROnPlateau(monitor='full_val_loss', factor=0.2, patience=10, min_lr=0.00001)
 
 print("\nTRAINING\n")
 
