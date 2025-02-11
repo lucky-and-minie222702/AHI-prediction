@@ -203,13 +203,13 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     val_size = int(total_samples * 0.15)
     test_size = total_samples - train_size - val_size
     
-    print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}")
-    
     train_indices = indices[:train_size:]
     test_indices = indices[train_size:train_size+test_size:]
     val_indices = indices[train_size+test_size::]
     
     print(f"SEGMENT LENGTH: {seg_len}\n")
+    print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}")
+
     model.load_weights(weights_path)
     model.fit(
         [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
