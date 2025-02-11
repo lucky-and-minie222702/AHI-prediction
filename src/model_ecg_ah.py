@@ -214,7 +214,7 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     model.fit(
         [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
         [full_labels[train_indices], single_labels[train_indices]],
-        epoch = 50,
+        epochs = 50,
         validation_data = (
             [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
             [full_labels[val_indices], single_labels[val_indices]]
