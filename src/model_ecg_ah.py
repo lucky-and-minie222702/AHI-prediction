@@ -150,7 +150,7 @@ print("\nTRAINING\n")
 # total_test_indices = []
 
 ecgs = np.load(path.join("gen_data", "merged_ecg.npy"))
-full_labels = np.load(path.join("data", "merged_label.npy"))
+full_labels = np.load(path.join("gen_data", "merged_label.npy"))
 rpa = np.load(path.join("gen_data", "merged_rpa.npy"))
 rri = np.load(path.join("dgen_ata", "merged_rri.npy"))
 

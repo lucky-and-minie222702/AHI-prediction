@@ -68,6 +68,10 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
     x = Conv(filters, kernel_size, strides=strides, padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = activation(x)
+
+    x = Conv(filters, kernel_size, strides=1, padding='same')(x)
+    x = layers.BatchNormalization()(x)
+    x = activation(x)
     
     x = Conv(filters, kernel_size, strides=1, padding='same')(x)
     x = layers.BatchNormalization()(x)
