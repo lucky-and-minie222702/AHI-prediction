@@ -42,7 +42,7 @@ def show_gpus():
         print("! No GPU detected. Using CPU.")
 
 # check for available GPUs
-def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, activation = layers.Activation("relu")):
+def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool | int = False, transpose: bool = False, activation = layers.Activation("relu")):
     if not transpose:
         if dimension == 1:
             Conv = layers.Conv1D
@@ -303,51 +303,3 @@ def show_data_size(train: np.ndarray, test: np.ndarray, val: np.ndarray):
         for idx in range(len(cls)):
             print(f" | Class {cls[idx]}: {counts[idx]}")
     
-def equally_dis(num_classes: int) -> List[int]:
-    ele = 1.0 / num_classes
-    last_ele = 1 - ele * (num_classes - 1)
-    return [ele for _ in range(num_classes - 1)] + [last_ele]
-    
-def split_classes(y: np.ndarray, class_ratio: List[float] = None, max_total_samples: int = None):
-    class_counts = np.unique(y, return_counts=True)[1]
-    num_classes = len(class_counts)
-    if class_ratio is None:
-        class_ratio = equally_dis(num_classes)
-    
-    # bin search
-    l = 0
-    r = len(y)
-    m = 0
-    while l <= r:
-        m = (l+r)//2
-        wrong = any([(m * class_ratio[i]) > class_counts[i] for i in range(num_classes)])
-        if wrong:
-            r = m -1
-        else:
-            l = m + 1
-    
-    total_samp = m
-    if max_total_samples is not None:
-        total_samp = min(total_samp, max_total_samples)
-
-    class_idx = []
-    for cls, i in enumerate(class_ratio):
-        k = int(total_samp * i)
-        class_idx.extend(np.random.choice(np.where(y==cls)[0], k, replace=False))
-        
-    return np.array(class_idx), np.array([int(total_samp * r) for r in class_ratio])
-
-def print_confusion_matrix(cm: np.ndarray | List[List[int]], labels = None):
-    if labels is None:
-        labels = list(map(str, range(len(cm))))
-    assert max([len(l) for l in labels]) <= 6, "Labels length for confusion matrix must not exceed 6"
-    print("Confusion Matrix:")
-    print(" " * 10, "Predicted", sep="")
-    print(" " * 10, " ".join(f"{label:>6}" for label in labels), sep="")
-    print(" " * 10 + "-" * (7 * (len(labels))), sep="")
-    remain_label = "Actual"
-    for i, row in enumerate(cm):
-        print(f"{remain_label[i] if i < len(remain_label) else ' '} {labels[i]:>6} |", " ".join(f"{val:>6}" for val in row), " |", sep="")
-    print(remain_label[len(cm)] if len(cm) < len(remain_label) else " ", " " * 9, "-" * (7 * (len(labels))), sep="")
-    for s in remain_label[len(cm)+1::]:
-        print(s)

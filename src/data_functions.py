@@ -4,6 +4,10 @@ from scipy.signal import find_peaks
 import neurokit2 as nk
 from scipy import signal
 from itertools import groupby
+from scipy.interpolate import interp1d
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
+from typing import *
 
 def count_ones_zeros(binary_seq):
     groups = ["".join(g) for _, g in groupby(binary_seq)]
@@ -236,3 +240,86 @@ def bandpass_filter(data, lowcut, highcut, fs, order: int = 4):
     b, a = butter_bandpass(lowcut, highcut, fs, order)
     y = signal.filtfilt(b, a, data)
     return y
+
+def time_warp(ecg, sigma=0.2):
+    """Apply time warping to an ECG signal."""
+    orig_steps = np.arange(len(ecg))
+    random_warp = np.cumsum(np.random.normal(0, sigma, size=len(ecg)))
+    warped_steps = orig_steps + random_warp
+    warped_steps = np.clip(warped_steps, 0, len(ecg) - 1)
+    interp = interp1d(warped_steps, ecg, kind='linear', fill_value="extrapolate")
+    return np.array(interp(orig_steps))
+
+def equally_dis(num_classes: int) -> List[int]:
+    ele = 1.0 / num_classes
+    last_ele = 1 - ele * (num_classes - 1)
+    return [ele for _ in range(num_classes - 1)] + [last_ele]
+    
+def split_classes(y: np.ndarray, class_ratio: List[float] = None, max_total_samples: int = None):
+    class_counts = np.unique(y, return_counts=True)[1]
+    num_classes = len(class_counts)
+    if class_ratio is None:
+        class_ratio = equally_dis(num_classes)
+    
+    # bin search
+    l = 0
+    r = len(y)
+    m = 0
+    while l <= r:
+        m = (l+r)//2
+        wrong = any([(m * class_ratio[i]) > class_counts[i] for i in range(num_classes)])
+        if wrong:
+            r = m -1
+        else:
+            l = m + 1
+    
+    total_samp = m
+    if max_total_samples is not None:
+        total_samp = min(total_samp, max_total_samples)
+
+    class_idx = []
+    for cls, i in enumerate(class_ratio):
+        k = int(total_samp * i)
+        class_idx.extend(np.random.choice(np.where(y==cls)[0], k, replace=False))
+        
+    return np.array(class_idx), np.array([int(total_samp * r) for r in class_ratio])
+
+def print_confusion_matrix(cm: np.ndarray | List[List[int]], labels = None):
+    if labels is None:
+        labels = list(map(str, range(len(cm))))
+    assert max([len(l) for l in labels]) <= 6, "Labels length for confusion matrix must not exceed 6"
+    print("Confusion Matrix:")
+    print(" " * 10, "Predicted", sep="")
+    print(" " * 10, " ".join(f"{label:>6}" for label in labels), sep="")
+    print(" " * 10 + "-" * (7 * (len(labels))), sep="")
+    remain_label = "Actual"
+    for i, row in enumerate(cm):
+        print(f"{remain_label[i] if i < len(remain_label) else ' '} {labels[i]:>6} |", " ".join(f"{val:>6}" for val in row), " |", sep="")
+    print(remain_label[len(cm)] if len(cm) < len(remain_label) else " ", " " * 9, "-" * (7 * (len(labels))), sep="")
+    for s in remain_label[len(cm)+1::]:
+        print(s)
+
+def show_res(y_true, y_pred, labels):
+    cm = confusion_matrix(y_true, y_pred)
+    print_confusion_matrix(cm, labels=labels)
+    print("\nClassification Report:")
+    if cm.shape[-1] == 2:  # 2-class
+        tn, fp, fn, tp = cm.ravel()
+        # Compute classification metrics
+        accuracy = accuracy_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred, zero_division=0)
+        recall = recall_score(y_true, y_pred,zero_division=0)  # Sensitivity
+        specificity = tn / (tn + fp)  # True Negative Rate
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+        auc = roc_auc_score(y_true, y_pred)
+        mcc = matthews_corrcoef(y_true, y_pred)  # Matthews Correlation Coefficient
+        print(f"TN: {tn}, FP: {fp}, FN: {fn}, TP: {tp}")
+        # Print evaluation metrics
+        print("Evaluation Metrics:")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall (Sensitivity): {recall:.4f}")
+        print(f"Specificity: {specificity:.4f}")
+        print(f"F1 Score: {f1:.4f}")
+        print(f"ROC AUC: {auc:.4f}")
+        print(f"Matthews Correlation Coefficient (MCC): {mcc:.4f}")

@@ -78,13 +78,14 @@ def create_model():
     conv = ResNetBlock(1, conv, 512, 3)
     
     # bottle-neck
-    conv_bn = layers.Conv1D(filters=128, kernel_size=1, strides=1, padding="same")(conv)
+    conv_bn = layers.Conv1D(filters=256, kernel_size=1, strides=1, padding="same")(conv)
     conv_bn = layers.BatchNormalization()(conv_bn)
     conv_bn = layers.Activation("relu")(conv_bn)
     
-    rnn = layers.LSTM(128, return_sequences=True)(conv_bn)
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
-    rnn = layers.LSTM(128, return_sequences=True)(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn)
+    rnn = layers.Bidirectional(layers.LSTM(96, return_sequences=True))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(96, return_sequences=True))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
     
     # restore    
     conv_r = layers.Conv1D(filters=512, kernel_size=1, padding="same")(rnn)
@@ -101,28 +102,24 @@ def create_model():
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
     
-    # preserved input shape (shallow features extract)
-    pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(ds_conv)
-    pis = layers.Conv1D(filters=128, kernel_size=9, strides=5, padding="same")(pis)
-    pis = layers.BatchNormalization()(pis)
-    pis = layers.Activation("relu")(pis)
-    pis = layers.Conv1D(filters=256, kernel_size=7, strides=5, padding="same")(pis)
-    pis = layers.BatchNormalization()(pis)
-    pis = layers.Activation("relu")(pis)
-    pis = layers.Cropping1D(cropping=(10, 10))(pis)
-    pis = layers.Conv1D(filters=512, kernel_size=1)(pis)  # match dimesion
-    pis = layers.BatchNormalization()(pis)
-    pis = layers.Activation("relu")(pis)
-    
-    # full-segment output
-    out = layers.Dot(axes=-1)([pis, fc])
-    out = layers.Activation("sigmoid", name="full")(out)
-    
     # single output
     out_s = layers.Dense(512)(fc)
     out_s = layers.BatchNormalization()(out_s)
     out_s = layers.Activation("relu")(out_s)
     out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
+    
+    # preserved input shape (shallow features extract)
+    pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(ds_conv)
+    pis = layers.Bidirectional(layers.LSTM(96, return_sequences=True))(pis)
+    pis = ResNetBlock(1, pis, 128, 9, change_sample=5)
+    pis = ResNetBlock(1, pis, 128, 7)
+    pis = ResNetBlock(1, pis, 256, 5, change_sample=5)
+    pis = ResNetBlock(1, pis, 256, 3)
+    pis = layers.Cropping1D(cropping=(10, 10))(pis)
+    pis = ResNetBlock(1, pis, 512, 1, change_sample=5)  # match channel
+    # full-segment output
+    out = layers.Dot(axes=-1)([pis, fc])
+    out = layers.Activation("sigmoid", name="full")(out)
     
     
     model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[out, out_s])
@@ -144,112 +141,100 @@ show_params(model, "ecg_ah")
 weights_path = path.join("weights", ".weights.h5")
 model.save_weights(weights_path)
 
-batch_size = 128
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+
+batch_size = 96
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
-    patience = 7,
+    patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
-    monitor = "full_val_loss",
+    monitor = "val_full_loss",
     mode = "min",
 )
 
-cb_lr = cbk.ReduceLROnPlateau(monitor='full_val_loss', factor=0.2, patience=10, min_lr=0.00001)
+cb_lr = cbk.ReduceLROnPlateau(monitor='val_full_loss', factor=0.2, patience=10, min_lr=0.00001)
 
 print("\nTRAINING\n")
 
 # clean_method = ['pantompkins1985', 'hamilton2002', 'elgendi2010', 'vg']
 # total_test_indices = []
 
-for seg_len in range(10, 70, 10): # 10s -> 1m max = 4m
-    ecgs = []
-    labels = []
-    rpa = []
-    rri = []
-    
-    for p in p_list:
-        raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
-        raw_label = raw_label[10:-10:]
-    
-        sig = divide_signal(raw_sig, win_size=(10+seg_len+10)*100, step_size=seg_len*100)
-        label = divide_signal(raw_label, win_size=seg_len)
+seg_len = 10
+ecgs = []
+labels = []
+rpa = []
+rri = []
 
-        ecgs.append(sig)
-        labels.append(label)
+for p in p_list:
+    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
+    raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
+    raw_label = raw_label[10:-10:]
 
-    scaler = MinMaxScaler()
-    
-    ecgs = np.vstack(ecgs)
-    ecgs = scaler.fit_transform(ecgs.T).T
-    ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
-    rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
-    full_labels = np.vstack(labels)
-    single_labels = np.round(np.mean(full_labels, axis=-1))
+    sig = divide_signal(raw_sig, win_size=(10+seg_len+10)*100, step_size=(seg_len*100) // 2)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=seg_len // 2)
 
-    # print(np.unique(single_labels, return_counts=True))
-    # exit()
-    
-    total_samples = len(ecgs)
-    indices = np.arange(total_samples)
-    indices = np.random.permutation(indices)
-    train_size = int(total_samples * 0.7)
-    val_size = int(total_samples * 0.15)
-    test_size = total_samples - train_size - val_size
-    
-    train_indices = indices[:train_size:]
-    test_indices = indices[train_size:train_size+test_size:]
-    val_indices = indices[train_size+test_size::]
-    
-    print(f"SEGMENT LENGTH: {seg_len}")
-    print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}\n")
+    ecgs.append(sig)
+    labels.append(label)
 
-    model.load_weights(weights_path)
-    model.fit(
-        [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
-        [full_labels[train_indices], single_labels[train_indices]],
-        epochs = 100,
-        validation_data = (
-            [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
-            [full_labels[val_indices], single_labels[val_indices]]
-        ),
-        batch_size = batch_size,
-        callbacks = [cb_early_stopping, cb_checkpoint]
-    )
-    
-    np.save(path.join("history", f"ecg_ah_test_{seg_len}"), train_indices)
-    
-    
-# print("\nTESTING\n")
-    
-# for seg_len in range(10, 250, 10): # 10s -> 4m
-#     ecgs = []
-#     labels = []
-#     rpa = []
-#     rri = []
-    
-#     for p in p_list:
-#         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-#         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
-#         raw_label = raw_label[10:-10:]
-    
-#         sig = divide_signal(raw_sig, win_size=(10+seg_len+10)*100, step_size=seg_len*100)
-#         label = divide_signal(raw_label, win_size=seg_len)
+scaler = MinMaxScaler()
 
-#         ecgs.append(sig)
-#         labels.append(label)
+ecgs = np.vstack(ecgs)
+# augment
+ecgs = scaler.fit_transform(ecgs.T).T
+ecgs = np.vstack([ecgs, np.arrray(time_warp(ecgs))])
+ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
 
-#     scaler = MinMaxScaler()
-    
-#     ecgs = np.vstack(ecgs)
-#     ecgs = scaler.fit_transform(ecgs.T).T
-#     ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="biosppy") for e in ecgs])
-#     rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len)
-#     full_labels = np.vstack(labels)
-#     single_labels = np.round(np.mean(full_labels, axis=-1))
+rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
 
-#     print(f"SEGMENT LENGTH: {seg_len}\n")
+full_labels = np.vstack(labels)
+full_labels = np.vstack([full_labels, full_labels])
+mean_labels = np.mean(full_labels, axis=-1)
+single_labels = np.round(mean_labels)
+sample_weights = np.ones(shape=single_labels.shape)
+sample_weights += mean_labels
+
+total_samples = len(ecgs)
+indices = np.arange(total_samples)
+indices = np.random.permutation(indices)
+train_size = int(total_samples * 0.7)
+val_size = int(total_samples * 0.15)
+test_size = total_samples - train_size - val_size
+
+train_indices = indices[:train_size:]
+test_indices = indices[train_size:train_size+test_size:]
+val_indices = indices[train_size+test_size::]
+
+print(f"SEGMENT LENGTH: {seg_len}")
+print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}\n")
+class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
+print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
+
+model.load_weights(weights_path)
+model.fit(
+    [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
+    [full_labels[train_indices], single_labels[train_indices]],
+    epochs = epochs,
+    validation_data = (
+        [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
+        [full_labels[val_indices], single_labels[val_indices]]
+    ),
+    batch_size = batch_size,
+    callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
+    sample_weight = sample_weights,
+)
+
+class_counts = np.unique(single_labels[test_indices], return_counts=True)[1]
+print("\nTESTING\n")
+print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
+raw_preds = model.predict([ecgs[test_indices], rpa[test_indices], rri[test_indices]], batch_size=batch_size)
+full_preds = raw_preds[0]
+single_preds = raw_preds[1]
+
+show_res(single_labels[test_indices], single_preds)
+
+np.save(path.join("history", "ecg_test_result"), np.vstack([single_labels[test_indices], single_preds]))
