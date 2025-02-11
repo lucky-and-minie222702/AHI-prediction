@@ -1,7 +1,8 @@
 import numpy as np
-import keras
 import sys
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import keras
 import tensorflow as tf
 import pandas as pd
 from keras import Sequential, Model
