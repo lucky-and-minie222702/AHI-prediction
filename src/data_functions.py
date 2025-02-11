@@ -306,7 +306,7 @@ def print_confusion_matrix(cm: np.ndarray | List[List[int]], labels = None):
     for s in remain_label[len(cm)+1::]:
         print(s)
 
-def show_res(y_true, y_pred, labels):
+def show_res(y_true, y_pred, labels=None):
     cm = confusion_matrix(y_true, y_pred)
     print_confusion_matrix(cm, labels=labels)
     print("\nClassification Report:")
