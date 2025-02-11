@@ -27,7 +27,7 @@ num_p = len(p_list)
 def create_model():
     inp_rpa = layers.Input(shape=(None, 1))
     norm_inp_rpa = layers.Normalization()(inp_rpa)
-    conv_rpa = layers.BatchNormalization()(conv_rpa)
+    conv_rpa = layers.BatchNormalization()(norm_inp_rpa)
     conv_rpa = layers.Activation("relu")(conv_rpa)
     conv_rpa = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(conv_rpa)
     conv_rpa = layers.Conv1D(filters=64, kernel_size=3, padding="same")(conv_rpa)
