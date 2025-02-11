@@ -247,3 +247,106 @@ class SaveEncoderCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs):
         if (epoch + 1) % self.sae == 0:
             self.encoder.save_weights(self.save_path)
+
+class TimingCallback(keras.callbacks.Callback):
+    def __init__(self, logs = {}):
+        self.logs=[]
+
+    def on_epoch_begin(self, epoch: int, logs = {}):
+        self.starttime = timer()
+        
+    def on_epoch_end(self, epoch: int, logs = {}):
+        self.logs.append(timer()-self.starttime)
+        
+class HistoryAutosaver(keras.callbacks.Callback):
+    def __init__(self, save_dir: str, model_name: str = "", session_id: int = None):
+        self.dir = save_dir
+        self.model_name = model_name
+        self.session_id = ""
+        if session_id is not None:
+            self.session_id = str(session_id)
+        self.history = {}
+
+    def on_epoch_end(self, epoch: int, logs=None):
+        logs = logs or {}
+        for key, value in logs.items():
+            np.save(path.join(self.dir, f"{self.model_name}_{self.session_id}_{key}"), np.array(value))
+            
+def convert_bytes(byte_size: int) -> str:
+    units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
+    size = byte_size
+    unit_index = 0
+    while size >= 1024 and unit_index < len(units) - 1:
+        size /= 1024
+        unit_index += 1
+    return f"{size:.2f} {units[unit_index]}"
+
+def convert_seconds(total_seconds: float) -> str:
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    return f"{int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds"
+
+def show_params(model, name: str = "Keras_deep_learning"):
+    print(f"Model {name}:")
+    params = model.count_params()
+    print(" | Total params :", "{:,}".format(params).replace(",", " "))
+    print(" | Size         :", convert_bytes(params * 4))
+    
+def show_data_size(train: np.ndarray, test: np.ndarray, val: np.ndarray):
+    data = [train, test, val]
+    labels = ["Train", "Test", "Validation"]
+    for i in range(3):
+        cls, counts = np.unique(data[i], return_counts=True)
+        print(f"{labels[i]} set:")
+        for idx in range(len(cls)):
+            print(f" | Class {cls[idx]}: {counts[idx]}")
+    
+def equally_dis(num_classes: int) -> List[int]:
+    ele = 1.0 / num_classes
+    last_ele = 1 - ele * (num_classes - 1)
+    return [ele for _ in range(num_classes - 1)] + [last_ele]
+    
+def split_classes(y: np.ndarray, class_ratio: List[float] = None, max_total_samples: int = None):
+    class_counts = np.unique(y, return_counts=True)[1]
+    num_classes = len(class_counts)
+    if class_ratio is None:
+        class_ratio = equally_dis(num_classes)
+    
+    # bin search
+    l = 0
+    r = len(y)
+    m = 0
+    while l <= r:
+        m = (l+r)//2
+        wrong = any([(m * class_ratio[i]) > class_counts[i] for i in range(num_classes)])
+        if wrong:
+            r = m -1
+        else:
+            l = m + 1
+    
+    total_samp = m
+    if max_total_samples is not None:
+        total_samp = min(total_samp, max_total_samples)
+
+    class_idx = []
+    for cls, i in enumerate(class_ratio):
+        k = int(total_samp * i)
+        class_idx.extend(np.random.choice(np.where(y==cls)[0], k, replace=False))
+        
+    return np.array(class_idx), np.array([int(total_samp * r) for r in class_ratio])
+
+def print_confusion_matrix(cm: np.ndarray | List[List[int]], labels = None):
+    if labels is None:
+        labels = list(map(str, range(len(cm))))
+    assert max([len(l) for l in labels]) <= 6, "Labels length for confusion matrix must not exceed 6"
+    print("Confusion Matrix:")
+    print(" " * 10, "Predicted", sep="")
+    print(" " * 10, " ".join(f"{label:>6}" for label in labels), sep="")
+    print(" " * 10 + "-" * (7 * (len(labels))), sep="")
+    remain_label = "Actual"
+    for i, row in enumerate(cm):
+        print(f"{remain_label[i] if i < len(remain_label) else ' '} {labels[i]:>6} |", " ".join(f"{val:>6}" for val in row), " |", sep="")
+    print(remain_label[len(cm)] if len(cm) < len(remain_label) else " ", " " * 9, "-" * (7 * (len(labels))), sep="")
+    for s in remain_label[len(cm)+1::]:
+        print(s)

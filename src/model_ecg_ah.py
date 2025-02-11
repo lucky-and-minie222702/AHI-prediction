@@ -1,6 +1,5 @@
 from numpy import ndim
 from data_functions import *
-from model_framework import show_params
 from model_functions import *
 # import model_framework
 from sklearn.preprocessing import MinMaxScaler
