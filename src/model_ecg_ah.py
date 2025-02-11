@@ -80,7 +80,7 @@ def create_model():
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3) 
     
-    conv = layers.Concatenate(axis=-2)([conv, r_peak_features])
+    conv = layers.Attention(use_scale=True)([conv, r_peak_features, conv])
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
@@ -189,7 +189,6 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     ecgs = np.vstack(ecgs)
     ecgs = scaler.fit_transform(ecgs.T).T
     ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
-    print(ecgs.shape)
     rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
     full_labels = np.vstack(labels)
     single_labels = np.round(np.mean(full_labels, axis=-1))

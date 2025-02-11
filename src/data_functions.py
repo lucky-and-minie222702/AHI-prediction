@@ -178,7 +178,7 @@ def calc_ecg(signals, splr: int, duration: int):
         rpa_res.append(rpa)
         rri_res.append(rri)
     
-    return rpa_res, rri_res
+    return np.array(rpa_res), np.array(rri_res)
 
 def calc_percentile(arr: np.ndarray, num: float) -> float:
     arr = sorted(arr)
