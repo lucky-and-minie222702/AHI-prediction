@@ -162,6 +162,7 @@ def calc_ecg(signals, splr: int, duration: int):
     """
     rri_res = []
     rpa_res = []
+    
     t = np.linspace(0, duration, splr * duration)
     for sig in signals:
         peaks = nk.ecg_findpeaks(sig, sampling_rate=splr, method="pantompkins1985")["ECG_R_Peaks"]  # https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
@@ -174,13 +175,8 @@ def calc_ecg(signals, splr: int, duration: int):
             rpa = []
             rri = []
         
-        max_rpa = max(max_rpa, len(rpa))
-        max_rri = max(max_rri, len(rri))
-        
         rpa_res.append(rpa)
         rri_res.append(rri)
-
-    # print(max_rri, max_rpa)
     
     return rpa_res, rri_res
 
