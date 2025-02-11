@@ -8,3 +8,4 @@ database
 *test*
 *.DS_Store
 weights
+gen_data

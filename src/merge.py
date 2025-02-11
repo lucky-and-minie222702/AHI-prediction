@@ -55,8 +55,8 @@ rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
 
 full_labels = np.vstack(labels)
 
-np.save(path.join("data", "merged_ecg"), ecgs)
-np.save(path.join("data", "merged_spo2"), spo2s)
-np.save(path.join("data", "merged_rpa"), rpa)
-np.save(path.join("data", "merged_rri"), rri)
-np.save(path.join("data", "merged_label"), labels)
+np.save(path.join("gen_data", "merged_ecg"), ecgs)
+np.save(path.join("gen_data", "merged_spo2"), spo2s)
+np.save(path.join("gen_data", "merged_rpa"), rpa)
+np.save(path.join("gen_data", "merged_rri"), rri)
+np.save(path.join("gen_data", "merged_label"), labels)

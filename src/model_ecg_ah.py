@@ -149,10 +149,10 @@ print("\nTRAINING\n")
 # clean_method = ['pantompkins1985', 'hamilton2002', 'elgendi2010', 'vg']
 # total_test_indices = []
 
-ecgs = np.load(path.join("data", "merged_ecg.npy"))
+ecgs = np.load(path.join("gen_data", "merged_ecg.npy"))
 full_labels = np.load(path.join("data", "merged_label.npy"))
-rpa = np.load(path.join("data", "merged_rpa.npy"))
-rri = np.load(path.join("data", "merged_rri.npy"))
+rpa = np.load(path.join("gen_data", "merged_rpa.npy"))
+rri = np.load(path.join("dgen_ata", "merged_rri.npy"))
 
 full_labels = np.vstack([full_labels, full_labels])
 mean_labels = np.mean(full_labels, axis=-1)
