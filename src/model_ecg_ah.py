@@ -55,7 +55,7 @@ def create_model():
     ds_conv = layers.Conv1D(filters=64, kernel_size=11, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(ds_conv)
+    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
     # deep
     conv = ResNetBlock(1, ds_conv, 64, 9)
@@ -103,10 +103,14 @@ def create_model():
     
     # preserved input shape (shallow features extract)
     pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(ds_conv)
-    pis = layers.Conv1D(filters=256, kernel_size=5, strides=5)(pis)
+    pis = layers.Conv1D(filters=128, kernel_size=9, strides=5, padding="same")(pis)
     pis = layers.BatchNormalization()(pis)
     pis = layers.Activation("relu")(pis)
-    pis = layers.Conv1D(filters=512, kernel_size=5, strides=5)(pis)
+    pis = layers.Conv1D(filters=256, kernel_size=7, strides=5, padding="same")(pis)
+    pis = layers.BatchNormalization()(pis)
+    pis = layers.Activation("relu")(pis)
+    pis = layers.Cropping1D(cropping=(10, 10))(pis)
+    pis = layers.Conv1D(filters=512, kernel_size=1)(pis)  # match dimesion
     pis = layers.BatchNormalization()(pis)
     pis = layers.Activation("relu")(pis)
     
