@@ -185,10 +185,10 @@ scaler = MinMaxScaler()
 ecgs = np.vstack(ecgs)
 # augment
 ecgs = scaler.fit_transform(ecgs.T).T
-print(np.count_nonzero(np.isnan(ecgs)))
+print(np.count_nonzero(np.isnan(ecgs)), np.count_nonzero(np.isinf(ecgs)))
 augmented_ecgs = np.array([time_warp(e, sigma=0.2) for e in ecgs])
 ecgs = np.vstack([ecgs, augmented_ecgs])
-print(np.count_nonzero(np.isnan(ecgs)))
+print(np.count_nonzero(np.isnan(ecgs)), np.count_nonzero(np.isinf(ecgs)))
 ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
 
 rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
