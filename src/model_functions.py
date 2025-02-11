@@ -35,7 +35,7 @@ from typing import *
 def show_gpus():
     gpus = tf.config.list_physical_devices('GPU')
     if gpus:
-        print(f"!!! GPUs detected: {len(gpus)}")
+        print(f"GPUs detected: {len(gpus)}")
         for i, gpu in enumerate(gpus):
             print(f" {i:2d} | GPU: {gpu.name}")
     else:
