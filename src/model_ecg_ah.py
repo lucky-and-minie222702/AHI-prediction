@@ -6,21 +6,6 @@ from sklearn.preprocessing import MinMaxScaler
 import neurokit2 as nk
 
 show_gpus()
-
-info = open(path.join("data", "info.txt"), "r").readlines()
-p_list = []
-no_spo2 = []
-
-for s in info:
-    s = s[:-1:]
-    if "*" in s:
-        p_list.append(int(s[1::]))
-        no_spo2.append(int(s[1::]))
-    else:
-        p_list.append(int(s))
-
-p_list = [x for x in p_list if x not in no_spo2]
-num_p = len(p_list)
         
         
 def create_model():
@@ -83,8 +68,8 @@ def create_model():
     conv_bn = layers.Activation("relu")(conv_bn)
     
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn)
-    rnn = layers.Bidirectional(layers.LSTM(96, return_sequences=True))(rnn)
-    rnn = layers.Bidirectional(layers.LSTM(96, return_sequences=True))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
     
     # restore    
@@ -109,14 +94,15 @@ def create_model():
     out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
     # preserved input shape (shallow features extract)
-    pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(ds_conv)
-    pis = layers.Bidirectional(layers.LSTM(96, return_sequences=True))(pis)
-    pis = ResNetBlock(1, pis, 128, 9, change_sample=5)
-    pis = ResNetBlock(1, pis, 128, 7)
-    pis = ResNetBlock(1, pis, 256, 5, change_sample=5)
-    pis = ResNetBlock(1, pis, 256, 3)
-    pis = layers.Cropping1D(cropping=(10, 10))(pis)
+    pis = ResNetBlock(1, ds_conv, 64, 9, change_sample=5)
+    pis = ResNetBlock(1, pis, 64, 7)
+    pis = ResNetBlock(1, pis, 128, 5, change_sample=5)
+    pis = ResNetBlock(1, pis, 128, 3)
+    pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(pis)
+    pis = layers.Bidirectional(layers.LSTM(128), return_sequences=True)(pis)
     pis = ResNetBlock(1, pis, 512, 1)  # match channel
+    pis = layers.Cropping1D(cropping=(10, 10))(pis)  # match length
+    
     # full-segment output
     out = layers.Dot(axes=-1)([pis, fc])
     out = layers.Activation("sigmoid", name="full")(out)
@@ -143,7 +129,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 96
+batch_size = 64
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
@@ -164,36 +150,11 @@ print("\nTRAINING\n")
 # clean_method = ['pantompkins1985', 'hamilton2002', 'elgendi2010', 'vg']
 # total_test_indices = []
 
-seg_len = 10
-ecgs = []
-labels = []
-rpa = []
-rri = []
+ecgs = np.load(path.join("data", "merged_ecg.npy"))
+full_labels = np.load(path.join("data", "merged_label.npy"))
+rpa = np.load(path.join("data", "merged_rpa.npy"))
+rri = np.load(path.join("data", "merged_rri.npy"))
 
-for p in p_list:
-    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-    raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
-    raw_label = raw_label[10:-10:]
-
-    sig = divide_signal(raw_sig, win_size=(10+seg_len+10)*100, step_size=(seg_len*100) // 2)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=seg_len // 2)
-
-    ecgs.append(sig)
-    labels.append(label)
-
-scaler = MinMaxScaler()
-ecgs = np.vstack(ecgs)
-# augment
-ecgs = scaler.fit_transform(ecgs.T).T
-# print(np.count_nonzero(np.isnan(ecgs)), np.count_nonzero(np.isinf(ecgs)))
-augmented_ecgs = np.array([time_warp(e, sigma=0.2) for e in ecgs])
-ecgs = np.vstack([ecgs, augmented_ecgs])
-# print(np.count_nonzero(np.isnan(ecgs)), np.count_nonzero(np.isinf(ecgs)))
-ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
-
-rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
-
-full_labels = np.vstack(labels)
 full_labels = np.vstack([full_labels, full_labels])
 mean_labels = np.mean(full_labels, axis=-1)
 single_labels = np.round(mean_labels)
@@ -211,10 +172,9 @@ train_indices = indices[:train_size:]
 test_indices = indices[train_size:train_size+test_size:]
 val_indices = indices[train_size+test_size::]
 
-print(f"SEGMENT LENGTH: {seg_len}")
-print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}\n")
+print(f"\nTrain - Test - Val: {train_size} - {test_size} - {val_size}")
 class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
-print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
+print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
 model.load_weights(weights_path)
 model.fit(
