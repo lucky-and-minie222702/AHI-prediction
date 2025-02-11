@@ -6,7 +6,6 @@ from sklearn.preprocessing import MinMaxScaler
 import neurokit2 as nk
 
 show_gpus()
-no_logs()
 
 info = open(path.join("data", "info.txt"), "r").readlines()
 p_list = []
@@ -66,6 +65,7 @@ def create_model():
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(ds_conv)
     
+    # deep
     conv = ResNetBlock(1, ds_conv, 64, 9)
     conv = ResNetBlock(1, conv, 64, 7)
     conv = ResNetBlock(1, conv, 64, 5)
@@ -73,19 +73,20 @@ def create_model():
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3) 
     
     conv = layers.Concatenate(axis=-2)([conv, r_peak_features])
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
     
     # bottle-neck
-    conv_bn = layers.Conv1D(filters=256, kernel_size=3, strides=2, padding="same")(conv)
+    conv_bn = layers.Conv1D(filters=128, kernel_size=3, strides=2, padding="same")(conv)
     conv_bn = layers.BatchNormalization()(conv_bn)
     conv_bn = layers.Activation("relu")(conv_bn)
     
@@ -93,27 +94,27 @@ def create_model():
     rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
     rnn = layers.LSTM(128, return_sequences=True)(rnn)
     
-    # restore
-    conv_r = layers.Conv1D(filters=256, kernel_size=3,padding="same")(rnn)
+    # restore    
+    conv_r = layers.Conv1D(filters=512, kernel_size=1, padding="same")(rnn)
     conv_r = layers.BatchNormalization()(conv_r)
     conv_r = layers.Activation("relu")(conv_r)
-    conv_r = layers.Conv1D(filters=512, kernel_size=3, padding="same")(conv_r)
-    conv_r = layers.BatchNormalization()(conv_r)
     conv_r = layers.Add()([conv, conv_r])  # residual connection
+    conv_r = ResNetBlock(1, conv_r, 512, 3)
     conv_r = layers.Activation("relu")(conv_r)
     
     se = SEBlock()(conv_r)
     
     fc = layers.GlobalAvgPool1D()(se)
-    fc = layers.Dense(256)(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
     
-    # preserved input shape
-    pis = layers.Conv1D(filters=128, kernel_size=5, strides=5)(ds_conv)
+    # preserved input shape (shallow features extract)
+    pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(ds_conv)
+    pis = layers.Conv1D(filters=256, kernel_size=5, strides=5)(pis)
     pis = layers.BatchNormalization()(pis)
     pis = layers.Activation("relu")(pis)
-    pis = layers.Conv1D(filters=256, kernel_size=5, strides=5)(pis)
+    pis = layers.Conv1D(filters=512, kernel_size=5, strides=5)(pis)
     pis = layers.BatchNormalization()(pis)
     pis = layers.Activation("relu")(pis)
     
@@ -122,7 +123,7 @@ def create_model():
     out = layers.Activation("sigmoid", name="full")(out)
     
     # single output
-    out_s = layers.Dense(128)(fc)
+    out_s = layers.Dense(512)(fc)
     out_s = layers.BatchNormalization()(out_s)
     out_s = layers.Activation("relu")(out_s)
     out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
@@ -143,6 +144,8 @@ def create_model():
     return model
 
 model = create_model()
+model.summary()
+exit()
 weights_path = path.join("weights", ".weights.h5")
 model.save_weights(weights_path)
 
@@ -160,7 +163,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     mode = "min",
 )
 
-print("TRAINING\n")
+print("\nTRAINING\n")
 
 # clean_method = ['pantompkins1985', 'hamilton2002', 'elgendi2010', 'vg']
 # total_test_indices = []
@@ -187,6 +190,7 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     ecgs = np.vstack(ecgs)
     ecgs = scaler.fit_transform(ecgs.T).T
     ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="biosppy") for e in ecgs])
+    print(ecgs.shape)
     rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len)
     full_labels = np.vstack(labels)
     single_labels = np.round(np.mean(full_labels, axis=-1))
@@ -224,7 +228,7 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     np.save(path.join("history", f"ecg_ah_test_{seg_len}"), train_indices)
     
     
-# print("TESTING\n")
+# print("\nTESTING\n")
     
 # for seg_len in range(10, 250, 10): # 10s -> 4m
 #     ecgs = []

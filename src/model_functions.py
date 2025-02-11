@@ -29,9 +29,6 @@ import keras.callbacks as cbk
 from keras.preprocessing.sequence import pad_sequences
 from timeit import default_timer as timer
 import random
-
-def no_logs():
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         
 def show_gpus():
     gpus = tf.config.list_physical_devices('GPU')
@@ -60,7 +57,7 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
             Conv = layers.Conv3DTranspose
     
     if isinstance(change_sample, bool):
-        strides = 1 + change_sample
+        strides = 1 + int(change_sample)
     else:
         strides = change_sample
     

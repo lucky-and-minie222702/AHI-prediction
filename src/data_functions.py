@@ -156,7 +156,7 @@ def calc_time(start: str, end: str) -> int:
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
 
-def calc_ecg(signals, splr: int = 100, duration: int = 30, max_rri: int = 60, max_rpa: int = 60):
+def calc_ecg(signals, splr: int, duration: int):
     """
     Return rpa, rri
     """
@@ -164,7 +164,7 @@ def calc_ecg(signals, splr: int = 100, duration: int = 30, max_rri: int = 60, ma
     rpa_res = []
     t = np.linspace(0, duration, splr * duration)
     for sig in signals:
-        peaks = nk.ecg_findpeaks(sig, sampling_rate=splr)["ECG_R_Peaks"]
+        peaks = nk.ecg_findpeaks(sig, sampling_rate=splr, method="vg")["ECG_R_Peaks"]  # https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
 
         if len(peaks) > 0:
             r_peaks_time = t[peaks]
@@ -180,8 +180,6 @@ def calc_ecg(signals, splr: int = 100, duration: int = 30, max_rri: int = 60, ma
         rpa_res.append(rpa)
         rri_res.append(rri)
 
-    rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
-    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
     # print(max_rri, max_rpa)
     
     return rpa_res, rri_res
