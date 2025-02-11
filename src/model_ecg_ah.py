@@ -182,11 +182,10 @@ for p in p_list:
     labels.append(label)
 
 scaler = MinMaxScaler()
-
 ecgs = np.vstack(ecgs)
 # augment
 ecgs = scaler.fit_transform(ecgs.T).T
-ecgs = np.vstack([ecgs, np.arrray(time_warp(ecgs))])
+ecgs = np.vstack([ecgs, np.array(time_warp(ecgs))])
 ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
 
 rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
