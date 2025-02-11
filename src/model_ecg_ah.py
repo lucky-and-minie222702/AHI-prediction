@@ -98,7 +98,7 @@ def create_model():
     pis = ResNetBlock(1, pis, 128, 5, change_sample=5)
     pis = ResNetBlock(1, pis, 128, 3)
     pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(pis)
-    pis = layers.Bidirectional(layers.LSTM(128), return_sequences=True)(pis)
+    pis = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(pis)
     pis = ResNetBlock(1, pis, 512, 1)  # match channel
     pis = layers.Cropping1D(cropping=(10, 10))(pis)  # match length
     
