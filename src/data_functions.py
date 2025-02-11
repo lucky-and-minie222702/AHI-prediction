@@ -163,6 +163,8 @@ def calc_ecg(signals, splr: int, duration: int):
     rri_res = []
     rpa_res = []
     
+    max_rpa = 0
+    max_rri = 0
     t = np.linspace(0, duration, splr * duration)
     for sig in signals:
         peaks = nk.ecg_findpeaks(sig, sampling_rate=splr, method="pantompkins1985")["ECG_R_Peaks"]  # https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
@@ -175,10 +177,18 @@ def calc_ecg(signals, splr: int, duration: int):
             rpa = []
             rri = []
         
+        max_rpa = max(max_rpa, len(rpa))
+        max_rri = max(max_rri, len(rri))
+        
         rpa_res.append(rpa)
         rri_res.append(rri)
+
+    # print(max_rri, max_rpa)
     
-    return np.array(rpa_res), np.array(rri_res)
+    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
+    rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
+    
+    return rpa_res, rri_res
 
 def calc_percentile(arr: np.ndarray, num: float) -> float:
     arr = sorted(arr)
