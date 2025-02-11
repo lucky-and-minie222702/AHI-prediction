@@ -169,7 +169,7 @@ print("\nTRAINING\n")
 # clean_method = ['pantompkins1985', 'hamilton2002', 'elgendi2010', 'vg']
 # total_test_indices = []
 
-for seg_len in range(10, 250, 10): # 10s -> 4m
+for seg_len in range(10, 70, 10): # 10s -> 1m max = 4m
     ecgs = []
     labels = []
     rpa = []
