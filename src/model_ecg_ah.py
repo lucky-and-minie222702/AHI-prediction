@@ -152,7 +152,7 @@ print("\nTRAINING\n")
 ecgs = np.load(path.join("gen_data", "merged_ecg.npy"))
 full_labels = np.load(path.join("gen_data", "merged_label.npy"))
 rpa = np.load(path.join("gen_data", "merged_rpa.npy"))
-rri = np.load(path.join("gen_ata", "merged_rri.npy"))
+rri = np.load(path.join("gen_data", "merged_rri.npy"))
 
 mean_labels = np.mean(full_labels, axis=-1)
 single_labels = np.round(mean_labels)
