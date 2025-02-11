@@ -227,7 +227,7 @@ model.fit(
     ),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
-    sample_weight = sample_weights,
+    sample_weight = sample_weights[train_indices],
 )
 
 class_counts = np.unique(single_labels[test_indices], return_counts=True)[1]
