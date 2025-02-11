@@ -56,7 +56,7 @@ def create_model():
     r_peak_features = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(r_peak_features)
     r_peak_features = SEBlock()(r_peak_features)
     
-    inp = layers.Input(shape=(1000, 1))
+    inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
@@ -86,7 +86,7 @@ def create_model():
     conv = ResNetBlock(1, conv, 512, 3)
     
     # bottle-neck
-    conv_bn = layers.Conv1D(filters=128, kernel_size=3, strides=2, padding="same")(conv)
+    conv_bn = layers.Conv1D(filters=128, kernel_size=1, strides=1, padding="same")(conv)
     conv_bn = layers.BatchNormalization()(conv_bn)
     conv_bn = layers.Activation("relu")(conv_bn)
     
@@ -99,8 +99,8 @@ def create_model():
     conv_r = layers.BatchNormalization()(conv_r)
     conv_r = layers.Activation("relu")(conv_r)
     conv_r = layers.Add()([conv, conv_r])  # residual connection
-    conv_r = ResNetBlock(1, conv_r, 512, 3)
     conv_r = layers.Activation("relu")(conv_r)
+    conv_r = ResNetBlock(1, conv_r, 512, 3)
     
     se = SEBlock()(conv_r)
     
