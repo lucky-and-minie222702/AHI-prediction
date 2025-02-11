@@ -1,6 +1,7 @@
 import numpy as np
 import keras
 import sys
+import os
 import tensorflow as tf
 import pandas as pd
 from keras import Sequential, Model
@@ -28,6 +29,18 @@ import keras.callbacks as cbk
 from keras.preprocessing.sequence import pad_sequences
 from timeit import default_timer as timer
 import random
+
+def no_logs():
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        
+def show_gpus():
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        print(f"!!! GPUs detected: {len(gpus)}")
+        for i, gpu in enumerate(gpus):
+            print(f" {i:2d} | GPU: {gpu.name}")
+    else:
+        print("! No GPU detected. Using CPU.")
 
 # check for available GPUs
 def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool = False, transpose: bool = False, activation = layers.Activation("relu")):
