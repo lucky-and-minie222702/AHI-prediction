@@ -144,7 +144,7 @@ show_params(model, "ecg_ah")
 weights_path = path.join("weights", ".weights.h5")
 model.save_weights(weights_path)
 
-batch_size = 64
+batch_size = 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
