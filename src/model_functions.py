@@ -72,6 +72,10 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
     x = Conv(filters, kernel_size, strides=1, padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = activation(x)
+    
+    x = Conv(filters, kernel_size, strides=1, padding='same')(x)
+    x = layers.BatchNormalization()(x)
+    x = activation(x)
 
     if strides != 1 or shortcut.shape[-1] != filters:
         shortcut = Conv(filters, kernel_size, strides=strides, padding='same')(shortcut)

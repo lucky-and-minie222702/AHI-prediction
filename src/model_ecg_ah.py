@@ -93,7 +93,7 @@ def create_model():
     conv_r = layers.Activation("relu")(conv_r)
     conv_r = layers.Add()([conv, conv_r])  # residual connection
     conv_r = layers.Activation("relu")(conv_r)
-    conv_r = ResNetBlock(1, conv_r, 512, 3)
+    conv_r = ResNetBlock(1, conv_r, 512, 1)
     
     se = SEBlock()(conv_r)
     
@@ -116,7 +116,7 @@ def create_model():
     pis = ResNetBlock(1, pis, 256, 5, change_sample=5)
     pis = ResNetBlock(1, pis, 256, 3)
     pis = layers.Cropping1D(cropping=(10, 10))(pis)
-    pis = ResNetBlock(1, pis, 512, 1, change_sample=5)  # match channel
+    pis = ResNetBlock(1, pis, 512, 1)  # match channel
     # full-segment output
     out = layers.Dot(axes=-1)([pis, fc])
     out = layers.Activation("sigmoid", name="full")(out)
