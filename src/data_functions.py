@@ -241,7 +241,7 @@ def bandpass_filter(data, lowcut, highcut, fs, order: int = 4):
     y = signal.filtfilt(b, a, data)
     return y
 
-def time_warp(ecg, sigma=0.2):
+def time_warp(ecg, sigma: float):
     """Apply time warping to an ECG signal."""
     orig_steps = np.arange(len(ecg))
     random_warp = np.cumsum(np.random.normal(0, sigma, size=len(ecg)))
