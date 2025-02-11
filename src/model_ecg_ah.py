@@ -188,7 +188,7 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     
     ecgs = np.vstack(ecgs)
     ecgs = scaler.fit_transform(ecgs.T).T
-    ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="biosppy") for e in ecgs])
+    ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
     print(ecgs.shape)
     rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len)
     full_labels = np.vstack(labels)
