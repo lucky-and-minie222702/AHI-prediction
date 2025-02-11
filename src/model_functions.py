@@ -30,6 +30,7 @@ import keras.callbacks as cbk
 from keras.preprocessing.sequence import pad_sequences
 from timeit import default_timer as timer
 import random
+from typing import *
         
 def show_gpus():
     gpus = tf.config.list_physical_devices('GPU')
