@@ -70,7 +70,6 @@ def create_model():
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn)
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
-    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
     
     # restore    
     conv_r = layers.Conv1D(filters=512, kernel_size=1, padding="same")(rnn)
@@ -129,7 +128,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 64
+batch_size = 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
