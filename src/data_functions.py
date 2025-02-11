@@ -247,7 +247,7 @@ def time_warp(ecg, sigma: float):
     random_warp = np.cumsum(np.random.normal(0, sigma, size=len(ecg)))
     warped_steps = orig_steps + random_warp
     warped_steps = np.clip(warped_steps, 0, len(ecg) - 1)
-    interp = interp1d(warped_steps, ecg, kind='linear', fill_value="extrapolate")
+    interp = interp1d(warped_steps, ecg, kind='cubic', fill_value="extrapolate")
     return np.array(interp(orig_steps))
 
 def equally_dis(num_classes: int) -> List[int]:
