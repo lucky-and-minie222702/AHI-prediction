@@ -241,14 +241,21 @@ def bandpass_filter(data, lowcut, highcut, fs, order: int = 4):
     y = signal.filtfilt(b, a, data)
     return y
 
-def time_warp(ecg, sigma: float):
-    """Apply time warping to an ECG signal."""
-    orig_steps = np.arange(len(ecg))
-    random_warp = np.cumsum(np.random.normal(0, sigma, size=len(ecg)))
-    warped_steps = orig_steps + random_warp
-    warped_steps = np.clip(warped_steps, 0, len(ecg) - 1)
-    interp = interp1d(warped_steps, ecg, kind='cubic', fill_value="extrapolate")
-    return np.array(interp(orig_steps))
+def time_warp(ecg_signal, sigma: float):
+    orig_time = np.arange(len(ecg_signal))
+
+    time_warping = np.cumsum(np.random.normal(0, sigma, size=len(ecg_signal)))
+
+    warped_time = orig_time + time_warping
+    warped_time = np.clip(warped_time, 0, len(ecg_signal) - 1)
+
+    warped_time, unique_indices = np.unique(warped_time, return_index=True)
+    ecg_signal_unique = ecg_signal[unique_indices]
+
+    interp_func = interp1d(warped_time, ecg_signal_unique, kind="cubic", fill_value="extrapolate")
+    warped_ecg = interp_func(orig_time)
+
+    return warped_ecg
 
 def equally_dis(num_classes: int) -> List[int]:
     ele = 1.0 / num_classes
