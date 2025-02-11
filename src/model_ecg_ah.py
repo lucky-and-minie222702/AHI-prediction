@@ -207,8 +207,8 @@ for seg_len in range(10, 250, 10): # 10s -> 4m
     test_indices = indices[train_size:train_size+test_size:]
     val_indices = indices[train_size+test_size::]
     
-    print(f"SEGMENT LENGTH: {seg_len}\n")
-    print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}")
+    print(f"SEGMENT LENGTH: {seg_len}")
+    print(f"Train - Test - Val: {train_size} - {test_size} - {val_size}\n")
 
     model.load_weights(weights_path)
     model.fit(
