@@ -1,5 +1,6 @@
 from numpy import ndim
 from data_functions import *
+from model_framework import show_params
 from model_functions import *
 # import model_framework
 from sklearn.preprocessing import MinMaxScaler
@@ -144,8 +145,7 @@ def create_model():
     return model
 
 model = create_model()
-model.summary()
-exit()
+show_params(model, "ecg_ah")
 weights_path = path.join("weights", ".weights.h5")
 model.save_weights(weights_path)
 
