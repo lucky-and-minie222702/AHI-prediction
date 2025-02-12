@@ -31,9 +31,9 @@ for p in p_list:
     raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
     # raw_label = raw_label[10:-10:]
 
-    sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=(seg_len*100) // 2 + 100)
-    spo2 = divide_signal(raw_spo2, win_size=(seg_len+1), step_size=seg_len // 2 + 1)
-    label = divide_signal(raw_label, win_size=(seg_len+1), step_size=seg_len // 2 + 1)
+    sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=100)
+    spo2 = divide_signal(raw_spo2, win_size=(seg_len+1), step_size=1)
+    label = divide_signal(raw_label, win_size=(seg_len+1), step_size=1)
 
     ecgs.append(sig)
     spo2s.append(spo2)
@@ -47,7 +47,7 @@ spo2s = spo2 / 100
 
 ecgs = scaler.fit_transform(ecgs.T).T
 print(ecgs.shape)
-ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="biosppy") for e in ecgs])
+ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
 rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
 
 full_labels = np.vstack(labels)
