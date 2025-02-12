@@ -11,7 +11,6 @@ show_gpus()
 def create_model():
     inp_rpa = layers.Input(shape=(None, 1))
     norm_inp_rpa = layers.Normalization()(inp_rpa)
-    conv_rpa = layers.BatchNormalization()(norm_inp_rpa)
     conv_rpa = ResNetBlock(1, norm_inp_rpa, 64, 3, change_sample=True)
     conv_rpa = ResNetBlock(1, conv_rpa, 64, 3)
     
