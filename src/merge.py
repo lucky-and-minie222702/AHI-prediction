@@ -49,8 +49,6 @@ if heavy_loading:
 spo2s = np.vstack(spo2s)
 spo2s = spo2 / 100
 
-print(f"Total samples: {len(labels)}")
-
 if heavy_loading:
     ecgs = scaler.fit_transform(ecgs.T).T
     print(ecgs.nbytes)
@@ -58,6 +56,7 @@ if heavy_loading:
     rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
 
 full_labels = np.vstack(labels)
+print(f"Total samples: {len(full_labels)}")
 
 if heavy_loading:
     np.save(path.join("gen_data", "merged_ecg"), ecgs)
