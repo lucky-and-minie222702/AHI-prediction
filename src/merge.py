@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 info = open(path.join("data", "info.txt"), "r").readlines()
 p_list = []
 no_spo2 = []
-heavy_loading = "heavy" in sys.argv:
+heavy_loading = "heavy" in sys.argv
 
 for s in info:
     s = s[:-1:]
