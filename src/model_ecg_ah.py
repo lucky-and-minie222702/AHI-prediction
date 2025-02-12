@@ -70,6 +70,7 @@ def create_model():
     out_s = layers.Activation("relu")(out_s)
     out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
+    # full-segment output
     # bottle-neck
     conv_bn = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
     conv_bn = layers.BatchNormalization()(conv_bn)
@@ -89,9 +90,6 @@ def create_model():
     conv_r = ResNetBlock(1, conv_r, 1024, 3)
     conv_r = ResNetBlock(1, conv_r, 1024, 3)
     
-    # preserved input shape (shallow features extract)
-
-    # full-segment output
     conv_se_r  = SEBlock()(conv_r)
     out_f = layers.GlobalAvgPool1D()(conv_se_r)
     out_f = layers.Dense(1024)(out_f)
@@ -100,16 +98,17 @@ def create_model():
     out_f = layers.Dense(1024)(out_f)
     out_f = layers.BatchNormalization()(out_f)
     out_f = layers.Activation("relu")(out_f)
-    out_f = layers.Dense(10, activation="sigmoid", name="full")(out_f)
+    out_f = layers.Dense(1, name="full")(out_f)
     
     model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[out_f, out_s])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = {
-            "full": "binary_crossentropy",
+            "full": "mse",
             "single": "binary_crossentropy",
         },
         metrics = {
+            "full": "mae",
             "single": [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
         }
     )
@@ -133,11 +132,11 @@ cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
-    monitor = "val_full_loss",
+    monitor = "val_single_loss",
     mode = "min",
 )
 
-cb_lr = cbk.ReduceLROnPlateau(monitor='val_full_loss', factor=0.2, patience=10, min_lr=0.00001)
+cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
 
 print("\nTRAINING\n")
 
@@ -151,8 +150,7 @@ rri = np.load(path.join("gen_data", "merged_rri.npy"))
 
 mean_labels = np.mean(full_labels, axis=-1)
 single_labels = np.round(mean_labels)
-sample_weights = np.ones(shape=single_labels.shape)
-sample_weights += mean_labels
+full_labels = np.array([count_first_ele(l) for l in full_labels])
 
 total_samples = len(ecgs)
 indices = np.arange(total_samples)
@@ -168,6 +166,9 @@ val_indices = indices[train_size+test_size::]
 print(f"\nTrain - Test - Val: {train_size} - {test_size} - {val_size}")
 class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
 print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
+
+sample_weights = np.array([0.5 for _ in range(len(single_labels))])
+sample_weights += mean_labels
 
 model.load_weights(weights_path)
 model.fit(
@@ -192,4 +193,7 @@ single_preds = raw_preds[1]
 
 np.save(path.join("history", "ecg_test_result"), np.vstack([single_labels[test_indices], single_preds]))
 
+print("\nClassification result:\n")
 show_res(single_labels[test_indices], single_preds)
+print("\nRegression result:\n")
+show_res_regression(full_labels[test_indices], full_preds)

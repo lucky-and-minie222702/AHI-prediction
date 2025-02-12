@@ -8,6 +8,7 @@ from scipy.interpolate import interp1d
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
 from typing import *
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error, median_absolute_error, root_mean_squared_error
 
 # https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
 
@@ -332,3 +333,37 @@ def show_res(y_true, y_pred, labels=None):
         print(f"F1 Score: {f1:.4f}")
         print(f"ROC AUC: {auc:.4f}")
         print(f"Matthews Correlation Coefficient (MCC): {mcc:.4f}")
+
+def count_first_ele(lst):
+    ele = lst[0]
+    res = 0
+    for i in range(len(lst)):
+        if lst[i] == ele:
+            res += 1
+        else:
+            break
+    return res
+
+def show_res_regression(y_true, y_pred):
+    # Number of data points and predictors (for Adjusted R²)
+    n = len(y_true)
+    p = 1  # Modify this if using multiple features in a regression model
+
+    # Compute regression metrics
+    mae = mean_absolute_error(y_true, y_pred)
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = root_mean_squared_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    adj_r2 = 1 - ((1 - r2) * (n - 1) / (n - p - 1))  # Adjusted R²
+    mape = mean_absolute_percentage_error(y_true, y_pred)
+    median_ae = median_absolute_error(y_true, y_pred)
+
+    # Print evaluation metrics
+    print("Regression Metrics:")
+    print(f"Mean Absolute Error (MAE): {mae:.4f}")
+    print(f"Mean Squared Error (MSE): {mse:.4f}")
+    print(f"Root Mean Squared Error (RMSE): {rmse:.4f}")
+    print(f"R² Score: {r2:.4f}")
+    print(f"Adjusted R² Score: {adj_r2:.4f}")
+    print(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
+    print(f"Median Absolute Error: {median_ae:.4f}")
