@@ -47,7 +47,7 @@ spo2s = spo2 / 100
 
 ecgs = scaler.fit_transform(ecgs.T).T
 print(ecgs.shape)
-ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
+ecgs = np.array([clean_ecg(e) for e in ecgs])
 rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
 
 full_labels = np.vstack(labels)

@@ -367,3 +367,14 @@ def show_res_regression(y_true, y_pred):
     print(f"Adjusted R² Score: {adj_r2:.4f}")
     print(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
     print(f"Median Absolute Error: {median_ae:.4f}")
+    
+def bandpass(signal_noisy, fs, low_cutoff_hz, high_cutoff_hz, order):
+    normalized_low_cutoff = low_cutoff_hz / (fs / 2) 
+    normalized_high_cutoff = high_cutoff_hz / (fs / 2)
+
+    b_bp, a_bp = signal.butter(order, [normalized_low_cutoff, normalized_high_cutoff], btype='band')
+
+    return signal.filtfilt(b_bp, a_bp, signal_noisy)
+
+def clean_ecg(sig):
+    return bandpass(sig, 100, 3, 45, 1)
