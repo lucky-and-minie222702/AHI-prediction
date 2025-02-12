@@ -17,7 +17,6 @@ def create_model():
     
     conv_rpa = ResNetBlock(1, conv_rpa, 128, 3, change_sample=True)
     conv_rpa = ResNetBlock(1, conv_rpa, 128, 3)
-    conv_rpa = ResNetBlock(1, conv_rpa, 128, 3)
     
     inp_rri = layers.Input(shape=(None, 1))
     norm_inp_rri = layers.Normalization()(inp_rri)
@@ -26,14 +25,13 @@ def create_model():
     
     conv_rri = ResNetBlock(1, conv_rri, 128, 3, change_sample=True)
     conv_rri = ResNetBlock(1, conv_rri, 128, 3)
-    conv_rri = ResNetBlock(1, conv_rri, 128, 3)
     
     r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
     r_peak_features = SEBlock()(r_peak_features)
     
-    inp = layers.Input(shape=(None, 1))
+    inp = layers.Input(shape=(3000, 1))  # 30s
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
@@ -50,10 +48,8 @@ def create_model():
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3) 
     
@@ -61,9 +57,22 @@ def create_model():
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    conv_se = SEBlock()(conv)
+    
+    # single output
+    out_s = layers.GlobalAvgPool1D()(conv_se)
+    out_s = layers.Dense(512)(out_s)
+    out_s = layers.BatchNormalization()(out_s)
+    out_s = layers.Activation("relu")(out_s)
+    out_s = layers.Dense(512)(out_s)
+    out_s = layers.BatchNormalization()(out_s)
+    out_s = layers.Activation("relu")(out_s)
+    out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
     # bottle-neck
-    conv_bn = layers.Conv1D(filters=256, kernel_size=1, strides=1, padding="same")(conv)
+    conv_bn = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
     conv_bn = layers.BatchNormalization()(conv_bn)
     conv_bn = layers.Activation("relu")(conv_bn)
     
@@ -77,37 +86,24 @@ def create_model():
     conv_r = layers.Activation("relu")(conv_r)
     conv_r = layers.Add()([conv, conv_r])  # residual connection
     conv_r = layers.Activation("relu")(conv_r)
-    conv_r = ResNetBlock(1, conv_r, 512, 1)
-    
-    se = SEBlock()(conv_r)
-    
-    fc = layers.GlobalAvgPool1D()(se)
-    fc = layers.Dense(512)(fc)
-    fc = layers.BatchNormalization()(fc)
-    fc = layers.Activation("relu")(fc)
-    
-    # single output
-    out_s = layers.Dense(512)(fc)
-    out_s = layers.BatchNormalization()(out_s)
-    out_s = layers.Activation("relu")(out_s)
-    out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
+    conv_r = ResNetBlock(1, conv_r, 1024, 3, change_sample=True)
+    conv_r = ResNetBlock(1, conv_r, 1024, 3)
+    conv_r = ResNetBlock(1, conv_r, 1024, 3)
     
     # preserved input shape (shallow features extract)
-    pis = ResNetBlock(1, ds_conv, 64, 9, change_sample=5)
-    pis = ResNetBlock(1, pis, 64, 7)
-    pis = ResNetBlock(1, pis, 128, 5, change_sample=5)
-    pis = ResNetBlock(1, pis, 128, 3)
-    pis = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(pis)
-    pis = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(pis)
-    pis = ResNetBlock(1, pis, 512, 1)  # match channel
-    pis = layers.Cropping1D(cropping=(10, 10))(pis)  # match length
-    
+
     # full-segment output
-    out = layers.Dot(axes=-1)([pis, fc])
-    out = layers.Activation("sigmoid", name="full")(out)
+    conv_se_r  = SEBlock()(conv_r)
+    out_f = layers.GlobalAvgPool1D()(conv_se_r)
+    out_f = layers.Dense(1024)(out_f)
+    out_f = layers.BatchNormalization()(out_f)
+    out_f = layers.Activation("relu")(out_f)
+    out_f = layers.Dense(1024)(out_f)
+    out_f = layers.BatchNormalization()(out_f)
+    out_f = layers.Activation("relu")(out_f)
+    out_f = layers.Dense(10, activation="sigmoid", name="full")(out_f)
     
-    
-    model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[out, out_s])
+    model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[out_f, out_s])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = {
@@ -131,7 +127,7 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 100,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -195,6 +191,6 @@ raw_preds = model.predict([ecgs[test_indices], rpa[test_indices], rri[test_indic
 full_preds = raw_preds[0]
 single_preds = raw_preds[1]
 
-show_res(single_labels[test_indices], single_preds)
-
 np.save(path.join("history", "ecg_test_result"), np.vstack([single_labels[test_indices], single_preds]))
+
+show_res(single_labels[test_indices], single_preds)

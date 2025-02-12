@@ -47,7 +47,7 @@ spo2s = scaler.fit_transform(spo2s.T).T
 
 # augment
 ecgs = scaler.fit_transform(ecgs.T).T
-ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="pantompkins1985") for e in ecgs])
+ecgs = np.array([nk.ecg.ecg_clean(e, sampling_rate=100, method="biosppy") for e in ecgs])
 rpa, rri = calc_ecg(ecgs, splr=100, duration=10+seg_len+10)
 
 

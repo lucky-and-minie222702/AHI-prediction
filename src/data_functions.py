@@ -9,6 +9,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
 from typing import *
 
+# https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
+
 def count_ones_zeros(binary_seq):
     groups = ["".join(g) for _, g in groupby(binary_seq)]
     count_ones = sum(1 for g in groups if g[0] == 1)
@@ -171,7 +173,7 @@ def calc_ecg(signals, splr: int, duration: int):
     max_rri = 0
     t = np.linspace(0, duration, splr * duration)
     for sig in signals:
-        peaks = nk.ecg_findpeaks(sig, sampling_rate=splr, method="pantompkins1985")["ECG_R_Peaks"]  # https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
+        peaks = nk.ecg_findpeaks(sig, sampling_rate=splr, method="vg")["ECG_R_Peaks"]  # https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
 
         if len(peaks) > 0:
             r_peaks_time = t[peaks]
