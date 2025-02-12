@@ -128,7 +128,7 @@ def create_model():
 
 model = create_model()
 show_params(model, "ecg_ah")
-exit()
+
 weights_path = path.join("weights", ".weights.h5")
 model.save_weights(weights_path)
 
