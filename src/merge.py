@@ -44,6 +44,7 @@ ecgs = np.vstack(ecgs)
 spo2s = np.vstack(spo2s)
 spo2s = spo2 / 100
 
+print(f"Total samples: {len(ecgs)}")
 
 ecgs = scaler.fit_transform(ecgs.T).T
 print(ecgs.shape)
