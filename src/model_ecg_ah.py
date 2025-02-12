@@ -30,7 +30,7 @@ def create_model():
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
     r_peak_features = SEBlock()(r_peak_features)
     
-    inp = layers.Input(shape=(3000, 1))  # 30s
+    inp = layers.Input(shape=(3100, 1))  # 30s
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
@@ -98,17 +98,17 @@ def create_model():
     out_f = layers.Dense(1024)(out_f)
     out_f = layers.BatchNormalization()(out_f)
     out_f = layers.Activation("relu")(out_f)
-    out_f = layers.Dense(1, name="full")(out_f)
+    out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
     
     model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[out_f, out_s])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = {
-            "full": "mse",
+            "full": "binary_crossentropy",
             "single": "binary_crossentropy",
         },
         metrics = {
-            "full": "mae",
+            "full": [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
             "single": [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
         }
     )
@@ -149,8 +149,8 @@ rpa = np.load(path.join("gen_data", "merged_rpa.npy"))
 rri = np.load(path.join("gen_data", "merged_rri.npy"))
 
 mean_labels = np.mean(full_labels, axis=-1)
-single_labels = np.round(mean_labels)
-full_labels = np.array([count_first_ele(l) for l in full_labels])
+full_labels = np.round(mean_labels)
+single_labels = np.array([l[15] for l in full_labels])
 
 total_samples = len(ecgs)
 indices = np.arange(total_samples)
@@ -167,7 +167,7 @@ print(f"\nTrain - Test - Val: {train_size} - {test_size} - {val_size}")
 class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
 print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
-sample_weights = np.array([0.5 for _ in range(len(single_labels))])
+sample_weights = np.ones(shape=mean_labels.shape)
 sample_weights += mean_labels
 
 model.load_weights(weights_path)
@@ -193,7 +193,7 @@ single_preds = raw_preds[1]
 
 np.save(path.join("history", "ecg_test_result"), np.vstack([single_labels[test_indices], single_preds]))
 
-print("\nClassification result:\n")
+print("\nClassification on single second result:\n")
 show_res(single_labels[test_indices], single_preds)
-print("\nRegression result:\n")
-show_res_regression(full_labels[test_indices], full_preds)
+print("\nClassification on full segment result:\n")
+show_res(full_labels[test_indices], full_preds)
