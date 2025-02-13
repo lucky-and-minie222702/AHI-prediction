@@ -59,7 +59,8 @@ full_labels = np.vstack(labels)
 print(f"Total samples: {len(full_labels)}")
 
 if heavy_loading:
-    np.save(path.join("gen_data", "merged_ecg"), ecgs)
+    if "save_ecg" in sys.argv:
+        np.save(path.join("gen_data", "merged_ecg"), ecgs)
     np.save(path.join("gen_data", "merged_rpa"), rpa)
     np.save(path.join("gen_data", "merged_rri"), rri)
 
