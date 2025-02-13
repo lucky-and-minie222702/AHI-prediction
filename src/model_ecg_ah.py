@@ -152,17 +152,14 @@ cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2,
 
 print("\nTRAINING\n")
 
-# clean_method = ['pantompkins1985', 'hamilton2002', 'elgendi2010', 'vg']
-# total_test_indices = []
-
 ecgs = np.load(path.join("gen_data", "merged_ecg.npy"))
-full_labels = np.load(path.join("gen_data", "merged_label.npy"))
+labels = np.load(path.join("gen_data", "merged_label.npy"))
 rpa = np.load(path.join("gen_data", "merged_rpa.npy"))
 rri = np.load(path.join("gen_data", "merged_rri.npy"))
 
-mean_labels = np.mean(full_labels, axis=-1)
+mean_labels = np.mean(labels, axis=-1)
 full_labels = np.round(mean_labels)
-single_labels = np.array([l[15] for l in full_labels])
+single_labels = np.array([l[15] for l in labels])
 
 total_samples = len(ecgs)
 indices = np.arange(total_samples)
