@@ -104,16 +104,18 @@ def create_model():
     r_peak_att = layers.Attention(use_scale=True)([conv, r_peak_features, r_peak_features])
     
     # bottle-neck lstm
-    conv_bn1 = layers.Conv1D(filters=64, kernel_size=1, padding="same")(r_peak_att)
+    conv_bn1 = layers.Conv1D(filters=128, kernel_size=3, strides=2, padding="same")(r_peak_att)
     conv_bn1 = layers.BatchNormalization()(conv_bn1)
     conv_bn1 = layers.Activation("relu")(conv_bn1)
     
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn1)
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
-    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(rnn)
     
-    # restore    
-    conv_r1 = layers.Add()([conv, rnn])  # residual connection
+    # restore  
+    conv_r1 = layers.Conv1DTranspose(filters=256, kernel_size=3, strides=2, padding="same")(rnn)
+    conv_r1 = layers.BatchNormalization()(conv_r1)
+    conv_r1 = layers.Activation("relu")(conv_r1)
+    conv_r1 = layers.Add()([conv, conv_r1])  # residual connection
     conv_r1 = layers.Activation("relu")(conv_r1)
     
     conv_r1 = ResNetBlock(1, conv_r1, 512, 3, change_sample=True)
@@ -133,7 +135,6 @@ def create_model():
     full = layers.Activation("relu")(full)
     
     conv_r2 = ResNetBlock(1, full, 1024, 3, change_sample=True)
-    conv_r2 = ResNetBlock(1, conv_r2, 1024, 3)
     conv_r2 = ResNetBlock(1, conv_r2, 1024, 3)
     
     se1 = SEBlock()(conv_r2)
