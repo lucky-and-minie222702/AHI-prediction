@@ -39,6 +39,7 @@ for p in range(1, num_p+1):
     real_ahi = round(real_ahi, 2)
     ai_ahi = round(ai_ahi, 2)
     
+    print(f"Benh nhan {p}:")
     print(real_ahi, ai_ahi)
     res.append([real_ahi, ai_ahi])
     

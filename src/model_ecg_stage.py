@@ -125,11 +125,11 @@ cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
-    monitor = "val_single_loss",
+    monitor = "val_full_loss",
     mode = "min",
 )
 
-cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
+cb_lr = cbk.ReduceLROnPlateau(monitor='val_full_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
 
 for i_fold in range(1, folds+1):
     seg_len = 30

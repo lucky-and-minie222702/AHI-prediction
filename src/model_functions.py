@@ -260,18 +260,14 @@ class TimingCallback(keras.callbacks.Callback):
         self.logs.append(timer()-self.starttime)
         
 class HistoryAutosaver(keras.callbacks.Callback):
-    def __init__(self, save_dir: str, model_name: str = "", session_id: int = None):
-        self.dir = save_dir
-        self.model_name = model_name
-        self.session_id = ""
-        if session_id is not None:
-            self.session_id = str(session_id)
+    def __init__(self, save_path: str):
+        self.p = save_path
         self.history = {}
 
     def on_epoch_end(self, epoch: int, logs=None):
         logs = logs or {}
         for key, value in logs.items():
-            np.save(path.join(self.dir, f"{self.model_name}_{self.session_id}_{key}"), np.array(value))
+            np.save(self.p, np.array(value))
             
 def convert_bytes(byte_size: int) -> str:
     units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB"]

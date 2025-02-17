@@ -113,28 +113,26 @@ def create_model():
     spo2_inp = layers.Input(shape=(31, 1))
     spo2_norm_inp = layers.Normalization()(spo2_inp)
     
-    spo2_conv = ResNetBlock(1, spo2_norm_inp, 64, 3)
+    spo2_conv = ResNetBlock(1, spo2_norm_inp, 64, 3, change_sample=True)
+    spo2_conv = ResNetBlock(1, spo2_conv, 64, 3)
     spo2_conv = ResNetBlock(1, spo2_conv, 64, 3)
     
-    spo2_conv = ResNetBlock(1, spo2_conv, 128, 3, change_sample=True)
-    spo2_conv = ResNetBlock(1, spo2_conv, 128, 3)
-    
-    spo2_rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(spo2_conv)
-    spo2_att = MyAtt(depth=64, num_heads=8)(spo2_rnn)
+    spo2_rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(spo2_conv)
+    spo2_att = MyAtt(depth=64, num_heads=4)(spo2_rnn)
     
     spo2_se1 = SEBlock()(spo2_att)
     spo2_se2 = SEBlock()(spo2_att)
 
 	# single second
     spo2_out_s = layers.GlobalAvgPool1D()(spo2_se1)
-    spo2_out_s = layers.Dense(256)(spo2_out_s)
+    spo2_out_s = layers.Dense(128)(spo2_out_s)
     spo2_out_s = layers.BatchNormalization()(spo2_out_s)
     spo2_out_s = layers.Activation("relu")(spo2_out_s)
     spo2_final_out_s = layers.Dense(1, activation="sigmoid", name="spo2_single")(spo2_out_s)
     
     # full segment
     spo2_out_f = layers.GlobalAvgPool1D()(spo2_se2)
-    spo2_out_f = layers.Dense(256)(spo2_out_f)
+    spo2_out_f = layers.Dense(128)(spo2_out_f)
     spo2_out_f = layers.BatchNormalization()(spo2_out_f)
     spo2_out_f = layers.Activation("relu")(spo2_out_f)
     spo2_final_out_f = layers.Dense(1, activation="sigmoid", name="spo2_full")(spo2_out_f)
@@ -176,17 +174,17 @@ batch_size = 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
-    patience = 10,
+    patience = 8,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
-    monitor = "val_single_loss",
+    monitor = "val_main_loss",
     mode = "min",
 )
 
-cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
+cb_lr = cbk.ReduceLROnPlateau(monitor='val_main_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
 
 for i_fold in range(1, folds+1):
     seg_len = 30
