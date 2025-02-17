@@ -28,7 +28,7 @@ p_list = list(map(lambda x: x.split(), p_list))
 for order, name, ahi in p_list:
     no_spo2 = False
     if "*" in order:
-        order = order[:-1:]
+        order = order[:-1:]   
         no_spo2 = True
     order = int(order)
     print("*" if no_spo2 else "", order, file=info_file, sep="")

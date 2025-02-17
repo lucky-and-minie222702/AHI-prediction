@@ -120,7 +120,7 @@ def create_model():
     spo2_conv = ResNetBlock(1, spo2_conv, 128, 3)
     
     spo2_rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(spo2_conv)
-    spo2_att = MyAtt(depth=64, num_heads=4)(spo2_rnn)
+    spo2_att = MyAtt(depth=64, num_heads=4, seq_len=8)(spo2_rnn, spo2_rnn, spo2_rnn)
     
     spo2_se1 = SEBlock()(spo2_att)
     spo2_se2 = SEBlock()(spo2_att)
@@ -145,12 +145,15 @@ def create_model():
     #########
     
     merge_out = layers.Concatenate()([out_s, out_f, spo2_out_s, spo2_out_f])
+    merge_out = layers.Dense(512)(merge_out)
+    merge_out = layers.BatchNormalization()(merge_out)
+    merge_out = layers.Activation("relu")(merge_out)
     merge_out = layers.Dense(1, activation="sigmoid", name="main")(merge_out)
     
     model = Model(inputs=[inp, inp_rpa, inp_rri, spo2_inp], outputs=[final_out_f, final_out_s, spo2_final_out_f, spo2_final_out_s, merge_out])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
-        loss = {
+        loss = { 
             "full": "binary_crossentropy",
             "single": "binary_crossentropy",
             "spo2_full": "binary_crossentropy",
@@ -166,6 +169,7 @@ def create_model():
 
 model = create_model()
 show_params(model, "ecg_ah")
+exit()
 
 weights_path = path.join("weights", "ah.weights.h5")
 model.save_weights(weights_path)
