@@ -115,9 +115,11 @@ def create_model():
     
     spo2_conv = ResNetBlock(1, spo2_norm_inp, 64, 3, change_sample=True)
     spo2_conv = ResNetBlock(1, spo2_conv, 64, 3)
-    spo2_conv = ResNetBlock(1, spo2_conv, 64, 3)
+
+    spo2_conv = ResNetBlock(1, spo2_conv, 128, 3, change_sample=True)
+    spo2_conv = ResNetBlock(1, spo2_conv, 128, 3)
     
-    spo2_rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(spo2_conv)
+    spo2_rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(spo2_conv)
     spo2_att = MyAtt(depth=64, num_heads=4)(spo2_rnn)
     
     spo2_se1 = SEBlock()(spo2_att)
@@ -296,7 +298,6 @@ for i_fold in range(1, folds+1):
         single_preds = raw_preds[-1]
 
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.vstack([single_labels, single_preds]))
-        
-        print()
+        print(f"\nBenh nhan {p}\n")
         show_res(single_labels, single_preds)
         print()

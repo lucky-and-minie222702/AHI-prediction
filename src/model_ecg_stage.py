@@ -234,6 +234,6 @@ for i_fold in range(1, folds+1):
         full_preds = raw_preds
 
         np.save(path.join("history", f"ecg_stage_res_p{p}"), np.vstack([full_labels, full_preds]))
-        print()
+        print(f"\nBenh nhan {p}\n")
         show_res(full_labels, full_preds)
         print()
