@@ -9,14 +9,32 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
 from typing import *
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error, median_absolute_error, root_mean_squared_error
-
-# https://www.researchgate.net/publication/375221357_Accelerated_Sample-Accurate_R-Peak_Detectors_Based_on_Visibility_Graphs
+import sys
 
 def count_ones_zeros(binary_seq):
     groups = ["".join(g) for _, g in groupby(binary_seq)]
     count_ones = sum(1 for g in groups if g[0] == 1)
     count_zeros = sum(1 for g in groups if g[0] == 0)
     return count_ones, count_zeros
+
+def count_groups(binary_list):
+    if not binary_list:
+        return []
+    
+    groups = []
+    start = 0
+    current_value = binary_list[0]
+
+    for i in range(1, len(binary_list)):
+        if binary_list[i] != current_value:
+            groups.append((start, i - start, current_value))
+            start = i
+            current_value = binary_list[i]
+    
+    # Add the last group
+    groups.append((start, len(binary_list) - start, current_value))
+
+    return groups
 
 def time_to_seconds(time_str):
     h, m, s = map(int, time_str.split(':'))
@@ -334,7 +352,7 @@ def show_res(y_true, y_pred, labels=None):
         print(f"ROC AUC: {auc:.4f}")
         print(f"Matthews Correlation Coefficient (MCC): {mcc:.4f}")
 
-def count_first_ele(lst):
+def  count_first_ele(lst):
     ele = lst[0]
     res = 0
     for i in range(len(lst)):
@@ -378,3 +396,21 @@ def bandpass(signal_noisy, fs, low_cutoff_hz, high_cutoff_hz, order):
 
 def clean_ecg(sig):
     return bandpass(sig, 100, 3, 45, 1)
+
+
+class Tee:
+    def reset():
+        sys.stdout.file.close() 
+        sys.stdout = sys.__stdout__
+    
+    def __init__(self, file: str):
+        self.file = file
+        self.stdout = sys.stdout
+
+    def write(self, message):
+        self.stdout.write(message)
+        self.file.write(message)
+
+    def flush(self):
+        self.stdout.flush()
+        self.file.flush()
