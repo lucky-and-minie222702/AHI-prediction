@@ -225,6 +225,7 @@ for i_fold in range(1, folds+1):
         ecgs = np.array([clean_ecg(e) for e in ecgs])
         rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len)
         
+        labels = np.array(label)
         mean_labels = np.mean(labels, axis=-1)
         full_labels = np.round(mean_labels)
 
