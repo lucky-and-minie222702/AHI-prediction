@@ -254,7 +254,7 @@ for i_fold in range(1, folds+1):
         [full_labels[train_indices], single_labels[train_indices], full_labels[train_indices], single_labels[train_indices], single_labels[train_indices]],
         epochs = epochs,
         validation_data = (
-            [ecgs[val_indices], rpa[val_indices], rri[val_indices], spo2[val_indices]],
+            [ecgs[val_indices], rpa[val_indices], rri[val_indices], spo2s[val_indices]],
             [full_labels[val_indices], single_labels[val_indices], full_labels[val_indices], single_labels[val_indices], single_labels[val_indices]]
         ),
         batch_size = batch_size,
