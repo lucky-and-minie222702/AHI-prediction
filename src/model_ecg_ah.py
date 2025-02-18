@@ -286,6 +286,7 @@ for i_fold in range(1, folds+1):
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
         raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
         single_preds = raw_preds[1]
+        single_preds = np.flatten(single_preds)
 
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([single_labels, single_preds], axis=0))
         print(f"\nBenh nhan {p}\n")
