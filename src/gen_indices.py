@@ -14,6 +14,7 @@ for s in info:
         p_list.append(int(s))
 
 # p_list = [x for x in p_list if x not in no_spo2]
+p_list = np.array(p_list)
 num_p = len(p_list)
 
 kf = KFold(n_splits=3, shuffle=True, random_state=np.random.randint(22022009))
