@@ -201,8 +201,8 @@ for i_fold in range(1, folds+1):
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
 
-        sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1600)
-        label = divide_signal(raw_label, win_size=(seg_len+1), step_size=16)
+        sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=400)
+        label = divide_signal(raw_label, win_size=(seg_len+1), step_size=4)
 
         ecgs.append(sig)
         labels.append(label)
