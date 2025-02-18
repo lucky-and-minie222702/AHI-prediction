@@ -200,7 +200,7 @@ for i_fold in range(1, folds+1):
     rpa = []
     rri = []
     spo2s  =[]
-    p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train"))
+    p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
@@ -269,7 +269,7 @@ for i_fold in range(1, folds+1):
     rpa = []
     rri = []
     spo2s  =[]
-    p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train"))
+    p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
