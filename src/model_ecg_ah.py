@@ -93,14 +93,14 @@ def create_model():
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
-    out_s = layers.Dense(512)(out_s)
+    out_s = layers.Dense(1024)(out_s)
     out_s = layers.BatchNormalization()(out_s)
     out_s = layers.Activation("relu")(out_s)
     final_out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
     # full segment
     out_f = layers.GlobalAvgPool1D()(se2)
-    out_f = layers.Dense(512)(out_f)
+    out_f = layers.Dense(1024)(out_f)
     out_f = layers.BatchNormalization()(out_f)
     out_f = layers.Activation("relu")(out_f)
     final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
@@ -110,58 +110,55 @@ def create_model():
     # SPO2 #
     ########
 
-    spo2_inp = layers.Input(shape=(31, 1))
-    spo2_norm_inp = layers.Normalization()(spo2_inp)
+    # spo2_inp = layers.Input(shape=(31, 1))
+    # spo2_norm_inp = layers.Normalization()(spo2_inp)
     
-    spo2_conv = ResNetBlock(1, spo2_norm_inp, 64, 3, change_sample=True)
-    spo2_conv = ResNetBlock(1, spo2_conv, 64, 3)
+    # spo2_conv = ResNetBlock(1, spo2_norm_inp, 64, 3, change_sample=True)
+    # spo2_conv = ResNetBlock(1, spo2_conv, 64, 3)
 
-    spo2_conv = ResNetBlock(1, spo2_conv, 128, 3, change_sample=True)
-    spo2_conv = ResNetBlock(1, spo2_conv, 128, 3)
+    # spo2_conv = ResNetBlock(1, spo2_conv, 128, 3, change_sample=True)
+    # spo2_conv = ResNetBlock(1, spo2_conv, 128, 3)
     
-    spo2_rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(spo2_conv)
-    spo2_att = MyAtt(depth=64, num_heads=4, seq_len=8)(spo2_rnn, spo2_rnn, spo2_rnn)
+    # spo2_rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(spo2_conv)
+    # spo2_att = MyAtt(depth=64, num_heads=4, seq_len=8)(spo2_rnn, spo2_rnn, spo2_rnn)
     
-    spo2_se1 = SEBlock()(spo2_att)
-    spo2_se2 = SEBlock()(spo2_att)
+    # spo2_se1 = SEBlock()(spo2_att)
+    # spo2_se2 = SEBlock()(spo2_att)
 
-	# single second
-    spo2_out_s = layers.GlobalAvgPool1D()(spo2_se1)
-    spo2_out_s = layers.Dense(128)(spo2_out_s)
-    spo2_out_s = layers.BatchNormalization()(spo2_out_s)
-    spo2_out_s = layers.Activation("relu")(spo2_out_s)
-    spo2_final_out_s = layers.Dense(1, activation="sigmoid", name="spo2_single")(spo2_out_s)
+	# # single second
+    # spo2_out_s = layers.GlobalAvgPool1D()(spo2_se1)
+    # spo2_out_s = layers.Dense(128)(spo2_out_s)
+    # spo2_out_s = layers.BatchNormalization()(spo2_out_s)
+    # spo2_out_s = layers.Activation("relu")(spo2_out_s)
+    # spo2_final_out_s = layers.Dense(1, activation="sigmoid", name="spo2_single")(spo2_out_s)
     
-    # full segment
-    spo2_out_f = layers.GlobalAvgPool1D()(spo2_se2)
-    spo2_out_f = layers.Dense(128)(spo2_out_f)
-    spo2_out_f = layers.BatchNormalization()(spo2_out_f)
-    spo2_out_f = layers.Activation("relu")(spo2_out_f)
-    spo2_final_out_f = layers.Dense(1, activation="sigmoid", name="spo2_full")(spo2_out_f)
+    # # full segment
+    # spo2_out_f = layers.GlobalAvgPool1D()(spo2_se2)
+    # spo2_out_f = layers.Dense(128)(spo2_out_f)
+    # spo2_out_f = layers.BatchNormalization()(spo2_out_f)
+    # spo2_out_f = layers.Activation("relu")(spo2_out_f)
+    # spo2_final_out_f = layers.Dense(1, activation="sigmoid", name="spo2_full")(spo2_out_f)
 
 
-    #########
-    # MERGE #
-    #########
+    # #########
+    # # MERGE #
+    # #########
     
-    merge_out = layers.Concatenate()([out_s, out_f, spo2_out_s, spo2_out_f])
-    merge_out = layers.Dense(512)(merge_out)
-    merge_out = layers.BatchNormalization()(merge_out)
-    merge_out = layers.Activation("relu")(merge_out)
-    merge_out = layers.Dense(1, activation="sigmoid", name="main")(merge_out)
+    # merge_out = layers.Concatenate()([out_s, out_f, spo2_out_s, spo2_out_f])
+    # merge_out = layers.Dense(512)(merge_out)
+    # merge_out = layers.BatchNormalization()(merge_out)
+    # merge_out = layers.Activation("relu")(merge_out)
+    # merge_out = layers.Dense(1, activation="sigmoid", name="main")(merge_out)
     
-    model = Model(inputs=[inp, inp_rpa, inp_rri, spo2_inp], outputs=[final_out_f, final_out_s, spo2_final_out_f, spo2_final_out_s, merge_out])
+    model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[final_out_f, final_out_s])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = { 
             "full": "binary_crossentropy",
             "single": "binary_crossentropy",
-            "spo2_full": "binary_crossentropy",
-            "spo2_single": "binary_crossentropy",
-            "main": "binary_crossentropy",
         },
         metrics = {
-            "main": [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
+            "single": [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
         }
     )
 
@@ -175,7 +172,7 @@ weights_path = path.join("weights", "ah.weights.h5")
 
 epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 128
+batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
@@ -185,41 +182,34 @@ cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
-    monitor = "val_main_loss",
+    monitor = "val_single_loss",
     mode = "min",
 )
 
-cb_lr = cbk.ReduceLROnPlateau(monitor='val_main_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
+cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
 
 for i_fold in range(1, folds+1):
     seg_len = 30
     
     ecgs = []
-    spo2s = []
     labels = []
     rpa = []
     rri = []
-    spo2s  =[]
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-        raw_spo2 = np.load(path.join("data", f"benhnhan{p}spo2.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
 
         sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1600)
-        spo2 = divide_signal(raw_spo2, win_size=(seg_len+1), step_size=16)
         label = divide_signal(raw_label, win_size=(seg_len+1), step_size=16)
 
         ecgs.append(sig)
-        spo2s.append(spo2)
         labels.append(label)
 
     scaler = MinMaxScaler()
 
     ecgs = np.vstack(ecgs)
-    spo2s = np.vstack(spo2s)
-    spo2s = spo2s / 100
     ecgs = scaler.fit_transform(ecgs.T).T
     
     ecgs = np.array([clean_ecg(e) for e in ecgs])
@@ -250,12 +240,12 @@ for i_fold in range(1, folds+1):
     sample_weights += mean_labels
 
     model.fit(
-        [ecgs[train_indices], rpa[train_indices], rri[train_indices], spo2s[train_indices]],
-        [full_labels[train_indices], single_labels[train_indices], full_labels[train_indices], single_labels[train_indices], single_labels[train_indices]],
+        [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
+        [full_labels[train_indices], single_labels[train_indices]],
         epochs = epochs,
         validation_data = (
-            [ecgs[val_indices], rpa[val_indices], rri[val_indices], spo2s[val_indices]],
-            [full_labels[val_indices], single_labels[val_indices], full_labels[val_indices], single_labels[val_indices], single_labels[val_indices]]
+            [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
+            [full_labels[val_indices], single_labels[val_indices]]
         ),
         batch_size = batch_size,
         callbacks = [cb_early_stopping, cb_lr],
@@ -264,27 +254,21 @@ for i_fold in range(1, folds+1):
     # model.load_weights(weights_path)
     
     ecgs = []
-    spo2s = []
     labels = []
     rpa = []
     rri = []
-    spo2s  =[]
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-        raw_spo2 = np.load(path.join("data", f"benhnhan{p}spo2.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
 
         sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=100)
-        spo2 = divide_signal(raw_spo2, win_size=(seg_len+1), step_size=1)
         label = divide_signal(raw_label, win_size=(seg_len+1), step_size=1)
 
         scaler = MinMaxScaler()
 
-        ecgs = np.array(ecgs)
-        spo2s = np.vstack(spo2s)
-        spo2s = spo2s / 100
+        ecgs = np.array(sig)
         ecgs = scaler.fit_transform(ecgs.T).T
         
         ecgs = np.array([clean_ecg(e) for e in ecgs])
@@ -297,7 +281,7 @@ for i_fold in range(1, folds+1):
         class_counts = np.unique(single_labels, return_counts=True)[1]
         print("\nTest result\n")
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
-        raw_preds = model.predict([ecgs, rpa, rri, spo2s], batch_size=batch_size)
+        raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
         single_preds = raw_preds[-1]
 
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.vstack([single_labels, single_preds]))
