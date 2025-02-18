@@ -142,8 +142,8 @@ for i_fold in range(1, folds+1):
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
 
     for p in p_list:
-        raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::])
+        raw_sig = np.load(path.join("data", f"benhnhan{p+1}ecg.npy"))
+        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p+1}label.npy"))[::, 1::])
         # raw_label = raw_label[10:-10:]
 
         sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
@@ -206,8 +206,8 @@ for i_fold in range(1, folds+1):
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
 
     for p in p_list:
-        raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::])
+        raw_sig = np.load(path.join("data", f"benhnhan{p+1}ecg.npy"))
+        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p+1}label.npy"))[::, 1::])
         offset = count_first_ele(raw_label)
         raw_sig = raw_sig[offset::]
         raw_label = raw_sig[offset::]
@@ -233,7 +233,7 @@ for i_fold in range(1, folds+1):
         raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
         full_preds = raw_preds
 
-        np.save(path.join("history", f"ecg_stage_res_p{p}"), np.vstack([full_labels, full_preds]))
-        print(f"\nBenh nhan {p}\n")
+        np.save(path.join("history", f"ecg_stage_res_p{p+1}"), np.vstack([full_labels, full_preds]))
+        print(f"\nBenh nhan {p+1}\n")
         show_res(full_labels, full_preds)
         print()

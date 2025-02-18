@@ -21,5 +21,5 @@ kf = KFold(n_splits=3, shuffle=True, random_state=np.random.randint(22022009))
 idx = 1
 
 for i, (train_index, test_index) in enumerate(kf.split(p_list)):
-    np.save(path.join("gen_data", f"fold_{i}_train"), train_index + 1)
-    np.save(path.join("gen_data", f"fold_{i}_test"), test_index + 1)
+    np.save(path.join("gen_data", f"fold_{i}_train"), train_index)
+    np.save(path.join("gen_data", f"fold_{i}_test"), test_index)
