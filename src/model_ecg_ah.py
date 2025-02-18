@@ -7,7 +7,7 @@ import neurokit2 as nk
 
 show_gpus()
 
-folds = 3
+folds = 2
         
 def create_model():
     #######
@@ -269,10 +269,10 @@ for i_fold in range(1, folds+1):
         scaler = MinMaxScaler()
 
         ecgs = np.array(sig)
-        ecgs = scaler.fit_transform(ecgs.reshape(-1, 1)).T[0]
+        ecgs = scaler.fit_transform(ecgs.T).T
         labels = np.array(label)
-        ecgs = np.array(clean_ecg(ecgs))
-        rpa, rri = calc_ecg([ecgs], splr=100, duration=seg_len+1)
+        ecgs = np.array([clean_ecg(e) for e in ecgs])
+        rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
 
         mean_labels = np.mean(labels, axis=-1)
         full_labels = np.round(mean_labels)
