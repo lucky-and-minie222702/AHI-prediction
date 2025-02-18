@@ -177,7 +177,7 @@ for i_fold in range(1, folds+1):
     train_indices = indices[:train_size:]
     val_indices = indices[train_size:train_size+val_size:]
 
-    print(f"\nTrain - Val: {train_size} - {val_size}")
+    print(f"Train - Val: {train_size} - {val_size}")
     class_counts = np.unique(full_labels[train_indices], return_counts=True)[1]
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 

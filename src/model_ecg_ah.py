@@ -237,12 +237,12 @@ for i_fold in range(1, folds+1):
     indices = np.arange(total_samples)
     indices = np.random.permutation(indices)
     train_size = int(total_samples * 0.85)
-    val_size = int(total_samples * 0.15)
+    val_size = total_samples - train_size
 
     train_indices = indices[:train_size:]
-    val_indices = indices[train_size:train_size+val_size:]
+    val_indices = indices[train_size::]
 
-    print(f"\nTrain - Val: {train_size} - {val_size}")
+    print(f"Train - Val: {train_size} - {val_size}")
     class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
