@@ -184,19 +184,20 @@ for i_fold in range(1, folds+1):
     sample_weights = np.ones(shape=mean_labels.shape)
     sample_weights += mean_labels
 
-    model.fit(
-        [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
-        full_labels[train_indices],
-        epochs = epochs,
-        validation_data = (
-            [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
-            full_labels[val_indices]
-        ),
-        batch_size = batch_size,
-        callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
-        sample_weight = sample_weights[train_indices],
-    )
-    # model.load_weights(weights_path)
+    if "train" in sys.argv:
+        model.fit(
+            [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
+            full_labels[train_indices],
+            epochs = epochs,
+            validation_data = (
+                [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
+                full_labels[val_indices]
+            ),
+            batch_size = batch_size,
+            callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
+            sample_weight = sample_weights[train_indices],
+        )
+        # model.load_weights(weights_path)
 
     ecgs = []
     spo2s = []

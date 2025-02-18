@@ -238,20 +238,22 @@ for i_fold in range(1, folds+1):
 
     sample_weights = np.ones(shape=mean_labels.shape)
     sample_weights += mean_labels
-
-    model.fit(
-        [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
-        [full_labels[train_indices], single_labels[train_indices]],
-        epochs = epochs,
-        validation_data = (
-            [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
-            [full_labels[val_indices], single_labels[val_indices]]
-        ),
-        batch_size = batch_size,
-        callbacks = [cb_early_stopping, cb_lr],
-        sample_weight = sample_weights[train_indices],
-    )
-    # model.load_weights(weights_path)
+    
+    
+    if "train" in sys.argv:
+        model.fit(
+            [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
+            [full_labels[train_indices], single_labels[train_indices]],
+            epochs = epochs,
+            validation_data = (
+                [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
+                [full_labels[val_indices], single_labels[val_indices]]
+            ),
+            batch_size = batch_size,
+            callbacks = [cb_early_stopping, cb_lr],
+            sample_weight = sample_weights[train_indices],
+        )
+        # model.load_weights(weights_path)
     
     ecgs = []
     labels = []
@@ -282,7 +284,7 @@ for i_fold in range(1, folds+1):
         print("\nTest result\n")
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
         raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
-        single_preds = raw_preds[-1]
+        single_preds = raw_preds[1]
 
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.vstack([single_labels, single_preds]))
         print(f"\nBenh nhan {p}\n")
