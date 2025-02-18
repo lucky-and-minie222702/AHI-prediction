@@ -238,5 +238,5 @@ for i_fold in range(1, folds+1):
 
         np.save(path.join("history", f"ecg_stage_res_p{p}"), np.stack([full_labels, full_preds], axis=0))
         print(f"\nBenh nhan {p}\n")
-        show_res(full_labels, full_preds)
+        show_res(full_labels, np.round(full_preds))
         print()
