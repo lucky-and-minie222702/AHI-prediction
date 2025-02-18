@@ -171,7 +171,7 @@ model = create_model()
 show_params(model, "ecg_ah")
 
 weights_path = path.join("weights", "ah.weights.h5")
-model.save_weights(weights_path)
+# model.save_weights(weights_path)
 
 epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
@@ -258,10 +258,10 @@ for i_fold in range(1, folds+1):
             [full_labels[val_indices], single_labels[val_indices], full_labels[val_indices], single_labels[val_indices], single_labels[val_indices]]
         ),
         batch_size = batch_size,
-        callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
+        callbacks = [cb_early_stopping, cb_lr],
         sample_weight = sample_weights[train_indices],
     )
-    model.load_weights(weights_path)
+    # model.load_weights(weights_path)
     
     ecgs = []
     spo2s = []
