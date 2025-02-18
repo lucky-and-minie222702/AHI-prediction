@@ -146,8 +146,8 @@ for i_fold in range(1, folds+1):
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::])
         # raw_label = raw_label[10:-10:]
 
-        sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
-        label = divide_signal(raw_label, win_size=seg_len, step_size=15)
+        sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=100)
+        label = divide_signal(raw_label, win_size=seg_len, step_size=1)
 
         ecgs.append(sig)
         labels.append(label)
@@ -219,11 +219,11 @@ for i_fold in range(1, folds+1):
         scaler = MinMaxScaler()
 
         ecgs = np.array(sig)
-
-        ecgs = scaler.fit_transform(ecgs.T).T
-        ecgs = np.array([clean_ecg(e) for e in ecgs])
-        rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
-        labels = np.vstack(labels)
+        ecgs = scaler.fit_transform(ecgs.reshape(-1, 1)).T[0]
+        labels = np.array(label)
+        ecgs = np.array(clean_ecg(ecgs))
+        rpa, rri = calc_ecg([ecgs], splr=100, duration=seg_len+1)
+        
         mean_labels = np.mean(labels, axis=-1)
         full_labels = np.round(mean_labels)
 
