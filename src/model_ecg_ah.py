@@ -175,8 +175,8 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
-    patience = 8,
+    start_from_epoch = 50,
+    patience = 5,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
