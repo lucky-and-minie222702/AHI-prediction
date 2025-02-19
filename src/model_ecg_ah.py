@@ -25,7 +25,7 @@ def create_model():
     psd_conv = ResNetBlock(1, psd_conv, 128, 3)
     
     
-    inp_fft = layers.Input(shape=(None, 2))
+    inp_fft = layers.Input(shape=(None, 1))
     norm_inp_fft = layers.Normalization()(inp_fft)
     
     fft_ds = layers.Conv1D(filters=32, kernel_size=5, strides=2, padding="same")(norm_inp_fft)
