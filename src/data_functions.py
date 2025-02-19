@@ -414,3 +414,24 @@ class Tee:
     def flush(self):
         self.stdout.flush()
         self.file.flush()
+        
+        
+def calc_psd(sig):
+    f, Pxx = signal.welch(sig, fs=100, nperseg=len(sig))
+    start = None
+    end = None
+    for i in range(len(f)):
+        if f[i] > 3 and start is None:
+            start = i
+
+        if f[i] > 45 and end is None:
+            end = i - 1
+            break
+
+    f = f[start:end:]
+    Pxx = Pxx[start:end:]
+    
+    return np.stack([f, Pxx], axis=1)
+
+def calc_fft(sig):
+    return np.fft.fft(sig).real[1::]
