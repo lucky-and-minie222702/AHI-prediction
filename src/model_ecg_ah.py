@@ -78,7 +78,7 @@ def create_model():
     conv_bn2 = layers.BatchNormalization()(conv_bn2)
     conv_bn2 = layers.Activation("relu")(conv_bn2)
     
-    att = MyAtt(depth=64, num_heads=16, seq_len=97)(conv_bn2, conv_bn2, conv_bn2)
+    att = MyAtt(depth=64, num_heads=16)(conv_bn2, conv_bn2, conv_bn2)
     full = layers.Conv1D(filters=512, kernel_size=1, padding="same")(att)
     full = layers.BatchNormalization()(full)
     full = layers.Activation("relu")(full)
@@ -93,16 +93,10 @@ def create_model():
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
-    out_s = layers.Dense(512)(out_s)
-    out_s = layers.BatchNormalization()(out_s)
-    out_s = layers.Activation("relu")(out_s)
     final_out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
     # full segment
     out_f = layers.GlobalAvgPool1D()(se2)
-    out_f = layers.Dense(512)(out_f)
-    out_f = layers.BatchNormalization()(out_f)
-    out_f = layers.Activation("relu")(out_f)
     final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
 
     
