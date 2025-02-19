@@ -47,11 +47,14 @@ def create_model():
     merge_conv = ResNetBlock(1, merge_conv, 512, 3)
     merge_conv = ResNetBlock(1, merge_conv, 512, 3)
     
-    se1 = SEBlock()(merge_conv)(merge_conv)
-    se2 = SEBlock()(merge_conv)(merge_conv)
+    se1 = SEBlock()(merge_conv)
+    se2 = SEBlock()(merge_conv)
     
-    out1 = layers.Dense(1, activation="sigmoid", name="full")(se1)
-    out2 = layers.Dense(1, activation="sigmoid", name="single")(se2)
+    fc1 = layers.GlobalAvgPool1D()(se1)
+    fc2 = layers.GlobalAvgPool1D()(se2)
+    
+    out1 = layers.Dense(1, activation="sigmoid", name="full")(fc1)
+    out2 = layers.Dense(1, activation="sigmoid", name="single")(fc2)
     
     
     
