@@ -36,6 +36,7 @@ def create_model():
     r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
+    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
     r_peak_features = SEBlock()(r_peak_features)
     
     inp = layers.Input(shape=(3100, 1))  # 30s
@@ -53,54 +54,63 @@ def create_model():
     
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3) 
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     r_peak_att = layers.Attention(use_scale=True, dropout=0.1)([conv, r_peak_features, r_peak_features])
     
-    # bottle-neck lstm
-    conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_att)
-    conv_bn1 = layers.BatchNormalization()(conv_bn1)
-    conv_bn1 = layers.Activation("relu")(conv_bn1)
+    # # bottle-neck lstm
+    # conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_att)
+    # conv_bn1 = layers.BatchNormalization()(conv_bn1)
+    # conv_bn1 = layers.Activation("relu")(conv_bn1)
     
-    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn1)
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    rnn = layers.Normalization()(rnn)
+    # rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn1)
+    # rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
+    # rnn = layers.Normalization()(rnn)
     
-    # restore  
-    conv_r1 = layers.Conv1DTranspose(filters=256, kernel_size=3, strides=2, padding="same")(rnn)
-    conv_r1 = layers.BatchNormalization()(conv_r1)
-    conv_r1 = layers.Activation("relu")(conv_r1)
-    conv_r1 = layers.Add()([conv, conv_r1])  # residual connection
-    conv_r1 = layers.Activation("relu")(conv_r1)
+    # # restore  
+    # conv_r1 = layers.Conv1DTranspose(filters=256, kernel_size=3, strides=2, padding="same")(rnn)
+    # conv_r1 = layers.BatchNormalization()(conv_r1)
+    # conv_r1 = layers.Activation("relu")(conv_r1)
+    # conv_r1 = layers.Add()([conv, conv_r1])  # residual connection
+    # conv_r1 = layers.Activation("relu")(conv_r1)
     
-    conv_r1 = ResNetBlock(1, conv_r1, 512, 3, change_sample=True)
-    conv_r1 = ResNetBlock(1, conv_r1, 512, 3)
+    # conv_r1 = ResNetBlock(1, conv_r1, 512, 3, change_sample=True)
+    # conv_r1 = ResNetBlock(1, conv_r1, 512, 3)
     
-    conv_r1 = layers.SpatialDropout1D(rate=0.1)(conv_r1)
+    # conv_r1 = layers.SpatialDropout1D(rate=0.1)(conv_r1)
     
-    # bottle-neck attention
-    conv_bn2 = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv_r1)
-    conv_bn2 = layers.BatchNormalization()(conv_bn2)
-    conv_bn2 = layers.Activation("relu")(conv_bn2)
+    # # bottle-neck attention
+    # conv_bn2 = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv_r1)
+    # conv_bn2 = layers.BatchNormalization()(conv_bn2)
+    # conv_bn2 = layers.Activation("relu")(conv_bn2)
     
-    att = MyAtt(depth=64, num_heads=16, dropout_rate=0.1)(conv_bn2, conv_bn2, conv_bn2)
-    full = layers.Conv1D(filters=512, kernel_size=1, padding="same")(att)
-    full = layers.BatchNormalization()(full)
-    full = layers.Activation("relu")(full)
-    full = layers.Add()([full, conv_r1])  # residual connection
-    full = layers.Activation("relu")(full)
+    # att = MyAtt(depth=64, num_heads=16, dropout_rate=0.1)(conv_bn2, conv_bn2, conv_bn2)
+    # full = layers.Conv1D(filters=512, kernel_size=1, padding="same")(att)
+    # full = layers.BatchNormalization()(full)
+    # full = layers.Activation("relu")(full)
+    # full = layers.Add()([full, conv_r1])  # residual connection
+    # full = layers.Activation("relu")(full)
     
-    conv_r2 = ResNetBlock(1, full, 1024, 3, change_sample=True)
-    conv_r2 = ResNetBlock(1, conv_r2, 1024, 3)
+    # conv_r2 = ResNetBlock(1, full, 1024, 3, change_sample=True)
+    # conv_r2 = ResNetBlock(1, conv_r2, 1024, 3)
     
-    conv_r2 = layers.SpatialDropout1D(rate=0.1)(conv_r2)
+    # conv_r2 = layers.SpatialDropout1D(rate=0.1)(conv_r2)
     
-    se1 = SEBlock()(conv_r2)
-    se2 = SEBlock()(conv_r2)
+    # se1 = SEBlock()(conv_r2)
+    # se2 = SEBlock()(conv_r2)
+    
+    conv = ResNetBlock(1, r_peak_features, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    se1 = SEBlock()(conv)
+    se2 = SEBlock()(conv)
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
@@ -130,13 +140,13 @@ show_params(model, "ecg_ah")
 weights_path = path.join("weights", "ah.weights.h5")
 # model.save_weights(weights_path)
 
-epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 20,
-    patience = 7,
+    start_from_epoch = 100,
+    patience = 10,
     monitor = "val_single_loss",
     mode = "min",
 )
@@ -148,7 +158,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     mode = "min",
 )
 
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=100, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=180, target_lr=0.001, min_lr=1e-6)
 
 res_file = open(path.join("history", "ah_res.txt"), "w")
 res_file.close()
