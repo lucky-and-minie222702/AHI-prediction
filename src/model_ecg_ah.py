@@ -128,15 +128,17 @@ def create_model():
 model = create_model()
 show_params(model, "ecg_ah")
 weights_path = path.join("weights", "ah.weights.h5")
-model.save_weights(weights_path)
+# model.save_weights(weights_path)
 
 epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
-    patience = 5,
+    start_from_epoch = 20,
+    patience = 7,
+    monitor = "val_single_loss",
+    mode = "min",
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
@@ -224,10 +226,10 @@ for i_fold in range(folds):
                 [full_labels[val_indices], single_labels[val_indices]]
             ),
             batch_size = batch_size,
-            callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
+            callbacks = [cb_early_stopping, cb_lr],
             sample_weight = sample_weights[train_indices],
         )
-        model.load_weights(weights_path)
+        # model.load_weights(weights_path)
     
     ecgs = []
     labels = []
