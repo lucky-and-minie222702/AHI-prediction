@@ -65,16 +65,16 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
     
     shortcut = x
 
-    x = Conv(filters, kernel_size, strides=strides, padding='same')(x)
+    x = Conv(filters, kernel_size, strides=strides, padding='same', kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(x)
     x = layers.BatchNormalization()(x)
     x = activation(x)
     
-    x = Conv(filters, kernel_size, strides=1, padding='same')(x)
+    x = Conv(filters, kernel_size, strides=1, padding='same', kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(x)
     x = layers.BatchNormalization()(x)
     x = activation(x)
 
     if strides != 1 or shortcut.shape[-1] != filters:
-        shortcut = Conv(filters, kernel_size, strides=strides, padding='same')(shortcut)
+        shortcut = Conv(filters, kernel_size, strides=strides, padding='same', kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
@@ -305,3 +305,23 @@ def show_data_size(train: np.ndarray, test: np.ndarray, val: np.ndarray):
         for idx in range(len(cls)):
             print(f" | Class {cls[idx]}: {counts[idx]}")
     
+
+class WarmupCosineDecayScheduler(cbk.Callback):
+    def __init__(self, warmup_epochs, total_epochs, target_lr, min_lr):
+        super(WarmupCosineDecayScheduler, self).__init__()
+        self.warmup_epochs = warmup_epochs
+        self.total_epochs = total_epochs
+        self.target_lr = target_lr
+        self.min_lr = min_lr
+
+    def on_epoch_begin(self, epoch, logs=None):
+        if epoch < self.warmup_epochs:
+            # Linear warmup
+            lr = (epoch + 1) / self.warmup_epochs * self.target_lr
+        else:
+            # Cosine Decay
+            decay_epoch = epoch - self.warmup_epochs
+            decay_total = self.total_epochs - self.warmup_epochs
+            lr = self.min_lr + (self.target_lr - self.min_lr) * (1 + np.cos(np.pi * decay_epoch / decay_total)) / 2
+            
+        tf.keras.backend.set_value(self.model.optimizer.lr, lr)

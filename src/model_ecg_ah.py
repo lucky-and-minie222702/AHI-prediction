@@ -1,4 +1,3 @@
-from numpy import ndim
 from data_functions import *
 from model_functions import *
 # import model_framework
@@ -39,7 +38,7 @@ def create_model():
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
-    ds_conv = layers.Conv1D(filters=64, kernel_size=11, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.Conv1D(filters=32, kernel_size=11, strides=2, padding="same", kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
@@ -54,14 +53,17 @@ def create_model():
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3) 
     
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
     r_peak_att = layers.Attention(use_scale=True)([conv, r_peak_features, r_peak_features])
     
     # bottle-neck lstm
-    conv_bn1 = layers.Conv1D(filters=128, kernel_size=3, strides=2, padding="same")(r_peak_att)
+    conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_att)
     conv_bn1 = layers.BatchNormalization()(conv_bn1)
     conv_bn1 = layers.Activation("relu")(conv_bn1)
     
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn1)
+    rnn = layers.Normalization()(rnn)
     
     # restore  
     conv_r1 = layers.Conv1DTranspose(filters=256, kernel_size=3, strides=2, padding="same")(rnn)
@@ -72,6 +74,8 @@ def create_model():
     
     conv_r1 = ResNetBlock(1, conv_r1, 512, 3, change_sample=True)
     conv_r1 = ResNetBlock(1, conv_r1, 512, 3)
+    
+    conv_r1 = layers.SpatialDropout1D(rate=0.1)(conv_r1)
     
     # bottle-neck attention
     conv_bn2 = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv_r1)
@@ -87,6 +91,8 @@ def create_model():
     
     conv_r2 = ResNetBlock(1, full, 1024, 3, change_sample=True)
     conv_r2 = ResNetBlock(1, conv_r2, 1024, 3)
+    
+    conv_r2 = layers.SpatialDropout1D(rate=0.1)(conv_r2)
     
     se1 = SEBlock()(conv_r2)
     se2 = SEBlock()(conv_r2)
@@ -116,16 +122,17 @@ def create_model():
 
 model = create_model()
 show_params(model, "ecg_ah")
+exit()
 
 weights_path = path.join("weights", "ah.weights.h5")
 # model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 44,
     patience = 5,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -136,7 +143,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     mode = "min",
 )
 
-cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=100, target_lr=0.001, min_lr=1e-6)
 
 for i_fold in range(folds):
     seg_len = 30
@@ -211,10 +218,10 @@ for i_fold in range(folds):
                 [full_labels[val_indices], single_labels[val_indices]]
             ),
             batch_size = batch_size,
-            callbacks = [cb_early_stopping, cb_lr],
+            callbacks = [cb_early_stopping, cb_checkpoint, cb_lr],
             sample_weight = sample_weights[train_indices],
         )
-        # model.load_weights(weights_path)
+        model.load_weights(weights_path)
     
     ecgs = []
     labels = []
