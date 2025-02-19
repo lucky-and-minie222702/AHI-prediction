@@ -113,51 +113,57 @@ class SEBlock(layers.Layer):
    
 
 class MyAtt(layers.Layer):
-    def __init__(self, depth: int, num_heads: int, seq_len: int = -1):
+    def __init__(self, depth, num_heads, dropout_rate=0.1):
         super(MyAtt, self).__init__()
-        self.num_heads = num_heads        
+        self.num_heads = num_heads
         self.depth = depth
         self.d_model = depth * num_heads
-        self.seq_len = seq_len
         
-        self.Wq = tf.keras.layers.Dense(self.d_model)
-        self.Wk = tf.keras.layers.Dense(self.d_model)
-        self.Wv = tf.keras.layers.Dense(self.d_model)
-        self.dense = tf.keras.layers.Dense(self.d_model)
-
-    def split_heads(self, x, batch_size: int):
-        # num_heads, depth
-        x = tf.reshape(x, (batch_size, self.seq_len, self.num_heads, self.depth))
-        return tf.transpose(x, perm=[0, 2, 1, 3])  # batch, heads, seq, depth
-
+        # Query, Key, Value projections
+        self.Wq = layers.Dense(self.d_model)
+        self.Wk = layers.Dense(self.d_model)
+        self.Wv = layers.Dense(self.d_model)
+        
+        # Output projection
+        self.dense = layers.Dense(self.d_model)
+        
+        # Normalization and dropout
+        self.dropout = layers.Dropout(dropout_rate)
+        self.norm = layers.LayerNormalization()
+    
+    def split_heads(self, x, batch_size):
+        """Split into multiple heads and reshape."""
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])  # (batch, num_heads, seq_len, depth)
+    
     def scaled_dot_product_attention(self, Q, K, V):
-        matmul_qk = tf.matmul(Q, K, transpose_b=True) 
+        """Compute attention scores."""
+        matmul_qk = tf.matmul(Q, K, transpose_b=True)  # (batch, num_heads, seq_len_q, seq_len_k)
         dk = tf.cast(tf.shape(K)[-1], tf.float32)
         scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
-        weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # softmax normalized
-        output = tf.matmul(weights, V)
-        return output, weights
+        attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
+        output = tf.matmul(attention_weights, V)  # (batch, num_heads, seq_len_q, depth)
+        return output, attention_weights
 
     def call(self, query, key, value):
         batch_size = tf.shape(query)[0]
-        
-        Q = self.Wq(query)
-        K = self.Wk(key)
-        V = self.Wv(value)
-        
-        # split heads
-        Q = self.split_heads(Q, batch_size)
-        K = self.split_heads(K, batch_size)
-        V = self.split_heads(V, batch_size)
-        
-        attention_output, w = self.scaled_dot_product_attention(Q, K, V)
-        
-        # merge heads
-        attention_output = tf.transpose(attention_output, perm=[0, 2, 1, 3])
-        concat_attention = tf.reshape(attention_output, (batch_size, self.seq_len, self.d_model))
-        
+
+        # Linear projections
+        Q = self.split_heads(self.Wq(query), batch_size)
+        K = self.split_heads(self.Wk(key), batch_size)
+        V = self.split_heads(self.Wv(value), batch_size)
+
+        # Scaled dot-product attention
+        attention_output, _ = self.scaled_dot_product_attention(Q, K, V)
+
+        # Concatenate heads
+        attention_output = tf.transpose(attention_output, perm=[0, 2, 1, 3])  
+        concat_attention = tf.reshape(attention_output, (batch_size, -1, self.num_heads * self.depth))
+
+        # Final dense projection
         output = self.dense(concat_attention)
-        return output
+        output = self.dropout(output)
+        return self.norm(output)
 
 
 class TimingCallback(keras.callbacks.Callback):

@@ -47,6 +47,8 @@ def create_model():
     merge_conv = ResNetBlock(1, merge_conv, 512, 3)
     merge_conv = ResNetBlock(1, merge_conv, 512, 3)
     
+    merge_conv = layers.SpatialDropout1D(rate=0.1)(merge_conv)
+    
     se1 = SEBlock()(merge_conv)
     se2 = SEBlock()(merge_conv)
     
