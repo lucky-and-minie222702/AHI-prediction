@@ -109,7 +109,7 @@ def create_model():
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
     
-    conv = ResNetBlock(1, r_peak_features, 1024, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 1024, 3)
     
     se1 = SEBlock()(conv)
