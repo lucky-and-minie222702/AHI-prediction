@@ -36,7 +36,6 @@ def create_model():
     r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
-    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
     r_peak_features = SEBlock()(r_peak_features)
     
     inp = layers.Input(shape=(3100, 1))  # 30s
@@ -54,15 +53,13 @@ def create_model():
     
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3) 
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    r_peak_att = layers.Attention(use_scale=True, dropout=0.1)([conv, r_peak_features, r_peak_features])
+    r_peak_att = layers.Attention(use_scale=True, dropout=0.1)([r_peak_features, conv, conv])
     
     # # bottle-neck lstm
     # conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_att)
@@ -106,7 +103,6 @@ def create_model():
     # se2 = SEBlock()(conv_r2)
     
     conv2 = ResNetBlock(1, r_peak_att, 512, 3, change_sample=True)
-    conv2 = ResNetBlock(1, conv2, 512, 3)
     conv2 = ResNetBlock(1, conv2, 512, 3)
     
     conv2 = ResNetBlock(1, conv2, 1024, 3, change_sample=True)
