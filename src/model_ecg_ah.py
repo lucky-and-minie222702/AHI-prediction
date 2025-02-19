@@ -114,8 +114,8 @@ def create_model():
     
     conv2 = layers.SpatialDropout1D(rate=0.1)(conv2)
     
-    se1 = SEBlock()(conv)
-    se2 = SEBlock()(conv)
+    se1 = SEBlock()(conv2)
+    se2 = SEBlock()(conv2)
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
