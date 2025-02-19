@@ -105,12 +105,12 @@ def create_model():
     # se1 = SEBlock()(conv_r2)
     # se2 = SEBlock()(conv_r2)
     
-    conv = ResNetBlock(1, r_peak_features, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
+    conv2 = ResNetBlock(1, r_peak_att, 512, 3, change_sample=True)
+    conv2 = ResNetBlock(1, conv2, 512, 3)
+    conv2 = ResNetBlock(1, conv2, 512, 3)
     
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 1024, 3)
+    conv2 = ResNetBlock(1, conv2, 1024, 3, change_sample=True)
+    conv2 = ResNetBlock(1, conv2, 1024, 3)
     
     se1 = SEBlock()(conv)
     se2 = SEBlock()(conv)
