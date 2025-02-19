@@ -169,15 +169,16 @@ for i_fold in range(folds):
     ecgs = np.vstack([
         ecgs,
         np.array([time_warp(e, sigma=0.2) for e in ecgs]),
-        np.array([time_shift(e, shift_max=0.2) for e in ecgs]),
-        np.array([bandpass(e, 100, 5, 43, 1) for e in ecgs]),
+        np.array([time_shift(e, shift_max=20) for e in ecgs]),
+        np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
+        np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
         np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
     ])
     ecgs = scaler.fit_transform(ecgs.T).T
     
     rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
     labels = np.vstack(labels)
-    labels = np.vstack([labels, labels, labels, labels, labels])
+    labels = np.vstack([labels, labels, labels, labels, labels, labels])
     mean_labels = np.mean(labels, axis=-1)
     full_labels = np.round(mean_labels)
     single_labels = np.array([l[15] for l in labels])
