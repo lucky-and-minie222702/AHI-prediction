@@ -445,3 +445,10 @@ def frequency_noise(ecg_signal, noise_std=0.01):
     fft_ecg = scipy.fftpack.fft(ecg_signal)
     noise = np.random.normal(0, noise_std, size=fft_ecg.shape)
     return np.real(scipy.fftpack.ifft(fft_ecg + noise))
+
+def round_bin(arr, threshold=0.5):
+    return (arr >= threshold).astype(int)
+
+def acc_bin(y_true, y_pred):
+    assert y_true.shape == y_pred.shape, "Arrays must have the same shape"
+    return np.mean(y_true == y_pred)

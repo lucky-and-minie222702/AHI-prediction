@@ -113,7 +113,7 @@ class SEBlock(layers.Layer):
    
 
 class MyAtt(layers.Layer):
-    def __init__(self, depth, num_heads, dropout_rate=0.1):
+    def __init__(self, depth, num_heads):
         super(MyAtt, self).__init__()
         self.num_heads = num_heads
         self.depth = depth

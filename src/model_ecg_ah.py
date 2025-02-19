@@ -21,6 +21,8 @@ def create_model():
     conv_rpa = ResNetBlock(1, conv_rpa, 128, 3, change_sample=True)
     conv_rpa = ResNetBlock(1, conv_rpa, 128, 3)
     
+    conv_rpa = layers.SpatialDropout1D(rate=0.1)(conv_rpa)
+    
     inp_rri = layers.Input(shape=(None, 1))
     norm_inp_rri = layers.Normalization()(inp_rri)
     conv_rri = ResNetBlock(1, norm_inp_rri, 64, 3, change_sample=True)
@@ -28,6 +30,8 @@ def create_model():
     
     conv_rri = ResNetBlock(1, conv_rri, 128, 3, change_sample=True)
     conv_rri = ResNetBlock(1, conv_rri, 128, 3)
+    
+    conv_rri = layers.SpatialDropout1D(rate=0.1)(conv_rri)
     
     r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
@@ -55,7 +59,7 @@ def create_model():
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    r_peak_att = layers.Attention(use_scale=True)([conv, r_peak_features, r_peak_features])
+    r_peak_att = layers.Attention(use_scale=True, dropout=0.1)([conv, r_peak_features, r_peak_features])
     
     # bottle-neck lstm
     conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_att)
@@ -63,6 +67,7 @@ def create_model():
     conv_bn1 = layers.Activation("relu")(conv_bn1)
     
     rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn1)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     rnn = layers.Normalization()(rnn)
     
     # restore  
@@ -82,7 +87,7 @@ def create_model():
     conv_bn2 = layers.BatchNormalization()(conv_bn2)
     conv_bn2 = layers.Activation("relu")(conv_bn2)
     
-    att = MyAtt(depth=64, num_heads=16)(conv_bn2, conv_bn2, conv_bn2)
+    att = MyAtt(depth=64, num_heads=16, dropout_rate=0.1)(conv_bn2, conv_bn2, conv_bn2)
     full = layers.Conv1D(filters=512, kernel_size=1, padding="same")(att)
     full = layers.BatchNormalization()(full)
     full = layers.Activation("relu")(full)
@@ -122,17 +127,15 @@ def create_model():
 
 model = create_model()
 show_params(model, "ecg_ah")
-exit()
-
 weights_path = path.join("weights", "ah.weights.h5")
-# model.save_weights(weights_path)
+model.save_weights(weights_path)
 
 epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 44,
+    start_from_epoch = 50,
     patience = 5,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -144,6 +147,9 @@ cb_checkpoint = cbk.ModelCheckpoint(
 )
 
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=100, target_lr=0.001, min_lr=1e-6)
+
+res_file = open(path.join("history", "ah_res.txt"), "w")
+res_file.close()
 
 for i_fold in range(folds):
     seg_len = 30
@@ -257,6 +263,14 @@ for i_fold in range(folds):
         single_preds = single_preds.flatten()
 
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([single_labels, single_preds], axis=0))
+        
+        res_file = open(path.join("history", "ah_res.txt"), "a")
         print(f"\nBenh nhan {p}\n")
-        show_res(single_labels, np.round(single_preds))
+        print(f"\nBenh nhan {p}\n", file=res_file)
+        for t in np.linspace(0, 1, 11)[1:-1:]:
+            t = round(t, 3)
+            print(f"Threshold {t}: {acc_bin(single_labels, round_bin(single_preds, t))}")
+            print(f"Threshold {t}: {acc_bin(single_labels, round_bin(single_preds, t))}", file=res_file)
         print()
+        
+        res_file.close()
