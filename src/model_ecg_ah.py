@@ -7,7 +7,7 @@ import neurokit2 as nk
 
 show_gpus()
 
-folds = 2
+folds = 3
         
 def create_model():
     inp_psd = layers.Input(shape=(None, 2))
