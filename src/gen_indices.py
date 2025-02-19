@@ -17,7 +17,7 @@ for s in info:
 p_list = np.array(p_list)
 num_p = len(p_list)
 
-kf = KFold(n_splits=2, shuffle=True, random_state=np.random.randint(22022009))
+kf = KFold(n_splits=3, shuffle=True, random_state=np.random.randint(22022009))
 
 idx = 1
 

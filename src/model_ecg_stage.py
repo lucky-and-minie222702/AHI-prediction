@@ -131,7 +131,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
 
 cb_lr = cbk.ReduceLROnPlateau(monitor='val_full_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
 
-for i_fold in range(1, folds+1):
+for i_fold in range(folds):
     seg_len = 30
     
     ecgs = []
@@ -140,14 +140,19 @@ for i_fold in range(1, folds+1):
     rpa = []
     rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
+    
+    last_p = 0
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::])
         # raw_label = raw_label[10:-10:]
 
-        sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=100)
-        label = divide_signal(raw_label, win_size=seg_len, step_size=1)
+        sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1000)
+        label = divide_signal(raw_label, win_size=seg_len, step_size=10)
+
+        if p == p_list[-2]:
+            last_p = sum([len(x) for x in ecgs])
 
         ecgs.append(sig)
         labels.append(label)
@@ -162,17 +167,15 @@ for i_fold in range(1, folds+1):
     labels = np.vstack(labels)
     mean_labels = np.mean(labels, axis=-1)
     full_labels = np.round(mean_labels)
-
     
     print(f"Total samples: {len(labels)}")    
     print(f"\nFold {i_fold}\n")
 
-
     total_samples = len(ecgs)
     indices = np.arange(total_samples)
     indices = np.random.permutation(indices)
-    train_size = int(total_samples * 0.85)
-    val_size = int(total_samples * 0.15)
+    train_size = last_p 
+    val_size = total_samples - last_p
 
     train_indices = indices[:train_size:]
     val_indices = indices[train_size:train_size+val_size:]
@@ -205,7 +208,8 @@ for i_fold in range(1, folds+1):
     rpa = []
     rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
-
+    print("\nTest result\n")
+    
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::])
@@ -230,7 +234,7 @@ for i_fold in range(1, folds+1):
         full_labels = np.round(mean_labels)
 
         class_counts = np.unique(full_labels, return_counts=True)[1]
-        print("\nTest result\n")
+
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
         raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
         full_preds = raw_preds

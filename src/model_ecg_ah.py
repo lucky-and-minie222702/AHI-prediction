@@ -74,7 +74,7 @@ def create_model():
     conv_r1 = ResNetBlock(1, conv_r1, 512, 3)
     
     # bottle-neck attention
-    conv_bn2 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv_r1)
+    conv_bn2 = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv_r1)
     conv_bn2 = layers.BatchNormalization()(conv_bn2)
     conv_bn2 = layers.Activation("relu")(conv_bn2)
     
@@ -93,14 +93,14 @@ def create_model():
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
-    out_s = layers.Dense(1024)(out_s)
+    out_s = layers.Dense(512)(out_s)
     out_s = layers.BatchNormalization()(out_s)
     out_s = layers.Activation("relu")(out_s)
     final_out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
     # full segment
     out_f = layers.GlobalAvgPool1D()(se2)
-    out_f = layers.Dense(1024)(out_f)
+    out_f = layers.Dense(512)(out_f)
     out_f = layers.BatchNormalization()(out_f)
     out_f = layers.Activation("relu")(out_f)
     final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
@@ -188,7 +188,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
 
 cb_lr = cbk.ReduceLROnPlateau(monitor='val_single_loss', mode="min", factor=0.2, patience=10, min_lr=0.00001)
 
-for i_fold in range(1, folds+1):
+for i_fold in range(folds):
     seg_len = 30
     
     ecgs = []
@@ -197,12 +197,17 @@ for i_fold in range(1, folds+1):
     rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
 
+    last_p = 0
+
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
 
-        sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=100)
-        label = divide_signal(raw_label, win_size=(seg_len+1), step_size=1)
+        sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
+        label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
+        
+        if p == p_list[-2]:
+            last_p = sum([len(x) for x in ecgs])
 
         ecgs.append(sig)
         labels.append(label)
@@ -219,15 +224,14 @@ for i_fold in range(1, folds+1):
     full_labels = np.round(mean_labels)
     single_labels = np.array([l[15] for l in labels])
 
-    
     print(f"Total samples: {len(labels)}")
     print(f"\nFold {i_fold}\n")
     
     total_samples = len(ecgs)
     indices = np.arange(total_samples)
     indices = np.random.permutation(indices)
-    train_size = int(total_samples * 0.85)
-    val_size = total_samples - train_size
+    train_size = last_p 
+    val_size = total_samples - last_p
 
     train_indices = indices[:train_size:]
     val_indices = indices[train_size::]
@@ -236,8 +240,9 @@ for i_fold in range(1, folds+1):
     class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
-    sample_weights = np.ones(shape=mean_labels.shape)
+    sample_weights = [0.5 if x == 0 else 1 for x in single_labels]
     sample_weights += mean_labels
+    sample_weights = np.array(sample_weights)
     
     
     if "train" in sys.argv:
@@ -260,6 +265,7 @@ for i_fold in range(1, folds+1):
     rpa = []
     rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
+    print("\nTest result\n")
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
@@ -282,7 +288,6 @@ for i_fold in range(1, folds+1):
         single_labels = np.array([l[15] for l in labels])
 
         class_counts = np.unique(single_labels, return_counts=True)[1]
-        print("\nTest result\n")
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
         raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
         single_preds = raw_preds[1]
