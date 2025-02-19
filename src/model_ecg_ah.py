@@ -197,7 +197,7 @@ for i_fold in range(folds):
 
         class_counts = np.unique(single_labels, return_counts=True)[1]
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
-        raw_preds = model.predict([ecgs, psds, ffts], batch_size=batch_size)
+        raw_preds = model.predict([psds, ffts], batch_size=batch_size)
         single_preds = raw_preds[1]
         single_preds = single_preds.flatten()
 
