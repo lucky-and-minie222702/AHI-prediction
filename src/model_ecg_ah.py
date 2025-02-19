@@ -10,57 +10,103 @@ show_gpus()
 folds = 3
         
 def create_model():
-    inp_psd = layers.Input(shape=(None, 2))
-    norm_inp_psd = layers.Normalization()(inp_psd)
+    #######
+    # ECG #
+    #######
     
-    psd_ds = layers.Conv1D(filters=32, kernel_size=5, strides=2, padding="same")(norm_inp_psd)
-    psd_ds = layers.BatchNormalization()(psd_ds)
-    psd_ds = layers.Activation("relu")(psd_ds)
-    psd_ds = layers.MaxPool1D(pool_size=2)(psd_ds)
+    inp_rpa = layers.Input(shape=(None, 1))
+    norm_inp_rpa = layers.Normalization()(inp_rpa)
+    conv_rpa = ResNetBlock(1, norm_inp_rpa, 64, 3, change_sample=True)
+    conv_rpa = ResNetBlock(1, conv_rpa, 64, 3)
     
-    psd_conv = ResNetBlock(1, psd_ds, 64, 3)
-    psd_conv = ResNetBlock(1, psd_conv, 64, 3)
+    conv_rpa = ResNetBlock(1, conv_rpa, 128, 3, change_sample=True)
+    conv_rpa = ResNetBlock(1, conv_rpa, 128, 3)
     
-    psd_conv = ResNetBlock(1, psd_conv, 128, 3, change_sample=True)
-    psd_conv = ResNetBlock(1, psd_conv, 128, 3)
+    inp_rri = layers.Input(shape=(None, 1))
+    norm_inp_rri = layers.Normalization()(inp_rri)
+    conv_rri = ResNetBlock(1, norm_inp_rri, 64, 3, change_sample=True)
+    conv_rri = ResNetBlock(1, conv_rri, 64, 3)
     
+    conv_rri = ResNetBlock(1, conv_rri, 128, 3, change_sample=True)
+    conv_rri = ResNetBlock(1, conv_rri, 128, 3)
     
-    inp_fft = layers.Input(shape=(None, 1))
-    norm_inp_fft = layers.Normalization()(inp_fft)
+    r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
+    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
+    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
+    r_peak_features = SEBlock()(r_peak_features)
     
-    fft_ds = layers.Conv1D(filters=32, kernel_size=5, strides=2, padding="same")(norm_inp_fft)
-    fft_ds = layers.BatchNormalization()(fft_ds)
-    fft_ds = layers.Activation("relu")(fft_ds)
-    fft_ds = layers.MaxPool1D(pool_size=2)(fft_ds)
+    inp = layers.Input(shape=(3100, 1))  # 30s
+    norm_inp = layers.Normalization()(inp)
     
-    fft_conv = ResNetBlock(1, fft_ds, 64, 3)
-    fft_conv = ResNetBlock(1, fft_conv, 64, 3)
+    # down_sample
+    ds_conv = layers.Conv1D(filters=64, kernel_size=11, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.BatchNormalization()(ds_conv)
+    ds_conv = layers.Activation("relu")(ds_conv)
+    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
-    fft_conv = ResNetBlock(1, fft_conv, 128, 3, change_sample=True)
-    fft_conv = ResNetBlock(1, fft_conv, 128, 3)
+    # deep
+    conv = ResNetBlock(1, ds_conv, 64, 9)
+    conv = ResNetBlock(1, conv, 64, 7)
     
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
     
-    # merge using attention
-    merge_att = MyAtt(depth=64, num_heads=8)(fft_conv, psd_conv, psd_conv)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3) 
     
-    merge_conv = ResNetBlock(1, merge_att, 512, 3, change_sample=True)
-    merge_conv = ResNetBlock(1, merge_conv, 512, 3)
-    merge_conv = ResNetBlock(1, merge_conv, 512, 3)
+    r_peak_att = layers.Attention(use_scale=True)([conv, r_peak_features, r_peak_features])
     
-    merge_conv = layers.SpatialDropout1D(rate=0.1)(merge_conv)
+    # bottle-neck lstm
+    conv_bn1 = layers.Conv1D(filters=128, kernel_size=3, strides=2, padding="same")(r_peak_att)
+    conv_bn1 = layers.BatchNormalization()(conv_bn1)
+    conv_bn1 = layers.Activation("relu")(conv_bn1)
     
-    se1 = SEBlock()(merge_conv)
-    se2 = SEBlock()(merge_conv)
+    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(conv_bn1)
     
-    fc1 = layers.GlobalAvgPool1D()(se1)
-    fc2 = layers.GlobalAvgPool1D()(se2)
+    # restore  
+    conv_r1 = layers.Conv1DTranspose(filters=256, kernel_size=3, strides=2, padding="same")(rnn)
+    conv_r1 = layers.BatchNormalization()(conv_r1)
+    conv_r1 = layers.Activation("relu")(conv_r1)
+    conv_r1 = layers.Add()([conv, conv_r1])  # residual connection
+    conv_r1 = layers.Activation("relu")(conv_r1)
     
-    out1 = layers.Dense(1, activation="sigmoid", name="full")(fc1)
-    out2 = layers.Dense(1, activation="sigmoid", name="single")(fc2)
+    conv_r1 = ResNetBlock(1, conv_r1, 512, 3, change_sample=True)
+    conv_r1 = ResNetBlock(1, conv_r1, 512, 3)
     
+    # bottle-neck attention
+    conv_bn2 = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv_r1)
+    conv_bn2 = layers.BatchNormalization()(conv_bn2)
+    conv_bn2 = layers.Activation("relu")(conv_bn2)
     
+    att = MyAtt(depth=64, num_heads=16, seq_len=97)(conv_bn2, conv_bn2, conv_bn2)
+    full = layers.Conv1D(filters=512, kernel_size=1, padding="same")(att)
+    full = layers.BatchNormalization()(full)
+    full = layers.Activation("relu")(full)
+    full = layers.Add()([full, conv_r1])  # residual connection
+    full = layers.Activation("relu")(full)
     
-    model = Model(inputs=[inp_psd, inp_fft], outputs=[out1, out2])
+    conv_r2 = ResNetBlock(1, full, 1024, 3, change_sample=True)
+    conv_r2 = ResNetBlock(1, conv_r2, 1024, 3)
+    
+    se1 = SEBlock()(conv_r2)
+    se2 = SEBlock()(conv_r2)
+    
+    # single second
+    out_s = layers.GlobalAvgPool1D()(se1)
+    out_s = layers.Dense(512)(out_s)
+    out_s = layers.BatchNormalization()(out_s)
+    out_s = layers.Activation("relu")(out_s)
+    final_out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
+    
+    # full segment
+    out_f = layers.GlobalAvgPool1D()(se2)
+    out_f = layers.Dense(512)(out_f)
+    out_f = layers.BatchNormalization()(out_f)
+    out_f = layers.Activation("relu")(out_f)
+    final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
+
+    
+    model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[final_out_f, final_out_s])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = { 
@@ -103,6 +149,8 @@ for i_fold in range(folds):
     
     ecgs = []
     labels = []
+    rpa = []
+    rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
 
     last_p = 0
@@ -123,15 +171,23 @@ for i_fold in range(folds):
     scaler = MinMaxScaler()
 
     ecgs = np.vstack(ecgs)
+    ecgs = np.array([clean_ecg(e) for e in ecgs])
+    ecgs = np.vstack([
+        ecgs,
+        np.array([time_warp(e, sigma=0.2) for e in ecgs]),
+        np.array([time_shift(e, shift_max=0.2) for e in ecgs]),
+        np.array([bandpass(e, 100, 5, 43, 1) for e in ecgs]),
+        np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
+    ])
     ecgs = scaler.fit_transform(ecgs.T).T
     
-    ecgs = np.array([clean_ecg(e) for e in ecgs])
-    psds = np.array([calc_psd(e) for e in ecgs])
-    ffts = np.array([calc_fft(e) for e in ecgs])
+    rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
     labels = np.vstack(labels)
+    labels = np.vstack([labels, labels, labels, labels, labels])
     mean_labels = np.mean(labels, axis=-1)
     full_labels = np.round(mean_labels)
     single_labels = np.array([l[15] for l in labels])
+    
 
     print(f"Total samples: {len(labels)}")
     print(f"\nFold {i_fold}\n")
@@ -156,11 +212,11 @@ for i_fold in range(folds):
     
     if "train" in sys.argv:
         model.fit(
-            [psds[train_indices], ffts[train_indices]],
+            [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
             [full_labels[train_indices], single_labels[train_indices]],
             epochs = epochs,
             validation_data = (
-                [psds[val_indices], ffts[val_indices]],
+                [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
                 [full_labels[val_indices], single_labels[val_indices]]
             ),
             batch_size = batch_size,
@@ -171,6 +227,8 @@ for i_fold in range(folds):
     
     ecgs = []
     labels = []
+    rpa = []
+    rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
     print("\nTest result\n")
 
@@ -187,8 +245,7 @@ for i_fold in range(folds):
         ecgs = scaler.fit_transform(ecgs.T).T
         labels = np.array(label)
         ecgs = np.array([clean_ecg(e) for e in ecgs])
-        psds = np.array([calc_psd(e) for e in ecgs])
-        ffts = np.array([calc_fft(e) for e in ecgs])
+        rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
 
         labels = np.array(label)
         mean_labels = np.mean(labels, axis=-1)
@@ -197,7 +254,7 @@ for i_fold in range(folds):
 
         class_counts = np.unique(single_labels, return_counts=True)[1]
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
-        raw_preds = model.predict([psds, ffts], batch_size=batch_size)
+        raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
         single_preds = raw_preds[1]
         single_preds = single_preds.flatten()
 

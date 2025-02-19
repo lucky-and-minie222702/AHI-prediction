@@ -10,6 +10,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from typing import *
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error, median_absolute_error, root_mean_squared_error
 import sys
+import scipy.fftpack
 
 def count_ones_zeros(binary_seq):
     groups = ["".join(g) for _, g in groupby(binary_seq)]
@@ -435,3 +436,12 @@ def calc_psd(sig):
 
 def calc_fft(sig):
     return np.fft.fft(sig).real[1::]
+
+def time_shift(ecg_signal, shift_max):
+    shift = np.random.randint(-shift_max, shift_max)
+    return np.roll(ecg_signal, shift)
+
+def frequency_noise(ecg_signal, noise_std=0.01):
+    fft_ecg = scipy.fftpack.fft(ecg_signal)
+    noise = np.random.normal(0, noise_std, size=fft_ecg.shape)
+    return np.real(scipy.fftpack.ifft(fft_ecg + noise))
