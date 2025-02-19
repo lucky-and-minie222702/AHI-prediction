@@ -147,17 +147,12 @@ for i_fold in range(folds):
     rri = []
     p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
 
-    last_p = 0
-
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
 
         sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
         label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
-        
-        if p == p_list[-2]:
-            last_p = sum([len(x) for x in ecgs])
 
         ecgs.append(sig)
         labels.append(label)
@@ -190,8 +185,9 @@ for i_fold in range(folds):
     total_samples = len(ecgs)
     indices = np.arange(total_samples)
     indices = np.random.permutation(indices)
-    train_size = last_p 
-    val_size = total_samples - last_p
+    np.random.shuffle(indices)
+    train_size = int(total_samples * 0.8)
+    val_size = total_samples - train_size
 
     train_indices = indices[:train_size:]
     val_indices = indices[train_size::]
