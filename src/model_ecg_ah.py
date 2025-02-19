@@ -112,6 +112,8 @@ def create_model():
     conv2 = ResNetBlock(1, conv2, 1024, 3, change_sample=True)
     conv2 = ResNetBlock(1, conv2, 1024, 3)
     
+    conv2 = layers.SpatialDropout1D(rate=0.1)(conv2)
+    
     se1 = SEBlock()(conv)
     se2 = SEBlock()(conv)
     
