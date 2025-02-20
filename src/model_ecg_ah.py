@@ -17,14 +17,14 @@ def create_model():
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
-    ds_conv = layers.Conv1D(filters=32, kernel_size=11, strides=2, padding="same", kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(norm_inp)
+    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same", kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
     # deep
-    conv = ResNetBlock(1, ds_conv, 64, 9)
-    conv = ResNetBlock(1, conv, 64, 7)
+    conv = ResNetBlock(1, ds_conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     

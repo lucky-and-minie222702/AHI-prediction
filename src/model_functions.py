@@ -360,27 +360,26 @@ class MIOECGGenerator():
 
     def generator(self):
         """ Generator function for `tf.data.Dataset` """
-        while True:
-            if self.shuffle:
-                np.random.shuffle(self.indices)
+        if self.shuffle:
+            np.random.shuffle(self.indices)
 
-            for i in range(0, len(self.indices), self.batch_size):
-                batch_indices = self.indices[i:i + self.batch_size]
+        for i in range(0, len(self.indices), self.batch_size):
+            batch_indices = self.indices[i:i + self.batch_size]
 
-                # Extract batch data for multiple inputs and outputs
-                X_batch = [X[batch_indices] for X in self.X_list]
-                y_batch = [y[batch_indices] for y in self.y_list]
-                sample_weights_batch = [w[batch_indices] for w in self.sample_weights]
+            # Extract batch data for multiple inputs and outputs
+            X_batch = [X[batch_indices] for X in self.X_list]
+            y_batch = [y[batch_indices] for y in self.y_list]
+            sample_weights_batch = [w[batch_indices] for w in self.sample_weights]
 
-                # Apply augmentation to only one randomly chosen input
-                if self.augment_fn:
-                    input_idxs = np.random.choice(len(self.X_list), size = self.batch_size // (np.random.choice(4) + 1))  # Select one input index to augment
-                    for input_idx in input_idxs:
-                        X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
+            # Apply augmentation to only one randomly chosen input
+            if self.augment_fn:
+                input_idxs = np.random.choice(len(self.X_list), size = self.batch_size // (np.random.choice(4) + 1))  # Select one input index to augment
+                for input_idx in input_idxs:
+                    X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
-                # X_batch = [np.expand_dims(xb, axis=-1) for xb in X_batch]
+            # X_batch = [np.expand_dims(xb, axis=-1) for xb in X_batch]
 
-                yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch) 
+            yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch) 
 
     def as_dataset(self):
         """ Converts the generator to `tf.data.Dataset` """
