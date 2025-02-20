@@ -197,9 +197,11 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
-        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[full_labels[train_indices], single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[train_indices]]).as_dataset()
-        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[full_labels[val_indices], single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[val_indices]]).as_dataset()
+        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[full_labels[train_indices], single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[train_indices], sample_weights[train_indices]]).as_dataset()
+        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[full_labels[val_indices], single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[val_indices], sample_weights[val_indices]]).as_dataset()
         
+        steps_per_epoch = len(ecgs) // batch_size
+        validation_steps = len(single_labels) // batch_size
         
         model.fit(
             train_generator,
@@ -207,6 +209,9 @@ for i_fold in range(folds):
             validation_data = val_generator,
             batch_size = batch_size,
             callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
+            
+            steps_per_epoch=steps_per_epoch,
+            validation_steps=validation_steps,
         )
         
         res_file = open(path.join("history", "ah_res.txt"), "w")
