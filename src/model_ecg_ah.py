@@ -97,7 +97,7 @@ def create_model():
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
-    final_out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
+    final_out_s = layers.Dense(1, activation="sigmoid")(out_s)
     
     # full segment
     # out_f = layers.GlobalAvgPool1D()(se2)
@@ -107,13 +107,8 @@ def create_model():
     model = Model(inputs=inp, outputs=final_out_s)
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001), 
-        loss = { 
-            # "full": "binary_crossentropy",
-            "single": "binary_crossentropy",
-        },
-        metrics = {
-            "single": [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
-        }
+        loss = "binary_crossentropy",
+        metrics = [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
     )
 
     return model
@@ -130,15 +125,15 @@ cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 300,
     patience = 10,
-    monitor = "val_single_loss",
-    mode = "min",
+    # monitor = "val_single_loss",
+    # mode = "min",
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
-    monitor = "val_single_loss",
-    mode = "min",
+    # monitor = "val_single_loss",
+    # mode = "min",
 )
 
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=400, target_lr=0.001, min_lr=1e-6)
@@ -216,7 +211,6 @@ for i_fold in range(folds):
             validation_data = (ecgs[val_indices], single_labels[val_indices]),
             batch_size = batch_size,
             callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
-            
             steps_per_epoch=steps_per_epoch,
         )
         
