@@ -377,7 +377,7 @@ class MIOECGGenerator():
                     input_idx = np.random.choice(len(self.X_list))  # Select one input index to augment
                     X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
-                yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch)  # ✅ Return tuples
+                yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch) 
 
     def as_dataset(self):
         """ Converts the generator to `tf.data.Dataset` """
