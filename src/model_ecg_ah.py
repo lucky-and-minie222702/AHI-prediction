@@ -59,7 +59,7 @@ def create_model():
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    r_peak_merge = layers.Concatenate()([r_peak_features, conv])
+    r_peak_merge = layers.Concatenate(axis=-2)([r_peak_features, conv])
     
     # # bottle-neck lstm
     # conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_merge)
