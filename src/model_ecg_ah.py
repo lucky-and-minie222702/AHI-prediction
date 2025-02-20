@@ -93,22 +93,22 @@ def create_model():
     # se2 = SEBlock()(conv_r2)
     
     se1 = SEBlock()(conv)
-    se2 = SEBlock()(conv)
+    # se2 = SEBlock()(conv)
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
     final_out_s = layers.Dense(1, activation="sigmoid", name="single")(out_s)
     
     # full segment
-    out_f = layers.GlobalAvgPool1D()(se2)
-    final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
+    # out_f = layers.GlobalAvgPool1D()(se2)
+    # final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
 
     
-    model = Model(inputs=inp, outputs=[final_out_f, final_out_s])
+    model = Model(inputs=inp, outputs=final_out_s)
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001), 
         loss = { 
-            "full": "binary_crossentropy",
+            # "full": "binary_crossentropy",
             "single": "binary_crossentropy",
         },
         metrics = {
@@ -197,8 +197,8 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
-        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[full_labels[train_indices], single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[train_indices], sample_weights[train_indices]]).as_dataset()
-        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[full_labels[val_indices], single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[val_indices], sample_weights[val_indices]]).as_dataset()
+        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[train_indices]]).as_dataset()
+        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[val_indices]]).as_dataset()
         
         steps_per_epoch = len(ecgs) // batch_size
         validation_steps = len(single_labels) // batch_size
@@ -248,7 +248,7 @@ for i_fold in range(folds):
         class_counts = np.unique(single_labels, return_counts=True)[1]
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
         raw_preds = model.predict(ecgs, batch_size=batch_size)
-        single_preds = raw_preds[1]
+        single_preds = raw_preds
         single_preds = single_preds.flatten()
 
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([single_labels, single_preds], axis=0))
