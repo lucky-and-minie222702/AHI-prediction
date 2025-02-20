@@ -378,7 +378,7 @@ class MIOECGGenerator():
                     for input_idx in input_idxs:
                         X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
-                X_batch = [np.expand_dims(xb, axis=-1) for xb in X_batch]
+                # X_batch = [np.expand_dims(xb, axis=-1) for xb in X_batch]
 
                 yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch) 
 
