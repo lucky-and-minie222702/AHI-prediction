@@ -234,7 +234,7 @@ for i_fold in range(folds):
                 [full_labels[val_indices], single_labels[val_indices]]
             ),
             batch_size = batch_size,
-            callbacks = [cb_early_stopping, cb_lr],
+            callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
             sample_weight = sample_weights[train_indices],
         )
         # model.load_weights(weights_path)
