@@ -374,15 +374,16 @@ class MIOECGGenerator():
 
                 # Apply augmentation to only one randomly chosen input
                 if self.augment_fn:
-                    input_idx = np.random.choice(len(self.X_list))  # Select one input index to augment
-                    X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
+                    input_idxs = np.random.choice(len(self.X_list), size = self.batch_size // np.random.choice(5))  # Select one input index to augment
+                    for input_idx in input_idxs:
+                        X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
                 yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch) 
 
     def as_dataset(self):
         """ Converts the generator to `tf.data.Dataset` """
         output_signature = (
-            tuple(tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32) for X in self.X_list),  # X
+            tuple(tf.TensorSpec(shape=(None, 3100, 1), dtype=tf.float32) for X in self.X_list),  # X
             tuple(tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32) for y in self.y_list),  # y
             tuple(tf.TensorSpec(shape=(None,), dtype=tf.float32) for w in self.sample_weights)  # sample weights
         )
