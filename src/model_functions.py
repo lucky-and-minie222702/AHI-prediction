@@ -376,21 +376,11 @@ class MIOECGGenerator():
                 if self.augment_fn:
                     input_idx = np.random.choice(len(self.X_list))  # Select one input index to augment
                     X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
-                    
-                if len(X_batch) != 1:
-                    X_batch = tuple(X_batch)
-                    
-                if len(y_batch) != 1:
-                    y_batch = tuple(y_batch)
-                    
-                if len(sample_weights_batch) != 1:
-                    sample_weights_batch = tuple(sample_weights_batch)
 
-                yield X_batch, y_batch, sample_weights_batch
+                yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch) 
 
     def as_dataset(self):
         """ Converts the generator to `tf.data.Dataset` """
-        
         output_signature = (
             tuple(tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32) for X in self.X_list),  # X
             tuple(tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32) for y in self.y_list),  # y
