@@ -374,8 +374,9 @@ class MIOECGGenerator():
 
                 # Apply augmentation to only one randomly chosen input
                 if self.augment_fn:
-                    input_idx = np.random.choice(len(self.X_list), size = self.batch_size // np.random.choice(5))  # Select one input index to augment
-                    X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
+                    input_idxs = np.random.choice(len(self.X_list), size = self.batch_size // np.random.choice(5))  # Select one input index to augment
+                    for input_idx in input_idxs:
+                        X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
                 X_batch = [np.expand_dims(xb, axis=-1) for xb in X_batch]
 

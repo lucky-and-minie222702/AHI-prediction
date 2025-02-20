@@ -106,7 +106,7 @@ def create_model():
     
     model = Model(inputs=inp, outputs=[final_out_f, final_out_s])
     model.compile(
-        optimizer = keras.optimizers.Adam(learning_rate=0.001),
+        optimizer = keras.optimizers.Adam(learning_rate=0.001), 
         loss = { 
             "full": "binary_crossentropy",
             "single": "binary_crossentropy",
