@@ -32,7 +32,6 @@ from timeit import default_timer as timer
 import random
 from typing import *
 from tensorflow.keras.utils import Sequence
-from tensorflow.keras.utils import PyDataset
         
 def show_gpus():
     gpus = tf.config.list_physical_devices('GPU')
@@ -330,8 +329,8 @@ class WarmupCosineDecayScheduler(cbk.Callback):
 
 
 
-class MIOECGGenerator(PyDataset):
-    def __init__(self, X_list, y_list, sample_weights=None, batch_size=32, shuffle=True, augment_fn=None, **kwargs):
+class MIOECGGenerator():
+    def __init__(self, X_list, y_list, sample_weights=None, batch_size=32, shuffle=True, augment_fn=None):
         """
         X_list: List of NumPy arrays for multiple inputs [X1, X2, ...]
         y_list: List of NumPy arrays for multiple outputs [y1, y2, ...]
@@ -340,46 +339,54 @@ class MIOECGGenerator(PyDataset):
         shuffle: Whether to shuffle indices at the end of each epoch
         augment_fn: Custom augmentation function (applied to one input per sample)
         """
-        super().__init__(**kwargs)  # ✅ Fix: Ensure PyDataset initializes correctly
-
         self.X_list = X_list
         self.y_list = y_list
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.augment_fn = augment_fn
-        self.indices = np.arange(len(X_list[0]))  # Assume all inputs have same length
+        self.indices = np.arange(len(X_list[0]))  # Assume all inputs have the same length
 
         # Ensure sample_weights is a list
         if sample_weights is None:
-            self.sample_weights = [np.ones_like(y, dtype=np.float32) for y in y_list]
+            self.sample_weights = [np.ones(len(y), dtype=np.float32) for y in y_list]
         elif isinstance(sample_weights, np.ndarray):
             self.sample_weights = [sample_weights]  # Convert single array to list
         else:
             self.sample_weights = sample_weights  # Assume it's already a list
 
-        self.on_epoch_end()
-
     def __len__(self):
         """ Returns the number of batches per epoch """
         return int(np.floor(len(self.X_list[0]) / self.batch_size))
 
-    def __getitem__(self, index):
-        """ Generate one batch of data """
-        batch_indices = self.indices[index * self.batch_size:(index + 1) * self.batch_size]
+    def generator(self):
+        """ Generator function for `tf.data.Dataset` """
+        while True:
+            if self.shuffle:
+                np.random.shuffle(self.indices)
 
-        # Extract batch data for multiple inputs and outputs
-        X_batch = [X[batch_indices] for X in self.X_list]
-        y_batch = [y[batch_indices] for y in self.y_list]
-        sample_weights_batch = [w[batch_indices] for w in self.sample_weights]
+            for i in range(0, len(self.indices), self.batch_size):
+                batch_indices = self.indices[i:i + self.batch_size]
 
-        # Apply augmentation to only one randomly chosen input
-        if self.augment_fn:
-            input_idx = np.random.choice(len(self.X_list))  # Select one input index to augment
-            X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
+                # Extract batch data for multiple inputs and outputs
+                X_batch = [X[batch_indices] for X in self.X_list]
+                y_batch = [y[batch_indices] for y in self.y_list]
+                sample_weights_batch = [w[batch_indices] for w in self.sample_weights]
 
-        return tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch)  # ✅ Fix: Return tuples
+                # Apply augmentation to only one randomly chosen input
+                if self.augment_fn:
+                    input_idx = np.random.choice(len(self.X_list))  # Select one input index to augment
+                    X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
-    def on_epoch_end(self):
-        """ Shuffle dataset at the end of each epoch if enabled """
-        if self.shuffle:
-            np.random.shuffle(self.indices)
+                yield tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch)  # ✅ Return tuples
+
+    def as_dataset(self):
+        """ Converts the generator to `tf.data.Dataset` """
+        output_signature = (
+            tuple(tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32) for X in self.X_list),  # X
+            tuple(tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32) for y in self.y_list),  # y
+            tuple(tf.TensorSpec(shape=(None,), dtype=tf.float32) for w in self.sample_weights)  # sample weights
+        )
+
+        return tf.data.Dataset.from_generator(
+            self.generator, output_signature=output_signature
+        ).batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
