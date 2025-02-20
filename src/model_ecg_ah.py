@@ -165,6 +165,14 @@ for i_fold in range(folds):
 
     ecgs = np.vstack(ecgs)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
+    ecgs = np.vstack([
+        ecgs,
+        np.array([time_warp(e, sigma=0.2) for e in ecgs]),
+        np.array([time_shift(e, shift_max=20) for e in ecgs]),
+        np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
+        np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
+        np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
+    ])
     ecgs = scaler.fit_transform(ecgs.T).T
     
     labels = np.vstack(labels)
@@ -197,21 +205,19 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
-        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[train_indices]]).as_dataset()
-        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[val_indices]]).as_dataset()
+        train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, batch_size=256, num_augmented_versions=6)
         
         steps_per_epoch = len(ecgs) // batch_size
-        validation_steps = len(single_labels) // batch_size
+        steps_per_epoch //= 6
         
         model.fit(
             train_generator,
             epochs = epochs,
-            validation_data = val_generator,
+            validation_data = (ecgs[val_indices], single_labels[val_indices]),
             batch_size = batch_size,
             callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
             
             steps_per_epoch=steps_per_epoch,
-            validation_steps=validation_steps,
         )
         
         res_file = open(path.join("history", "ah_res.txt"), "w")

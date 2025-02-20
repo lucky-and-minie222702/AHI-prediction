@@ -373,7 +373,7 @@ class MIOECGGenerator():
 
             # Apply augmentation to only one randomly chosen input
             if self.augment_fn:
-                input_idxs = np.random.choice(len(self.X_list), size = self.batch_size // (np.random.choice(4) + 1))  # Select one input index to augment
+                input_idxs = np.random.choice(len(self.X_list))  # Select one input index to augment
                 for input_idx in input_idxs:
                     X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
@@ -392,3 +392,41 @@ class MIOECGGenerator():
         return tf.data.Dataset.from_generator(
             self.generator, output_signature=output_signature
         ).prefetch(tf.data.AUTOTUNE)
+        
+        
+class DynamicAugmentedECGDataset:
+    def __init__(self, X_original, y_original, X_augmented, num_augmented_versions, batch_size=32, shuffle=True):
+        self.X_original = X_original  # Unaugmented ECGs
+        self.y_original = y_original  # Labels
+        self.X_augmented = X_augmented  # Augmented dataset
+        self.num_augmented_versions = num_augmented_versions  # Number of augmentations per sample
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.indices = np.arange(len(X_original))
+        self.on_epoch_end()  # Select augmentations for first epoch
+
+    def on_epoch_end(self):
+        """ Randomly select ONE augmented version per sample at the start of each epoch """
+        chosen_indices = np.random.randint(0, self.num_augmented_versions, size=len(self.X_original))
+        self.selected_X = np.array([
+            self.X_augmented[i * self.num_augmented_versions + chosen_indices[i]]
+            for i in range(len(self.X_original))
+        ])
+        if self.shuffle:
+            np.random.shuffle(self.indices)
+
+    def __len__(self):
+        """ Returns the number of batches per epoch """
+        return int(np.floor(len(self.X_original) / self.batch_size))
+
+    def __getitem__(self, index):
+        """ Generate one batch of dynamically sampled augmented data """
+        batch_indices = self.indices[index * self.batch_size:(index + 1) * self.batch_size]
+        return self.selected_X[batch_indices], self.y_original[batch_indices]
+
+    def as_dataset(self):
+        """ Convert to TensorFlow dataset for efficient training """
+        return tf.data.Dataset.from_tensor_slices((self.selected_X, self.y_original)) \
+            .shuffle(len(self.X_original)) \
+            .batch(self.batch_size) \
+            .prefetch(tf.data.AUTOTUNE)
