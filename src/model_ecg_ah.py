@@ -36,7 +36,6 @@ def create_model():
     r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
-    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
     r_peak_features = SEBlock()(r_peak_features)
     
     inp = layers.Input(shape=(3100, 1))  # 30s
@@ -56,7 +55,6 @@ def create_model():
     conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3) 
     conv = ResNetBlock(1, conv, 256, 3) 
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
