@@ -13,31 +13,6 @@ def create_model():
     # ECG #
     #######
     
-    inp_rpa = layers.Input(shape=(None, 1))
-    norm_inp_rpa = layers.Normalization()(inp_rpa)
-    conv_rpa = ResNetBlock(1, norm_inp_rpa, 64, 3, change_sample=True)
-    conv_rpa = ResNetBlock(1, conv_rpa, 64, 3)
-    
-    conv_rpa = ResNetBlock(1, conv_rpa, 128, 3, change_sample=True)
-    conv_rpa = ResNetBlock(1, conv_rpa, 128, 3)
-    
-    conv_rpa = layers.SpatialDropout1D(rate=0.1)(conv_rpa)
-    
-    inp_rri = layers.Input(shape=(None, 1))
-    norm_inp_rri = layers.Normalization()(inp_rri)
-    conv_rri = ResNetBlock(1, norm_inp_rri, 64, 3, change_sample=True)
-    conv_rri = ResNetBlock(1, conv_rri, 64, 3)
-    
-    conv_rri = ResNetBlock(1, conv_rri, 128, 3, change_sample=True)
-    conv_rri = ResNetBlock(1, conv_rri, 128, 3)
-    
-    conv_rri = layers.SpatialDropout1D(rate=0.1)(conv_rri)
-    
-    r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
-    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
-    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
-    r_peak_features = SEBlock()(r_peak_features)
-    
     inp = layers.Input(shape=(3100, 1))  # 30s
     norm_inp = layers.Normalization()(inp)
     
@@ -51,15 +26,30 @@ def create_model():
     conv = ResNetBlock(1, ds_conv, 64, 9)
     conv = ResNetBlock(1, conv, 64, 7)
     
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3) 
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    r_peak_merge = layers.Attention(use_scale=True)([r_peak_features, conv, conv])
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     # # bottle-neck lstm
     # conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_merge)
@@ -102,13 +92,8 @@ def create_model():
     # se1 = SEBlock()(conv_r2)
     # se2 = SEBlock()(conv_r2)
     
-    conv2 = ResNetBlock(1, r_peak_merge, 512, 3, change_sample=True)
-    conv2 = ResNetBlock(1, conv2, 512, 3)
-    
-    conv2 = layers.SpatialDropout1D(rate=0.1)(conv2)
-    
-    se1 = SEBlock()(conv2)
-    se2 = SEBlock()(conv2)
+    se1 = SEBlock()(conv)
+    se2 = SEBlock()(conv)
     
     # single second
     out_s = layers.GlobalAvgPool1D()(se1)
@@ -119,7 +104,7 @@ def create_model():
     final_out_f = layers.Dense(1, activation="sigmoid", name="full")(out_f)
 
     
-    model = Model(inputs=[inp, inp_rpa, inp_rri], outputs=[final_out_f, final_out_s])
+    model = Model(inputs=inp, outputs=[final_out_f, final_out_s])
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001),
         loss = { 
@@ -158,9 +143,6 @@ cb_checkpoint = cbk.ModelCheckpoint(
 
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=400, target_lr=0.001, min_lr=1e-6)
 
-res_file = open(path.join("history", "ah_res.txt"), "w")
-res_file.close()
-
 for i_fold in range(folds):
     seg_len = 30
     
@@ -173,7 +155,6 @@ for i_fold in range(folds):
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
-
         sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
         label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
 
@@ -184,17 +165,8 @@ for i_fold in range(folds):
 
     ecgs = np.vstack(ecgs)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
-    ecgs = np.vstack([
-        ecgs,
-        np.array([time_warp(e, sigma=0.2) for e in ecgs]),
-        np.array([time_shift(e, shift_max=20) for e in ecgs]),
-        np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
-        np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
-        np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
-    ])
     ecgs = scaler.fit_transform(ecgs.T).T
     
-    rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
     labels = np.vstack(labels)
     labels = np.vstack([labels, labels, labels, labels, labels, labels])
     mean_labels = np.mean(labels, axis=-1)
@@ -225,18 +197,22 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
+        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[full_labels[train_indices], single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation)
+        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[full_labels[val_indices], single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation)
+        
+        
         model.fit(
-            [ecgs[train_indices], rpa[train_indices], rri[train_indices]],
-            [full_labels[train_indices], single_labels[train_indices]],
+            train_generator,
             epochs = epochs,
-            validation_data = (
-                [ecgs[val_indices], rpa[val_indices], rri[val_indices]],
-                [full_labels[val_indices], single_labels[val_indices]]
-            ),
+            validation_data = val_generator,
             batch_size = batch_size,
             callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
             sample_weight = sample_weights[train_indices],
         )
+        
+        res_file = open(path.join("history", "ah_res.txt"), "w")
+        res_file.close()
+        
         # model.load_weights(weights_path)
     
     ecgs = []
@@ -259,7 +235,6 @@ for i_fold in range(folds):
         ecgs = scaler.fit_transform(ecgs.T).T
         labels = np.array(label)
         ecgs = np.array([clean_ecg(e) for e in ecgs])
-        rpa, rri = calc_ecg(ecgs, splr=100, duration=seg_len+1)
 
         labels = np.array(label)
         mean_labels = np.mean(labels, axis=-1)
@@ -268,7 +243,7 @@ for i_fold in range(folds):
 
         class_counts = np.unique(single_labels, return_counts=True)[1]
         print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
-        raw_preds = model.predict([ecgs, rpa, rri], batch_size=batch_size)
+        raw_preds = model.predict(ecgs, batch_size=batch_size)
         single_preds = raw_preds[1]
         single_preds = single_preds.flatten()
 

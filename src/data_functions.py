@@ -452,3 +452,16 @@ def round_bin(arr, threshold=0.5):
 def acc_bin(y_true, y_pred):
     assert y_true.shape == y_pred.shape, "Arrays must have the same shape"
     return np.mean(y_true == y_pred)
+
+
+augmentation_options = [
+    lambda e: time_warp(e, sigma=0.2),
+    lambda e: time_shift(e, shift_max=20),
+    lambda e: bandpass(e, 100, 5, 35, 1),
+    lambda e: bandpass(e, 100, 3, 45, 1),
+    lambda e: frequency_noise(e, noise_std=0.15),
+]
+
+def my_ecg_augmentation(signal):
+    augment_fn = np.random.choice(augmentation_options)
+    return augment_fn(signal) 
