@@ -210,7 +210,7 @@ for i_fold in range(folds):
             epochs = epochs,
             validation_data = (ecgs[val_indices], single_labels[val_indices]),
             batch_size = batch_size,
-            callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
+            callbacks = [cb_early_stopping, cb_lr],
             steps_per_epoch=steps_per_epoch,
         )
         
