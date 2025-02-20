@@ -205,7 +205,7 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
-        train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, batch_size=256, num_augmented_versions=6, sample_weights=sample_weights[train_indices])
+        train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, batch_size=256, num_augmented_versions=6, sample_weights=sample_weights[train_indices]).as_dataset()
         
         steps_per_epoch = len(ecgs) // batch_size
         steps_per_epoch //= 6
