@@ -197,8 +197,8 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
-        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[full_labels[train_indices], single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation)
-        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[full_labels[val_indices], single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation)
+        train_generator = MIOECGGenerator(X_list=[ecgs[train_indices]], y_list=[full_labels[train_indices], single_labels[train_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[train_indices]])
+        val_generator = MIOECGGenerator(X_list=[ecgs[val_indices]], y_list=[full_labels[val_indices], single_labels[val_indices]], batch_size=batch_size, augment_fn=my_ecg_augmentation, sample_weights=[sample_weights[val_indices]])
         
         
         model.fit(
@@ -207,7 +207,6 @@ for i_fold in range(folds):
             validation_data = val_generator,
             batch_size = batch_size,
             callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
-            sample_weight = sample_weights[train_indices],
         )
         
         res_file = open(path.join("history", "ah_res.txt"), "w")

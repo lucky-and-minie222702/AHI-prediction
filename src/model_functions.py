@@ -31,6 +31,8 @@ from keras.preprocessing.sequence import pad_sequences
 from timeit import default_timer as timer
 import random
 from typing import *
+from tensorflow.keras.utils import Sequence
+from tensorflow.keras.utils import PyDataset
         
 def show_gpus():
     gpus = tf.config.list_physical_devices('GPU')
@@ -326,62 +328,35 @@ class WarmupCosineDecayScheduler(cbk.Callback):
             
         tf.keras.backend.set_value(self.model.optimizer.lr, lr)
 
-from tensorflow.keras.utils import Sequence
 
 
-class ECGDataGenerator(Sequence):
-    def __init__(self, X, y, batch_size=32, shuffle=True, augment_fn=None):
-        """
-        X: NumPy array of ECG signals, shape (num_samples, time_steps, channels)
-        y: NumPy array of labels, shape (num_samples,)
-        batch_size: Number of samples per batch
-        shuffle: Whether to shuffle indices at the end of each epoch
-        augment_fn: Custom augmentation function (applied per sample)
-        """
-        self.X = X
-        self.y = y
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.augment_fn = augment_fn
-        self.indices = np.arange(len(X))
-        self.on_epoch_end()
-
-    def __len__(self):
-        """ Returns number of batches per epoch """
-        return int(np.floor(len(self.X) / self.batch_size))
-
-    def __getitem__(self, index):
-        """ Generate one batch of data """
-        batch_indices = self.indices[index * self.batch_size:(index + 1) * self.batch_size]
-        X_batch, y_batch = self.X[batch_indices], self.y[batch_indices]
-
-        # Apply augmentation if function is provided
-        if self.augment_fn:
-            X_batch = np.array([self.augment_fn(x) for x in X_batch])
-
-        return X_batch, y_batch
-
-    def on_epoch_end(self):
-        """ Shuffle dataset at end of epoch if enabled """
-        if self.shuffle:
-            np.random.shuffle(self.indices)
-
-
-class MIOECGGenerator(Sequence):
-    def __init__(self, X_list, y_list, batch_size=32, shuffle=True, augment_fn=None):
+class MIOECGGenerator(PyDataset):
+    def __init__(self, X_list, y_list, sample_weights=None, batch_size=32, shuffle=True, augment_fn=None, **kwargs):
         """
         X_list: List of NumPy arrays for multiple inputs [X1, X2, ...]
         y_list: List of NumPy arrays for multiple outputs [y1, y2, ...]
+        sample_weights: List of NumPy arrays for sample weights (one per output), or None
         batch_size: Number of samples per batch
         shuffle: Whether to shuffle indices at the end of each epoch
         augment_fn: Custom augmentation function (applied to one input per sample)
         """
-        self.X_list = X_list  # List of multiple inputs
-        self.y_list = y_list  # List of multiple outputs
+        super().__init__(**kwargs)  # ✅ Fix: Ensure PyDataset initializes correctly
+
+        self.X_list = X_list
+        self.y_list = y_list
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.augment_fn = augment_fn  # Augmentation applied to inputs
-        self.indices = np.arange(len(X_list[0]))  # Assume same length for all inputs
+        self.augment_fn = augment_fn
+        self.indices = np.arange(len(X_list[0]))  # Assume all inputs have same length
+
+        # Ensure sample_weights is a list
+        if sample_weights is None:
+            self.sample_weights = [np.ones_like(y, dtype=np.float32) for y in y_list]
+        elif isinstance(sample_weights, np.ndarray):
+            self.sample_weights = [sample_weights]  # Convert single array to list
+        else:
+            self.sample_weights = sample_weights  # Assume it's already a list
+
         self.on_epoch_end()
 
     def __len__(self):
@@ -391,21 +366,18 @@ class MIOECGGenerator(Sequence):
     def __getitem__(self, index):
         """ Generate one batch of data """
         batch_indices = self.indices[index * self.batch_size:(index + 1) * self.batch_size]
-        
+
         # Extract batch data for multiple inputs and outputs
-        X_batch = [X[batch_indices] for X in self.X_list]  
-        y_batch = [y[batch_indices] for y in self.y_list]  
+        X_batch = [X[batch_indices] for X in self.X_list]
+        y_batch = [y[batch_indices] for y in self.y_list]
+        sample_weights_batch = [w[batch_indices] for w in self.sample_weights]
 
         # Apply augmentation to only one randomly chosen input
         if self.augment_fn:
             input_idx = np.random.choice(len(self.X_list))  # Select one input index to augment
             X_batch[input_idx] = np.array([self.augment_fn(x) for x in X_batch[input_idx]])
 
-        if len(X_batch) == 1:
-            X_batch = X_batch[0]
-        if len(y_batch) == 1:
-            X_batch = y_batch[0]
-        return X_batch, y_batch  # Keras expects (inputs, outputs)
+        return tuple(X_batch), tuple(y_batch), tuple(sample_weights_batch)  # ✅ Fix: Return tuples
 
     def on_epoch_end(self):
         """ Shuffle dataset at the end of each epoch if enabled """
