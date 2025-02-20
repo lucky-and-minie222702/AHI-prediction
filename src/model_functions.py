@@ -440,4 +440,4 @@ class DynamicAugmentedECGDataset:
 
         return tf.data.Dataset.from_generator(
             self.generator, output_signature=output_signature
-        ).batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
+        ).prefetch(tf.data.AUTOTUNE)
