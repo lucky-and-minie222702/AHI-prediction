@@ -6,7 +6,7 @@ import neurokit2 as nk
 
 show_gpus()
 
-folds = 3
+folds = 1
         
 def create_model():
     #######
@@ -36,6 +36,7 @@ def create_model():
     r_peak_features = layers.Concatenate(axis=-2)([conv_rpa, conv_rri])
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3, change_sample=True)
     r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
+    r_peak_features = ResNetBlock(1, r_peak_features, 256, 3)
     r_peak_features = SEBlock()(r_peak_features)
     
     inp = layers.Input(shape=(3100, 1))  # 30s
@@ -56,13 +57,14 @@ def create_model():
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3) 
+    conv = ResNetBlock(1, conv, 256, 3) 
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    r_peak_att = layers.Attention(use_scale=True, dropout=0.1)([r_peak_features, conv, conv])
+    r_peak_merge = layers.Concatenate()([r_peak_features, conv])
     
     # # bottle-neck lstm
-    # conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_att)
+    # conv_bn1 = layers.Conv1D(filters=64, kernel_size=3, strides=2, padding="same")(r_peak_merge)
     # conv_bn1 = layers.BatchNormalization()(conv_bn1)
     # conv_bn1 = layers.Activation("relu")(conv_bn1)
     
@@ -102,11 +104,8 @@ def create_model():
     # se1 = SEBlock()(conv_r2)
     # se2 = SEBlock()(conv_r2)
     
-    conv2 = ResNetBlock(1, r_peak_att, 512, 3, change_sample=True)
+    conv2 = ResNetBlock(1, r_peak_merge, 512, 3, change_sample=True)
     conv2 = ResNetBlock(1, conv2, 512, 3)
-    
-    conv2 = ResNetBlock(1, conv2, 1024, 3, change_sample=True)
-    conv2 = ResNetBlock(1, conv2, 1024, 3)
     
     conv2 = layers.SpatialDropout1D(rate=0.1)(conv2)
     
@@ -141,12 +140,12 @@ show_params(model, "ecg_ah")
 weights_path = path.join("weights", "ah.weights.h5")
 # model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 300,
     patience = 10,
     monitor = "val_single_loss",
     mode = "min",
@@ -159,7 +158,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     mode = "min",
 )
 
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=180, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=400, target_lr=0.001, min_lr=1e-6)
 
 res_file = open(path.join("history", "ah_res.txt"), "w")
 res_file.close()
