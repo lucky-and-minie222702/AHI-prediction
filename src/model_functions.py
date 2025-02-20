@@ -395,14 +395,15 @@ class MIOECGGenerator():
         
         
 class DynamicAugmentedECGDataset:
-    def __init__(self, X_original, y_original, X_augmented, num_augmented_versions, batch_size=32, shuffle=True):
+    def __init__(self, X_original, y_original, X_augmented, num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
         self.X_original = X_original  # Unaugmented ECGs
         self.y_original = y_original  # Labels
         self.X_augmented = X_augmented  # Augmented dataset
+        self.sample_weights = sample_weights if sample_weights is not None else np.ones(len(y_original))  # Default weights = 1
         self.num_augmented_versions = num_augmented_versions  # Number of augmentations per sample
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.indices = np.arange(len(X_original))
+        self.indices = np.arange(len(self.X_original))
         self.on_epoch_end()  # Select augmentations for first epoch
 
     def on_epoch_end(self):
@@ -419,14 +420,24 @@ class DynamicAugmentedECGDataset:
         """ Returns the number of batches per epoch """
         return int(np.floor(len(self.X_original) / self.batch_size))
 
-    def __getitem__(self, index):
-        """ Generate one batch of dynamically sampled augmented data """
-        batch_indices = self.indices[index * self.batch_size:(index + 1) * self.batch_size]
-        return self.selected_X[batch_indices], self.y_original[batch_indices]
+    def generator(self):
+        """ ✅ Fix: Ensure outputs are returned as (X_batch, y_batch, sample_weights_batch) """
+        for i in range(0, len(self.indices), self.batch_size):
+            batch_indices = self.indices[i:i + self.batch_size]
+            X_batch = self.selected_X[batch_indices]
+            y_batch = self.y_original[batch_indices]
+            w_batch = self.sample_weights[batch_indices]  # Select corresponding sample weights
+
+            yield (X_batch, y_batch, w_batch)  # ✅ Ensure correct tuple format
 
     def as_dataset(self):
-        """ Convert to TensorFlow dataset for efficient training """
-        return tf.data.Dataset.from_tensor_slices((self.selected_X, self.y_original)) \
-            .shuffle(len(self.X_original)) \
-            .batch(self.batch_size) \
-            .prefetch(tf.data.AUTOTUNE)
+        """ ✅ Fix: Ensure `output_signature` includes sample weights """
+        output_signature = (
+            tf.TensorSpec(shape=(None, 3100, 1), dtype=tf.float32),  # ✅ Input shape
+            tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Output shape (classification)
+            tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Sample weights shape
+        )
+
+        return tf.data.Dataset.from_generator(
+            self.generator, output_signature=output_signature
+        ).batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
