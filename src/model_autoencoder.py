@@ -151,7 +151,7 @@ val_ecgs = scaler.fit_transform(val_ecgs.T).T
 
 train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], ecgs[:len(ecgs) // 6:],  ecgs, ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
 
-val_generator = DynamicAugmentedECGDataset(val_ecgs[:len(val_ecgs) // 6:], val_ecgs[:len(val_ecgs) // 6:],  val_ecgs, val_ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
+# val_generator = DynamicAugmentedECGDataset(val_ecgs[:len(val_ecgs) // 6:], val_ecgs[:len(val_ecgs) // 6:],  val_ecgs, val_ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
 steps_per_epoch //= 6
@@ -161,7 +161,7 @@ model.fit(
     train_generator,
     epochs = epochs,
     batch_size = batch_size,
-    validation_data = val_generator,
+    validation_data = val_ecgs,
     steps_per_epoch = steps_per_epoch,
     callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
 )
