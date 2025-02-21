@@ -244,11 +244,11 @@ for i_fold in range(folds):
 
     print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
     class_counts = np.unique(val_single_labels, return_counts=True)[1]
-    print(f"Val: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
+    print(f"Val: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}")
     class_counts = np.unique(single_labels, return_counts=True)[1]
     print(f"Train: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
 
-    sample_weights = [total_samples / class_counts[x] for x in single_labels]
+    sample_weights = [total_samples / class_counts[int(x)] for x in single_labels]
     sample_weights += mean_labels
     sample_weights = np.array(sample_weights)
     
