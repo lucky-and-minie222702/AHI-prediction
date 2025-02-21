@@ -22,7 +22,7 @@ def  create_model():
     inp = layers.Input(shape=(3100, 1))
     norm_inp = layers.Normalization()(inp)
 
-    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same", kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(norm_inp)
+    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
@@ -42,22 +42,22 @@ def  create_model():
     encode_out = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv)
     encode_out = layers.Normalization()(encode_out)
     
-    ds_conv_r = layers.Conv1DTranspose(filters=256, kernel_size=7, strides=2, padding="same", kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))(encode_out)
+    ds_conv_r = layers.Conv1DTranspose(filters=256, kernel_size=7, strides=2, padding="same")(encode_out)
     ds_conv_r = layers.BatchNormalization()(ds_conv_r)
-    ds_conv_r = layers.LeakyReLU(negative_slope=0.3)(ds_conv_r)
+    ds_conv_r = layers.LeakyReLU(alpha=0.3)(ds_conv_r)
     ds_conv_r = layers.UpSampling1D(size=2)(ds_conv_r)
     
-    conv_r = ResNetBlock(1, ds_conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
-    conv_r = ResNetBlock(1, conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
+    conv_r = ResNetBlock(1, ds_conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
-    conv_r = ResNetBlock(1, conv_r, 256, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
-    conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
+    conv_r = ResNetBlock(1, conv_r, 256, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
-    conv_r = ResNetBlock(1, conv_r, 128, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
+    conv_r = ResNetBlock(1, conv_r, 128, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
     
-    conv_r = ResNetBlock(1, conv_r, 64, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
-    conv_r = ResNetBlock(1, conv_r, 64, 3, transpose=True, activation=layers.LeakyReLU(negative_slope=0.3))
+    conv_r = ResNetBlock(1, conv_r, 64, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 64, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
     out = layers.Conv1D(filters=1, kernel_size=5)(conv_r)
     out = layers.Activation("sigmoid")(out)
@@ -69,7 +69,7 @@ def  create_model():
     show_params(model)
     return model, encoder
     
-model, encoder =    create_model()
+model, encoder = create_model()
 weights_path = path.join("history", "encoder.weights.h5")
 encoder.save_weights(weights_path)
 
