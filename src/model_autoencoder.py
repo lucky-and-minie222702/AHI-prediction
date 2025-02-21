@@ -61,6 +61,7 @@ def  create_model():
     
     out = layers.Conv1D(filters=1, kernel_size=5)(conv_r)
     out = layers.Activation("sigmoid")(out)
+    out = layers.Flatten()(out)
     
     print(out.shape)
     

@@ -444,12 +444,12 @@ class DynamicAugmentedECGDataset:
 
     def as_dataset(self):
         """ ✅ Fix: Ensure `output_signature` includes sample weights """
-        output_signature = (
-            tf.TensorSpec(shape=(None, 3100, 1), dtype=tf.float32),  # ✅ Input shape
-            tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Output shape (classification)
-            tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Sample weights shape
-        )
+        # output_signature = (
+        #     tf.TensorSpec(shape=(None, 3100, 1), dtype=tf.float32),  # ✅ Input shape
+        #     tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Output shape (classification)
+        #     tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Sample weights shape
+        # )
 
         return tf.data.Dataset.from_generator(
-            self.generator, output_signature=output_signature
+            self.generator
         ).prefetch(tf.data.AUTOTUNE)
