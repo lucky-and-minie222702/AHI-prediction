@@ -78,10 +78,11 @@ encoder.save_weights(weights_path)
 model.compile(
     loss = "mse",
     metrics = ["mae"],
+    weighted_metrics = [],
 )
 
 
-epochs = 400
+epochs = 350
 batch_size = 256
 
 
@@ -94,14 +95,14 @@ cb_early_stopping = cbk.EarlyStopping(
     # mode = "min",
 )
 cb_save_encoder = SaveEncoderCallback(encoder=encoder, save_path=weights_path)
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=400, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=350, target_lr=0.001, min_lr=1e-6)
 
 
 ecgs = []
 labels = []
 rpa = []
 rri = []
-p_list = raw_p_list[:20:]
+p_list = raw_p_list[:22:]
 seg_len = 30
 last_p = 0
 
