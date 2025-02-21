@@ -165,7 +165,7 @@ for i_fold in range(folds):
     rpa = []
     rri = []
     # p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
-    p_list
+    p_list = raw_p_list[:25:]
 
     last_p = 0
 
@@ -275,7 +275,8 @@ for i_fold in range(folds):
     labels = []
     rpa = []
     rri = []
-    p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
+    # p_list = np.load(path.join("gen_data", f"fold_{i_fold}_test.npy"))
+    p_list = raw_p_list[25::]
     print("\nTest result\n")
 
     for p in p_list:
