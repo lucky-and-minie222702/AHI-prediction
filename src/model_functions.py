@@ -395,9 +395,10 @@ class MIOECGGenerator():
         
         
 class DynamicAugmentedECGDataset:
-    def __init__(self, X_original, y_original, X_augmented, num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
+    def __init__(self, X_original, y_original, X_augmented, y_augmented,num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
         self.X_original = X_original  # Unaugmented ECGs
         self.y_original = y_original  # Labels
+        self.y_augmented = y_augmented  # Labels
         self.X_augmented = X_augmented  # Augmented dataset
         self.sample_weights = sample_weights if sample_weights is not None else np.ones(len(y_original))  # Default weights = 1
         self.num_augmented_versions = num_augmented_versions  # Number of augmentations per sample
@@ -409,10 +410,17 @@ class DynamicAugmentedECGDataset:
     def on_epoch_end(self):
         """ Randomly select ONE augmented version per sample at the start of each epoch """
         chosen_indices = np.random.randint(0, self.num_augmented_versions, size=len(self.X_original))
+        
         self.selected_X = np.array([
             self.X_augmented[i * self.num_augmented_versions + chosen_indices[i]]
             for i in range(len(self.X_original))
         ])
+        
+        self.selected_y = np.array([
+            self.y_augmented[i * self.num_augmented_versions + chosen_indices[i]]
+            for i in range(len(self.y_original))
+        ])
+        
         if self.shuffle:
             np.random.shuffle(self.indices)
 
