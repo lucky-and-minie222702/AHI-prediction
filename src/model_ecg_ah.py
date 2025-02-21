@@ -233,18 +233,20 @@ for i_fold in range(folds):
     print(f"\nFold {i_fold}\n")
     
     total_samples = len(ecgs)
-    indices = np.arange(total_samples)
-    indices = np.random.permutation(indices)
-    np.random.shuffle(indices)
-    train_size = int(total_samples * 0.8)
-    val_size = total_samples - train_size
+    # indices = np.arange(total_samples)
+    # indices = np.random.permutation(indices)
+    # np.random.shuffle(indices)
+    # train_size = int(total_samples * 0.8)
+    # val_size = total_samples - train_size
 
-    train_indices = indices[:train_size:]
-    val_indices = indices[train_size::]
+    # train_indices = indices[:train_size:]
+    # val_indices = indices[train_size::]
 
-    print(f"Train - Val: {train_size} - {val_size}")
-    class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
-    print(f"Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
+    print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
+    class_counts = np.unique(val_single_labels, return_counts=True)[1]
+    print(f"Val: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
+    class_counts = np.unique(single_labels, return_counts=True)[1]
+    print(f"Train: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
 
     sample_weights = [total_samples / class_counts[x] for x in single_labels]
     sample_weights += mean_labels
@@ -252,7 +254,7 @@ for i_fold in range(folds):
     
     
     if "train" in sys.argv:
-        train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, batch_size=256, num_augmented_versions=6, sample_weights=sample_weights[train_indices]).as_dataset()
+        train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, batch_size=256, num_augmented_versions=6, sample_weights=sample_weights).as_dataset()
         
         steps_per_epoch = len(ecgs) // batch_size
         steps_per_epoch //= 6
