@@ -1,6 +1,7 @@
 from model_functions import *
 from data_functions import *
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 info = open(path.join("data", "info.txt"), "r").readlines()
 raw_p_list = []
@@ -99,10 +100,7 @@ cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=350, target_lr
 
 
 ecgs = []
-labels = []
-rpa = []
-rri = []
-p_list = raw_p_list[:22:]
+p_list = raw_p_list[:20:]
 seg_len = 30
 last_p = 0
 
@@ -116,15 +114,12 @@ for p in p_list:
         last_p = len(ecgs)
 
     ecgs.append(sig)
-    labels.append(label)
 
 scaler = MinMaxScaler()
 
 val_ecgs = ecgs[last_p::]
-val_labels = labels[last_p::]
 
 ecgs = ecgs[:last_p:]
-labels = labels[:last_p:]
 
 
 # train
@@ -170,3 +165,34 @@ model.fit(
     steps_per_epoch = steps_per_epoch,
     callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
 )
+
+
+# test
+ecgs = []
+p_list = raw_p_list[22::]
+seg_len = 30
+last_p = 0
+
+for p in p_list:
+    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
+    raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
+    sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
+    label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
+    
+    if p == p_list[-2]:
+        last_p = len(ecgs)
+
+    ecgs.append(sig)
+    
+ecgs = scaler.fit_transform(ecgs.T).T
+
+pred = model.predict(ecgs, batch_size=batch_size)
+mae = mean_absolute_error(ecgs, pred)
+mse = mean_squared_error(ecgs, pred)
+
+res_file = open(path.join("history", "autoencoder.txt"), "w")
+print("MAE:", mae)
+print("MSE:", mse)
+print("MAE:", mae, file=res_file)
+print("MSE:", mse, file=res_file)
+res_file.close()
