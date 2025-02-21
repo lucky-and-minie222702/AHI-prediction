@@ -163,6 +163,7 @@ steps_per_epoch //= 6
 model.fit(
     train_generator,
     epochs = epochs,
+    batch_size = batch_size,
     validation_data = val_generator,
     steps_per_epoch = steps_per_epoch,
     callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
