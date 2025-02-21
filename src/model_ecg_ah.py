@@ -227,7 +227,7 @@ for i_fold in range(folds):
     val_labels = np.vstack([val_labels, val_labels, val_labels, val_labels, val_labels, val_labels])
     val_mean_labels = np.mean(val_labels, axis=-1)
     val_full_labels = np.round(val_mean_labels)
-    val_single_labels = np.array([l[15] for l in labels])
+    val_single_labels = np.array([l[15] for l in val_labels])
 
     print(f"Total samples: {len(labels)}")
     print(f"\nFold {i_fold}\n")
