@@ -83,20 +83,20 @@ model.compile(
 )
 
 
-epochs = 350
+epochs = 400
 batch_size = 256
 
 
 cb_his = HistoryAutosaver(path.join("history", "ecg_encoder"))
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 250,
+    start_from_epoch = 350,
     patience = 10,
     # monitor = "val_single_loss",
     # mode = "min",
 )
 cb_save_encoder = SaveEncoderCallback(encoder=encoder, save_path=weights_path)
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=350, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=400, target_lr=0.001, min_lr=1e-6)
 
 
 ecgs = []
@@ -161,7 +161,7 @@ model.fit(
     train_generator,
     epochs = epochs,
     batch_size = batch_size,
-    validation_data = val_ecgs,
+    validation_data = (val_ecgs, val_ecgs),
     steps_per_epoch = steps_per_epoch,
     callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
 )
