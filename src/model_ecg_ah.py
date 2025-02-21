@@ -176,7 +176,7 @@ for i_fold in range(folds):
         label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
         
         if p == p_list[-2]:
-            last_p = sum([len(e) for e in ecgs])
+            last_p = len(ecgs)
 
         ecgs.append(sig)
         labels.append(label)
