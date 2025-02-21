@@ -4,6 +4,25 @@ from model_functions import *
 from sklearn.preprocessing import MinMaxScaler
 import neurokit2 as nk
 
+############
+
+info = open(path.join("data", "info.txt"), "r").readlines()
+raw_p_list = []
+no_spo2 = []
+
+for s in info:
+    s = s[:-1:]
+    if "*" in s:
+        no_spo2.append(int(s[1::]))
+    else:
+        raw_p_list.append(int(s))
+
+# p_list = [x for x in p_list if x not in no_spo2]
+raw_p_list = np.array(raw_p_list)
+num_p = len(raw_p_list)
+
+############
+
 show_gpus()
 
 folds = 1
@@ -118,12 +137,12 @@ show_params(model, "ecg_ah")
 weights_path = path.join("weights", "ah.weights.h5")
 # model.save_weights(weights_path)
 
-epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 300,
+    start_from_epoch = 400,
     patience = 10,
     # monitor = "val_single_loss",
     # mode = "min",
@@ -135,8 +154,8 @@ cb_checkpoint = cbk.ModelCheckpoint(
     # monitor = "val_single_loss",
     # mode = "min",
 )
-
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=400, target_lr=0.001, min_lr=1e-6)
+cb_his = HistoryAutosaver(save_path=path.join("history", "model_ecg_ah"))
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=500, target_lr=0.001, min_lr=1e-6)
 
 for i_fold in range(folds):
     seg_len = 30
@@ -145,19 +164,33 @@ for i_fold in range(folds):
     labels = []
     rpa = []
     rri = []
-    p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
+    # p_list = np.load(path.join("gen_data", f"fold_{i_fold}_train.npy"))
+    p_list
+
+    last_p = 0
 
     for p in p_list:
         raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
         raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
         sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
         label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
+        
+        if p == p_list[-2]:
+            last_p = sum([len(e) for e in ecgs])
 
         ecgs.append(sig)
         labels.append(label)
 
     scaler = MinMaxScaler()
+    
+    val_ecgs = ecgs[last_p::]
+    val_labels = labels[last_p::]
+    
+    ecgs = ecgs[:last_p:]
+    labels = labels[:last_p:]
 
+
+    # train
     ecgs = np.vstack(ecgs)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
     ecgs = np.vstack([
@@ -177,6 +210,25 @@ for i_fold in range(folds):
     single_labels = np.array([l[15] for l in labels])
     
 
+    # val
+    val_ecgs = np.vstack(val_ecgs)
+    val_ecgs = np.array([clean_ecg(e) for e in val_ecgs])
+    val_ecgs = np.vstack([
+        val_ecgs,
+        np.array([time_warp(e, sigma=0.2) for e in val_ecgs]),
+        np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
+        np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
+        np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
+        np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
+    ])
+    val_ecgs = scaler.fit_transform(val_ecgs.T).T
+    
+    val_labels = np.vstack(val_labels)
+    val_labels = np.vstack([val_labels, val_labels, val_labels, val_labels, val_labels, val_labels])
+    val_mean_labels = np.mean(val_labels, axis=-1)
+    val_full_labels = np.round(val_mean_labels)
+    val_single_labels = np.array([l[15] for l in labels])
+
     print(f"Total samples: {len(labels)}")
     print(f"\nFold {i_fold}\n")
     
@@ -192,9 +244,9 @@ for i_fold in range(folds):
 
     print(f"Train - Val: {train_size} - {val_size}")
     class_counts = np.unique(single_labels[train_indices], return_counts=True)[1]
-    print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
+    print(f"Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
 
-    sample_weights = [0.5 if x == 0 else 1 for x in single_labels]
+    sample_weights = [total_samples / class_counts[x] for x in single_labels]
     sample_weights += mean_labels
     sample_weights = np.array(sample_weights)
     
@@ -208,9 +260,9 @@ for i_fold in range(folds):
         model.fit(
             train_generator,
             epochs = epochs,
-            validation_data = (ecgs[val_indices], single_labels[val_indices]),
+            validation_data = (val_ecgs, val_single_labels),
             batch_size = batch_size,
-            callbacks = [cb_early_stopping, cb_lr],
+            callbacks = [cb_early_stopping, cb_lr, cb_his],
             steps_per_epoch=steps_per_epoch,
         )
         
@@ -246,7 +298,13 @@ for i_fold in range(folds):
         single_labels = np.array([l[15] for l in labels])
 
         class_counts = np.unique(single_labels, return_counts=True)[1]
-        print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
+            
+        print(f"\nBenh nhan {p}\n")
+        print(f"\nBenh nhan {p}\n", file=res_file)
+        
+        print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
+        print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
+        
         raw_preds = model.predict(ecgs, batch_size=batch_size)
         single_preds = raw_preds
         single_preds = single_preds.flatten()
@@ -254,8 +312,6 @@ for i_fold in range(folds):
         np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([single_labels, single_preds], axis=0))
         
         res_file = open(path.join("history", "ah_res.txt"), "a")
-        print(f"\nBenh nhan {p}\n")
-        print(f"\nBenh nhan {p}\n", file=res_file)
         for t in np.linspace(0, 1, 11)[1:-1:]:
             t = round(t, 3)
             print(f"Threshold {t}: {acc_bin(single_labels, round_bin(single_preds, t))}")

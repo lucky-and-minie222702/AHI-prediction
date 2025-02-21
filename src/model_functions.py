@@ -274,7 +274,7 @@ class HistoryAutosaver(keras.callbacks.Callback):
     def on_epoch_end(self, epoch: int, logs=None):
         logs = logs or {}
         for key, value in logs.items():
-            np.save(self.p, np.array(value))
+            np.save(self.p + f"_{key}", np.array(value))
             
 def convert_bytes(byte_size: int) -> str:
     units = ["bytes", "KB", "MB", "GB", "TB", "PB", "EB"]
