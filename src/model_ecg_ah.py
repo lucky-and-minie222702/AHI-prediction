@@ -159,18 +159,16 @@ single_labels = np.array([l[15] for l in labels])
 # val
 val_ecgs = np.vstack(val_ecgs)
 val_ecgs = np.array([clean_ecg(e) for e in val_ecgs])
-# val_ecgs = np.vstack([
-#     val_ecgs,
-#     np.array([time_warp(e, sigma=0.2) for e in val_ecgs]),
-#     np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
-#     np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
-#     np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
-#     np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
-# ])
+val_ecgs = np.vstack([
+    val_ecgs,
+    np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
+    np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
+    np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
+])
 val_ecgs = scaler.fit_transform(val_ecgs.T).T
 
 val_labels = np.vstack(val_labels)
-# val_labels = np.vstack([val_labels, val_labels, val_labels, val_labels, val_labels, val_labels])
+val_labels = np.vstack([val_labels, val_labels, val_labels, val_labels])
 val_mean_labels = np.mean(val_labels, axis=-1)
 val_full_labels = np.round(val_mean_labels)
 val_single_labels = np.array([l[15] for l in val_labels])
@@ -187,7 +185,7 @@ total_samples = len(ecgs)
 
 print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
 class_counts = np.unique(val_single_labels, return_counts=True)[1]
-print(f"Val: Class 0: {class_counts[0] // 4} - Class 1: {class_counts[1] // 4}")
+print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
 class_counts = np.unique(single_labels, return_counts=True)[1]
 print(f"Train: Class 0: {class_counts[0] // 4} - Class 1: {class_counts[1] // 4}\n")
 
@@ -198,7 +196,7 @@ sample_weights = np.array(sample_weights)
 train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 4:], single_labels[:len(single_labels) // 4:],  ecgs, single_labels, batch_size=batch_size, num_augmented_versions=4, sample_weights=sample_weights).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
-steps_per_epoch //= 6
+steps_per_epoch //= 4
 
 model.fit(
     train_generator,

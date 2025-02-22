@@ -403,7 +403,7 @@ class MIOECGGenerator():
         
         
 class DynamicAugmentedECGDataset:
-    def __init__(self, X_original, y_original, X_augmented, y_augmented,num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
+    def __init__(self, X_original, y_original, X_augmented, y_augmented, num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
         self.X_original = X_original  # Unaugmented ECGs
         self.y_original = y_original  # Labels
         self.y_augmented = y_augmented  # Labels
