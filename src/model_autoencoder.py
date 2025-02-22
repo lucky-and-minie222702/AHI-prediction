@@ -98,6 +98,10 @@ cb_early_stopping = cbk.EarlyStopping(
 cb_save_encoder = SaveEncoderCallback(encoder=encoder, save_path=weights_path)
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=400, target_lr=0.001, min_lr=1e-6)
 
+
+scaler = MinMaxScaler()
+
+
 if "train" in sys.argv:
     # train
     model.load_weights(weights_path)
@@ -118,10 +122,8 @@ if "train" in sys.argv:
 
         ecgs.append(sig)
 
-    scaler = MinMaxScaler()
 
     val_ecgs = ecgs[last_p::]
-
     ecgs = ecgs[:last_p:]
 
 
@@ -188,6 +190,7 @@ if "test" in sys.argv:
 
         ecgs.append(sig)
         
+
     ecgs = np.vstack(ecgs)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
     ecgs = scaler.fit_transform(ecgs.T).T
