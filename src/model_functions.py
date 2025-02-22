@@ -282,6 +282,8 @@ class HistoryAutosaver(keras.callbacks.Callback):
     def on_epoch_end(self, epoch: int, logs=None):
         logs = logs or {}
         for key, value in logs.items():
+            if key not in self.history:
+                self.history[key] = []
             self.history[key].append(value)
             np.save(self.p + f"_{key}", np.array(self.history[key]))
             
