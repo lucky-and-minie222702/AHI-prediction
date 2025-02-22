@@ -141,14 +141,14 @@ labels = labels[:last_p:]
 # train
 ecgs = np.vstack(ecgs)
 ecgs = np.array([clean_ecg(e) for e in ecgs])
-ecgs = np.vstack([
-    ecgs,
-    np.array([time_warp(e, sigma=0.2) for e in ecgs]),
-    np.array([time_shift(e, shift_max=20) for e in ecgs]),
-    np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
-    np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
-    np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
-])
+# ecgs = np.vstack([
+#     ecgs,
+#     np.array([time_warp(e, sigma=0.2) for e in ecgs]),
+#     np.array([time_shift(e, shift_max=20) for e in ecgs]),
+#     np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
+#     np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
+#     np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
+# ])
 ecgs = scaler.fit_transform(ecgs.T).T
 
 labels = np.vstack(labels)
@@ -161,14 +161,14 @@ single_labels = np.array([l[15] for l in labels])
 # val
 val_ecgs = np.vstack(val_ecgs)
 val_ecgs = np.array([clean_ecg(e) for e in val_ecgs])
-val_ecgs = np.vstack([
-    val_ecgs,
-    np.array([time_warp(e, sigma=0.2) for e in val_ecgs]),
-    np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
-    np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
-    np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
-    np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
-])
+# val_ecgs = np.vstack([
+#     val_ecgs,
+#     np.array([time_warp(e, sigma=0.2) for e in val_ecgs]),
+#     np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
+#     np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
+#     np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
+#     np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
+# ])
 val_ecgs = scaler.fit_transform(val_ecgs.T).T
 
 val_labels = np.vstack(val_labels)
@@ -179,8 +179,8 @@ val_single_labels = np.array([l[15] for l in val_labels])
 
 
 # encode
-ecgs = encoder.predict(ecgs, batch_size=64)
-val_ecgs = encoder.predict(val_ecgs, batch_size=64)
+ecgs = encoder.predict(ecgs, batch_size=256)
+val_ecgs = encoder.predict(val_ecgs, batch_size=256)
 
 
 print(f"Total samples: {len(labels)}\n")
@@ -233,7 +233,7 @@ for p in p_list:
 
     ecgs = np.array(sig)
     ecgs = scaler.fit_transform(ecgs.T).T
-    ecgs = encoder.predict(ecgs, batch_size=64)
+    ecgs = encoder.predict(ecgs, batch_size=256)
     
     labels = np.array(label)
     ecgs = np.array([clean_ecg(e) for e in ecgs])

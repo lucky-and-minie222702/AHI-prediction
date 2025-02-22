@@ -42,12 +42,13 @@ def show_gpus(limit_mem: bool = True):
     else:
         print("! No GPU detected. Using CPU.")
         
-    if gpus:
-        try:
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)  # Only allocate memory as needed
-        except RuntimeError as e:
-            print(e)
+    if limit_mem:
+        if gpus:
+            try:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)  # Only allocate memory as needed
+            except RuntimeError as e:
+                print(e)
 
 # check for available GPUs
 def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool | int = False, transpose: bool = False, activation = layers.Activation("relu")):
