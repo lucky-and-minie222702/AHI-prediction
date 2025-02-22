@@ -23,33 +23,34 @@ def  create_model():
     inp = layers.Input(shape=(3100, 1))
     norm_inp = layers.Normalization()(inp)
 
-    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same", kernel_regularizer=reg.l1(0.001))(norm_inp)
+    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l1(0.001))
+    conv = ResNetBlock(1, ds_conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l1(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l1(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l1(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l1(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
     
     
-    encode_out = layers.Conv1D(filters=128, kernel_size=3, kernel_regularizer=reg.l1(0.001))(conv)
+    encode_out = layers.Conv1D(filters=128, kernel_size=3)(conv)
     encode_out = layers.BatchNormalization()(encode_out)
     encode_out = layers.Activation("relu")(encode_out)
-    encode_out = layers.Conv1D(filters=32, kernel_size=3, kernel_regularizer=reg.l1(0.001))(encode_out)
-    encode_out = layers.BatchNormalization()(encode_out)
+    encode_out = layers.Conv1D(filters=32, kernel_size=3)(encode_out)
     encode_out = layers.Normalization()(encode_out)
     
     print(encode_out.shape)
@@ -61,8 +62,10 @@ def  create_model():
     conv_r = ResNetBlock(1, conv_r, 128, 3, change_sample=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 128, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 128, 3, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 128, 3, activation=layers.LeakyReLU(alpha=0.3))
     
     conv_r = ResNetBlock(1, conv_r, 256, 3, change_sample=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 256, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, activation=layers.LeakyReLU(alpha=0.3))
     
