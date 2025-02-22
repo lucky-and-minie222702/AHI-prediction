@@ -344,7 +344,7 @@ class MIOECGGenerator():
         y_list: List of NumPy arrays for multiple outputs [y1, y2, ...]
         sample_weights: List of NumPy arrays for sample weights (one per output), or None
         batch_size: Number of samples per batch
-        shuffle: Whether to shuffle indices at the end of each epoch
+        shuffle: Whether to shuffle indices at the end of each epochk
         augment_fn: Custom augmentation function (applied to one input per sample)
         """
         self.X_list = X_list

@@ -150,7 +150,7 @@ ecgs = np.vstack([
 ecgs = scaler.fit_transform(ecgs.T).T
 
 labels = np.vstack(labels)
-labels = np.vstack([labels, labels, labels, label])
+labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 full_labels = np.round(mean_labels)
 single_labels = np.array([l[15] for l in labels])
