@@ -195,7 +195,7 @@ sample_weights = [total_samples / class_counts[int(x)] for x in single_labels]
 # sample_weights += mean_labels
 sample_weights = np.array(sample_weights)
 
-train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, batch_size=256, num_augmented_versions=4, sample_weights=sample_weights).as_dataset()
+train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, single_labels, batch_size=256, num_augmented_versions=4, sample_weights=sample_weights).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
 steps_per_epoch //= 6
