@@ -102,7 +102,7 @@ model.compile(
 
 
 epochs = 500
-batch_size = 128
+batch_size = 256
 
 
 cb_his = HistoryAutosaver(path.join("history", "ecg_autoencoder"))
