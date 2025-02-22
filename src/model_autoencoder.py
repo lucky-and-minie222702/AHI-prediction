@@ -35,24 +35,34 @@ def  create_model():
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3)
     
     
-    encode_out = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv)
+    encode_out = layers.Conv1D(filters=256, kernel_size=3, padding="same")(conv)
     encode_out = layers.Normalization()(encode_out)
+    
+    print(encode_out.shape)
+    exit()
     
     ds_conv_r = layers.Conv1DTranspose(filters=256, kernel_size=7, strides=2, padding="same")(encode_out)
     ds_conv_r = layers.BatchNormalization()(ds_conv_r)
     ds_conv_r = layers.LeakyReLU(alpha=0.3)(ds_conv_r)
     ds_conv_r = layers.UpSampling1D(size=2)(ds_conv_r)
+    
+    conv_r = ResNetBlock(1, ds_conv_r, 1024, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 1024, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 1024, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
     conv_r = ResNetBlock(1, ds_conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
@@ -61,10 +71,8 @@ def  create_model():
     conv_r = ResNetBlock(1, conv_r, 256, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
-    conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
     conv_r = ResNetBlock(1, conv_r, 128, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
-    conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
     conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
     conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
     
@@ -77,6 +85,7 @@ def  create_model():
     out = layers.LeakyReLU(alpha=0.3)(out)
     
     out = layers.Conv1D(filters=1, kernel_size=3)(out)
+    out = layers.Normalization()(out)
     out = layers.Activation("sigmoid")(out)
     out = layers.Flatten()(out)
     
@@ -99,20 +108,20 @@ model.compile(
 )
 
 
-epochs = 400
-batch_size = 256
+epochs = 500
+batch_size = 128
 
 
 cb_his = HistoryAutosaver(path.join("history", "ecg_encoder"))
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 350,
+    start_from_epoch = 400,
     patience = 10,
     # monitor = "val_single_loss",
     # mode = "min",
 )
 cb_save_encoder = SaveEncoderCallback(encoder=encoder, save_path=weights_path)
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=400, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=500, target_lr=0.001, min_lr=1e-6)
 
 
 scaler = MinMaxScaler()
