@@ -419,12 +419,12 @@ class DynamicAugmentedECGDataset:
         chosen_indices = np.random.randint(0, self.num_augmented_versions, size=len(self.X_original))
         
         self.selected_X = np.array([
-            self.X_augmented[i + len(self.X_origin) * chosen_indices[i]]
+            self.X_augmented[i + len(self.X_original) * chosen_indices[i]]
             for i in range(len(self.X_original))
         ])
         
         self.selected_y = np.array([
-            self.y_augmented[i + len(self.y_origin) * chosen_indices[i]]
+            self.y_augmented[i + len(self.y_original) * chosen_indices[i]]
             for i in range(len(self.y_original))
         ])
         
