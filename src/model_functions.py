@@ -445,7 +445,7 @@ class DynamicAugmentedECGDataset:
                 batch_indices = self.indices[i:i + self.batch_size]
                 X_batch = self.selected_X[batch_indices]
                 # X_batch = np.expand_dims(X_batch, axis=-1)
-                y_batch = self.y_original[batch_indices]
+                y_batch = self.selected_y[batch_indices]
                 w_batch = self.sample_weights[batch_indices]  # Select corresponding sample weights
 
                 yield (X_batch, y_batch, w_batch)  # ✅ Ensure correct tuple format
