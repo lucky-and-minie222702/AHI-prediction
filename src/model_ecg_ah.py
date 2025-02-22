@@ -187,15 +187,15 @@ total_samples = len(ecgs)
 
 print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
 class_counts = np.unique(val_single_labels, return_counts=True)[1]
-print(f"Val: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}")
+print(f"Val: Class 0: {class_counts[0] // 4} - Class 1: {class_counts[1] // 4}")
 class_counts = np.unique(single_labels, return_counts=True)[1]
-print(f"Train: Class 0: {class_counts[0] // 6} - Class 1: {class_counts[1] // 6}\n")
+print(f"Train: Class 0: {class_counts[0] // 4} - Class 1: {class_counts[1] // 4}\n")
 
 sample_weights = [total_samples / class_counts[int(x)] for x in single_labels]
 # sample_weights += mean_labels
 sample_weights = np.array(sample_weights)
 
-train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], single_labels[:len(single_labels) // 6:],  ecgs, single_labels, batch_size=batch_size, num_augmented_versions=4, sample_weights=sample_weights).as_dataset()
+train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 4:], single_labels[:len(single_labels) // 4:],  ecgs, single_labels, batch_size=batch_size, num_augmented_versions=4, sample_weights=sample_weights).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
 steps_per_epoch //= 6
