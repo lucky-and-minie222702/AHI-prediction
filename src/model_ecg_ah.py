@@ -88,12 +88,12 @@ weights_path = path.join("history", "ecg_ah.weights.h5")
 encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 1000 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 500,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -102,7 +102,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=300, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
 
 seg_len = 30
 
@@ -200,7 +200,7 @@ model.fit(
     epochs = epochs,
     validation_data = (val_ecgs, val_single_labels),
     batch_size = batch_size,
-    callbacks = [cb_early_stopping, cb_lr, cb_his],
+    callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
     steps_per_epoch=steps_per_epoch,
 )
 
