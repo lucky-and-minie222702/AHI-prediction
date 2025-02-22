@@ -51,7 +51,7 @@ def show_gpus(limit_mem: bool = True):
                 print(e)
 
 # check for available GPUs
-def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool | int = False, transpose: bool = False, activation = layers.Activation("relu")):
+def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool | int = False, transpose: bool = False, activation = layers.Activation("relu"), kernel_regularizer=None):
     if not transpose:
         if dimension == 1:
             Conv = layers.Conv1D
@@ -74,16 +74,16 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
     
     shortcut = x
 
-    x = Conv(filters, kernel_size, strides=strides, padding='same')(x)
+    x = Conv(filters, kernel_size, strides=strides, padding='same', kernel_regularizer=kernel_regularizer)(x)
     x = layers.BatchNormalization()(x)
     x = activation(x)
     
-    x = Conv(filters, kernel_size, strides=1, padding='same')(x)
+    x = Conv(filters, kernel_size, strides=1, padding='same', kernel_regularizer=kernel_regularizer)(x)
     x = layers.BatchNormalization()(x)
     x = activation(x)
 
     if strides != 1 or shortcut.shape[-1] != filters:
-        shortcut = Conv(filters, kernel_size, strides=strides, padding='same')(shortcut)
+        shortcut = Conv(filters, kernel_size, strides=strides, padding='same', kernel_regularizer=kernel_regularizer)(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     x = layers.Add()([x, shortcut])
