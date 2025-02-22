@@ -141,14 +141,12 @@ labels = labels[:last_p:]
 # train
 ecgs = np.vstack(ecgs)
 ecgs = np.array([clean_ecg(e) for e in ecgs])
-# ecgs = np.vstack([
-#     ecgs,
-#     np.array([time_warp(e, sigma=0.2) for e in ecgs]),
-#     np.array([time_shift(e, shift_max=20) for e in ecgs]),
-#     np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
-#     np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
-#     np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
-# ])
+ecgs = np.vstack([
+    ecgs,
+    np.array([time_shift(e, shift_max=20) for e in ecgs]),
+    np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
+    np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
+])
 ecgs = scaler.fit_transform(ecgs.T).T
 
 labels = np.vstack(labels)
