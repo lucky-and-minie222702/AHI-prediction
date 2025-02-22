@@ -1,3 +1,4 @@
+from idna import encode
 from model_functions import *
 from data_functions import *
 from sklearn.preprocessing import MinMaxScaler
@@ -35,10 +36,8 @@ def  create_model():
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     
@@ -46,11 +45,16 @@ def  create_model():
     conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3)
     
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3)
     
-    encode_out = layers.Conv1D(filters=128, kernel_size=3)(conv)
+    encode_out = layers.Conv1D(filters=256, kernel_size=3)(conv)
     encode_out = layers.BatchNormalization()(encode_out)
     encode_out = layers.Activation("relu")(encode_out)
-    encode_out = layers.Conv1D(filters=32, kernel_size=3)(encode_out)
+    encode_out = layers.Conv1D(filters=64, kernel_size=3)(encode_out)
+    encode_out = layers.BatchNormalization()(encode_out)
+    encode_out = layers.Reshape((160, 18))(encode_out)
     encode_out = layers.Normalization()(encode_out)
     
     print(encode_out.shape)
@@ -62,10 +66,8 @@ def  create_model():
     conv_r = ResNetBlock(1, conv_r, 128, 3, change_sample=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 128, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 128, 3, activation=layers.LeakyReLU(alpha=0.3))
-    conv_r = ResNetBlock(1, conv_r, 128, 3, activation=layers.LeakyReLU(alpha=0.3))
     
     conv_r = ResNetBlock(1, conv_r, 256, 3, change_sample=True, activation=layers.LeakyReLU(alpha=0.3))
-    conv_r = ResNetBlock(1, conv_r, 256, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, activation=layers.LeakyReLU(alpha=0.3))
     
@@ -73,18 +75,16 @@ def  create_model():
     conv_r = ResNetBlock(1, conv_r, 512, 3, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 512, 3, activation=layers.LeakyReLU(alpha=0.3))
     
-    out = layers.Conv1D(filters=258, kernel_size=3, padding="same")(conv_r)
+    conv_r = ResNetBlock(1, conv_r, 1024, 3, change_sample=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 1024, 3, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 1024, 3, activation=layers.LeakyReLU(alpha=0.3))
+    
+    out = layers.Conv1D(filters=310, kernel_size=3, padding="same")(conv_r)
     out = layers.Normalization()(out)
-    out = layers.LeakyReLU(alpha=0.3)(out)
-    out = layers.Flatten()(out)
-    out = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(out)
-    out = layers.Conv1DTranspose(filters=32, kernel_size=3)(out)
-    out = layers.BatchNormalization()(out)
-    out = layers.LeakyReLU(alpha=0.3)(out)
-    out = layers.Conv1DTranspose(filters=1, kernel_size=3)(out)
-    out = layers.BatchNormalization()(out)
     out = layers.Activation("sigmoid")(out)
     out = layers.Flatten()(out)
+    
+    print(out.shape)
     
 
     model = Model(inputs=inp, outputs=out)
@@ -94,7 +94,9 @@ def  create_model():
     
 model, encoder = create_model()
 weights_path = path.join("history", "encoder.weights.h5")
+autoencoder_path = path.join("history", "autoencoder.weights.h5")
 encoder.save_weights(weights_path)
+model.save_weights(autoencoder_path)
 
 
 model.compile(
@@ -104,20 +106,25 @@ model.compile(
 )
 
 
-epochs = 500
+epochs = 300
 batch_size = 256
 
 
 cb_his = HistoryAutosaver(path.join("history", "ecg_autoencoder"))
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 400,
+    start_from_epoch = 200,
     patience = 10,
     # monitor = "val_single_loss",
     # mode = "min",
 )
 cb_save_encoder = SaveEncoderCallback(encoder=encoder, save_path=weights_path)
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=500, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=300, target_lr=0.001, min_lr=1e-6)
+cb_checkpoint = cbk.ModelCheckpoint(
+    autoencoder_path,
+    save_weights_only = True,
+    save_best_only = True,
+)
 
 
 scaler = MinMaxScaler()
@@ -186,7 +193,7 @@ if "train" in sys.argv:
         batch_size = batch_size,
         validation_data = (val_ecgs, val_ecgs),
         steps_per_epoch = steps_per_epoch,
-        callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
+        callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder, cb_checkpoint]
     )
 
 
@@ -213,7 +220,7 @@ if "test" in sys.argv:
     ecgs = np.array([clean_ecg(e) for e in ecgs])
     ecgs = scaler.fit_transform(ecgs.T).T
     
-    model.load_weights(weights_path)
+    model.load_weights(autoencoder_path)
 
     pred = model.predict(ecgs, batch_size=batch_size)
     mae = mean_absolute_error(ecgs, pred)
