@@ -42,31 +42,28 @@ def create_model():
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
     # deep
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3) 
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001)) 
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
+    conv = ResNetBlock(1, conv, 1024, 3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
@@ -91,7 +88,7 @@ weights_path = path.join("history", "ecg_ah.weights.h5")
 encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
@@ -105,7 +102,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=200, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=300, target_lr=0.001, min_lr=1e-6)
 
 seg_len = 30
 
