@@ -155,8 +155,6 @@ if "train" in sys.argv:
 
     train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], ecgs[:len(ecgs) // 6:],  ecgs, ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
 
-    # val_generator = DynamicAugmentedECGDataset(val_ecgs[:len(val_ecgs) // 6:], val_ecgs[:len(val_ecgs) // 6:],  val_ecgs, val_ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
-
     steps_per_epoch = len(ecgs) // batch_size
     steps_per_epoch //= 6
 

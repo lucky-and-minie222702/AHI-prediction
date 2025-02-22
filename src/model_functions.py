@@ -416,16 +416,15 @@ class DynamicAugmentedECGDataset:
         self.on_epoch_end()  # Select augmentations for first epoch
 
     def on_epoch_end(self):
-        """ Randomly select ONE augmented version per sample at the start of each epoch """
         chosen_indices = np.random.randint(0, self.num_augmented_versions, size=len(self.X_original))
         
         self.selected_X = np.array([
-            self.X_augmented[i * self.num_augmented_versions + chosen_indices[i]]
+            self.X_augmented[i + len(self.X_origin) * chosen_indices[i]]
             for i in range(len(self.X_original))
         ])
         
         self.selected_y = np.array([
-            self.y_augmented[i * self.num_augmented_versions + chosen_indices[i]]
+            self.y_augmented[i + len(self.y_origin) * chosen_indices[i]]
             for i in range(len(self.y_original))
         ])
         
@@ -433,11 +432,9 @@ class DynamicAugmentedECGDataset:
             np.random.shuffle(self.indices)
 
     def __len__(self):
-        """ Returns the number of batches per epoch """
         return int(np.floor(len(self.X_original) / self.batch_size))
 
     def generator(self):
-        """ ✅ Fix: Ensure outputs are returned as (X_batch, y_batch, sample_weights_batch) """
         while True:  # Infinite loop to keep generating data
             if self.shuffle:
                 np.random.shuffle(self.indices)
@@ -451,7 +448,6 @@ class DynamicAugmentedECGDataset:
                 yield (X_batch, y_batch, w_batch)  # ✅ Ensure correct tuple format
 
     def as_dataset(self):
-        """ ✅ Fix: Ensure `output_signature` includes sample weights """
         output_signature = (
             tf.TensorSpec(shape=(None, *self.X_original.shape[1::]), dtype=tf.float32),  # ✅ Input shape
             tf.TensorSpec(shape=(None, *self.y_original.shape[1::]), dtype=tf.float32),  # ✅ Output shape (classification)
