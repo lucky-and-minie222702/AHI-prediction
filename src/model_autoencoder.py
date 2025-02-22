@@ -98,101 +98,105 @@ cb_early_stopping = cbk.EarlyStopping(
 cb_save_encoder = SaveEncoderCallback(encoder=encoder, save_path=weights_path)
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=400, target_lr=0.001, min_lr=1e-6)
 
+if "train" in sys.argv:
+    # train
+    ecgs = []
+    p_list = raw_p_list[:20:]
+    seg_len = 30
+    last_p = 0
 
-ecgs = []
-p_list = raw_p_list[:20:]
-seg_len = 30
-last_p = 0
+    for p in p_list:
+        raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
+        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
+        sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
+        label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
+        
+        if p == p_list[-2]:
+            last_p = len(ecgs)
 
-for p in p_list:
-    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-    raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
-    sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
-    label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
-    
-    if p == p_list[-2]:
-        last_p = len(ecgs)
+        ecgs.append(sig)
 
-    ecgs.append(sig)
+    scaler = MinMaxScaler()
 
-scaler = MinMaxScaler()
+    val_ecgs = ecgs[last_p::]
 
-val_ecgs = ecgs[last_p::]
-
-ecgs = ecgs[:last_p:]
-
-
-# train
-ecgs = np.vstack(ecgs)
-ecgs = np.array([clean_ecg(e) for e in ecgs])
-ecgs = np.vstack([
-    ecgs,
-    np.array([time_warp(e, sigma=0.2) for e in ecgs]),
-    np.array([time_shift(e, shift_max=20) for e in ecgs]),
-    np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
-    np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
-    np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
-])
-ecgs = scaler.fit_transform(ecgs.T).T
+    ecgs = ecgs[:last_p:]
 
 
-# val
-val_ecgs = np.vstack(val_ecgs)
-val_ecgs = np.array([clean_ecg(e) for e in val_ecgs])
-val_ecgs = np.vstack([
-    val_ecgs,
-    np.array([time_warp(e, sigma=0.2) for e in val_ecgs]),
-    np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
-    np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
-    np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
-    np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
-])
-val_ecgs = scaler.fit_transform(val_ecgs.T).T
-
-train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], ecgs[:len(ecgs) // 6:],  ecgs, ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
-
-# val_generator = DynamicAugmentedECGDataset(val_ecgs[:len(val_ecgs) // 6:], val_ecgs[:len(val_ecgs) // 6:],  val_ecgs, val_ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
-
-steps_per_epoch = len(ecgs) // batch_size
-steps_per_epoch //= 6
+    # train
+    ecgs = np.vstack(ecgs)
+    ecgs = np.array([clean_ecg(e) for e in ecgs])
+    ecgs = np.vstack([
+        ecgs,
+        np.array([time_warp(e, sigma=0.2) for e in ecgs]),
+        np.array([time_shift(e, shift_max=20) for e in ecgs]),
+        np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
+        np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
+        np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
+    ])
+    ecgs = scaler.fit_transform(ecgs.T).T
 
 
-model.fit(
-    train_generator,
-    epochs = epochs,
-    batch_size = batch_size,
-    validation_data = (val_ecgs, val_ecgs),
-    steps_per_epoch = steps_per_epoch,
-    callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
-)
+    # val
+    val_ecgs = np.vstack(val_ecgs)
+    val_ecgs = np.array([clean_ecg(e) for e in val_ecgs])
+    val_ecgs = np.vstack([
+        val_ecgs,
+        np.array([time_warp(e, sigma=0.2) for e in val_ecgs]),
+        np.array([time_shift(e, shift_max=20) for e in val_ecgs]),
+        np.array([bandpass(e, 100, 5, 35, 1) for e in val_ecgs]),
+        np.array([bandpass(e, 100, 3, 45, 1) for e in val_ecgs]),
+        np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
+    ])
+    val_ecgs = scaler.fit_transform(val_ecgs.T).T
+
+    train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 6:], ecgs[:len(ecgs) // 6:],  ecgs, ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
+
+    # val_generator = DynamicAugmentedECGDataset(val_ecgs[:len(val_ecgs) // 6:], val_ecgs[:len(val_ecgs) // 6:],  val_ecgs, val_ecgs, batch_size=batch_size, num_augmented_versions=6).as_dataset()
+
+    steps_per_epoch = len(ecgs) // batch_size
+    steps_per_epoch //= 6
 
 
-# test
-ecgs = []
-p_list = raw_p_list[22::]
-seg_len = 30
-last_p = 0
+    model.fit(
+        train_generator,
+        epochs = epochs,
+        batch_size = batch_size,
+        validation_data = (val_ecgs, val_ecgs),
+        steps_per_epoch = steps_per_epoch,
+        callbacks = [cb_his, cb_early_stopping, cb_lr, cb_save_encoder]
+    )
 
-for p in p_list:
-    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-    raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
-    sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
-    label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
-    
-    if p == p_list[-2]:
-        last_p = len(ecgs)
 
-    ecgs.append(sig)
-    
-ecgs = scaler.fit_transform(ecgs.T).T
+if "test" in sys.argv:
+    # test
+    ecgs = []
+    p_list = raw_p_list[22::]
+    seg_len = 30
+    last_p = 0
 
-pred = model.predict(ecgs, batch_size=batch_size)
-mae = mean_absolute_error(ecgs, pred)
-mse = mean_squared_error(ecgs, pred)
+    for p in p_list:
+        raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
+        raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
+        sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
+        label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
+        
+        if p == p_list[-2]:
+            last_p = len(ecgs)
 
-res_file = open(path.join("history", "autoencoder.txt"), "w")
-print("MAE:", mae)
-print("MSE:", mse)
-print("MAE:", mae, file=res_file)
-print("MSE:", mse, file=res_file)
-res_file.close()
+        ecgs.append(sig)
+        
+    ecgs = np.vstack(ecgs)
+    ecgs = np.array([clean_ecg(e) for e in ecgs])
+    ecgs = scaler.fit_transform(ecgs.T).T
+
+    pred = model.predict(ecgs, batch_size=batch_size)
+    mae = mean_absolute_error(ecgs, pred)
+    mse = mean_squared_error(ecgs, pred)
+
+    res_file = open(path.join("history", "autoencoder.txt"), "w")
+    print("MAE:", mae)
+    print("MSE:", mse)
+    print("MAE:", mae, file=res_file)
+    print("MSE:", mse, file=res_file)
+    res_file.close()
