@@ -100,6 +100,8 @@ cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=400, target_lr
 
 if "train" in sys.argv:
     # train
+    model.load_weights(weights_path)
+    
     ecgs = []
     p_list = raw_p_list[:20:]
     seg_len = 30
