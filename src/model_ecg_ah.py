@@ -179,8 +179,8 @@ val_single_labels = np.array([l[15] for l in val_labels])
 
 
 # encode
-ecgs = encoder.predict(ecgs, batch_size=256)
-val_ecgs = encoder.predict(val_ecgs, batch_size=256)
+ecgs = encoder.predict(ecgs, batch_size=64)
+val_ecgs = encoder.predict(val_ecgs, batch_size=64)
 
 
 print(f"Total samples: {len(labels)}\n")
@@ -233,7 +233,7 @@ for p in p_list:
 
     ecgs = np.array(sig)
     ecgs = scaler.fit_transform(ecgs.T).T
-    ecgs = encoder.predict(ecgs, batch_size=256)
+    ecgs = encoder.predict(ecgs, batch_size=64)
     
     labels = np.array(label)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
