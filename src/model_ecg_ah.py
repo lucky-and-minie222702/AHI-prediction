@@ -32,7 +32,7 @@ def create_model():
     # ECG #
     #######
     
-    inp = layers.Input(shape=(97, 128))
+    inp = layers.Input(shape=(None, 32))
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
@@ -143,7 +143,7 @@ ecgs = np.vstack(ecgs)
 ecgs = np.array([clean_ecg(e) for e in ecgs])
 ecgs = np.vstack([
     ecgs,
-    np.array([time_shift(e, shift_max=20) for e in ecgs]),
+    np.array([time_shift(e, shift_max=20) for e in ecgs]),  
     np.array([bandpass(e, 100, 5, 35, 1) for e in ecgs]),
     np.array([bandpass(e, 100, 3, 45, 1) for e in ecgs]),
 ])

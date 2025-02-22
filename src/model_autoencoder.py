@@ -212,6 +212,8 @@ if "test" in sys.argv:
     ecgs = np.vstack(ecgs)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
     ecgs = scaler.fit_transform(ecgs.T).T
+    
+    model.load_weights(weights_path)
 
     pred = model.predict(ecgs, batch_size=batch_size)
     mae = mean_absolute_error(ecgs, pred)
