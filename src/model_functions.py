@@ -453,3 +453,33 @@ class DynamicAugmentedECGDataset:
         return tf.data.Dataset.from_generator(
             self.generator, output_signature=output_signature
         ).prefetch(tf.data.AUTOTUNE)
+        
+        
+def load_encoder():
+    inp = layers.Input(shape=(3100, 1))
+    norm_inp = layers.Normalization()(inp)
+
+    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.BatchNormalization()(ds_conv)
+    ds_conv = layers.Activation("relu")(ds_conv)
+    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
+    
+    conv = ResNetBlock(1, ds_conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
+    
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
+    
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
+    
+    encode_out = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv)
+    encode_out = layers.Normalization()(encode_out)
+    
+    encoder = Model(inputs=inp, outputs=encode_out)
+    weights_path = path.join("history", "encoder.weights.h5")
+    encoder.load_weights(weights_path)
+    return encoder

@@ -127,7 +127,6 @@ if "train" in sys.argv:
     ecgs = ecgs[:last_p:]
 
 
-    # train
     ecgs = np.vstack(ecgs)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
     ecgs = np.vstack([
@@ -205,3 +204,5 @@ if "test" in sys.argv:
     print("MAE:", mae, file=res_file)
     print("MSE:", mse, file=res_file)
     res_file.close()
+    
+
