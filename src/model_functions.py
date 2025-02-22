@@ -33,7 +33,7 @@ import random
 from typing import *
 from tensorflow.keras.utils import Sequence
         
-def show_gpus():
+def show_gpus(limit_mem: bool = True):
     gpus = tf.config.list_physical_devices('GPU')
     if gpus:
         print(f"GPUs detected: {len(gpus)}")
@@ -41,6 +41,13 @@ def show_gpus():
             print(f" {i:2d} | GPU: {gpu.name}")
     else:
         print("! No GPU detected. Using CPU.")
+        
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)  # Only allocate memory as needed
+        except RuntimeError as e:
+            print(e)
 
 # check for available GPUs
 def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample: bool | int = False, transpose: bool = False, activation = layers.Activation("relu")):
