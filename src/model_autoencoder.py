@@ -30,15 +30,21 @@ def  create_model():
     
     conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
+    
     
     encode_out = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv)
     encode_out = layers.Normalization()(encode_out)
@@ -50,17 +56,27 @@ def  create_model():
     
     conv_r = ResNetBlock(1, ds_conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 512, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
     conv_r = ResNetBlock(1, conv_r, 256, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 256, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
     conv_r = ResNetBlock(1, conv_r, 128, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
+    conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
+    conv_r = ResNetBlock(1, conv_r, 128, 3, transpose=True)
     
     conv_r = ResNetBlock(1, conv_r, 64, 3, change_sample=True, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     conv_r = ResNetBlock(1, conv_r, 64, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
+    conv_r = ResNetBlock(1, conv_r, 64, 3, transpose=True, activation=layers.LeakyReLU(alpha=0.3))
     
-    out = layers.Conv1D(filters=1, kernel_size=5)(conv_r)
+    out = layers.Conv1D(filters=32, kernel_size=3)(conv_r)
+    out = layers.BatchNormalization()(out)
+    out = layers.LeakyReLU(alpha=0.3)(out)
+    
+    out = layers.Conv1D(filters=1, kernel_size=3)(out)
     out = layers.Activation("sigmoid")(out)
     out = layers.Flatten()(out)
     
