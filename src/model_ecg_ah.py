@@ -119,7 +119,7 @@ for p in p_list:
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
     raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
     
-    sig = clean_ecg(sig)
+    sig = clean_ecg(raw_sig)
     sig = scaler.fit_transform(sig.reshape(-1, 1)).flatten()
     sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
     label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
