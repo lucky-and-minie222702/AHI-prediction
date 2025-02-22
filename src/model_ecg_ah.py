@@ -95,7 +95,7 @@ epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 200,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -104,7 +104,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=20, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
 
 seg_len = 30
 
