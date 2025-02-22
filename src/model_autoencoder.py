@@ -94,9 +94,9 @@ def  create_model():
     
 model, encoder = create_model()
 weights_path = path.join("history", "encoder.weights.h5")
-autoencoder_path = path.join("history", "autoencoder.weights.h5")
-encoder.save_weights(weights_path)
-model.save_weights(autoencoder_path)
+autoencoder_path = path.join("history", "autoencoder.weights.h5") 
+# encoder.save_weights(weights_path)
+# model.save_weights(autoencoder_path)
 
 
 model.compile(
