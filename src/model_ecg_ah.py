@@ -32,7 +32,7 @@ def create_model():
     # ECG #
     #######
     
-    inp = layers.Input(shape=(None, 32))
+    inp = layers.Input(shape=(None, 18))
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
