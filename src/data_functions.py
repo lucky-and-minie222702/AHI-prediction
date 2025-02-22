@@ -396,7 +396,7 @@ def bandpass(signal_noisy, fs, low_cutoff_hz, high_cutoff_hz, order):
     return signal.filtfilt(b_bp, a_bp, signal_noisy)
 
 def clean_ecg(sig):
-    return bandpass(sig, 100, 3, 45, 1)
+    return bandpass(sig, 100, 5, 20, 2)
 
 
 class Tee:
@@ -441,10 +441,13 @@ def time_shift(ecg_signal, shift_max):
     shift = np.random.randint(-shift_max, shift_max)
     return np.roll(ecg_signal, shift)
 
-def frequency_noise(ecg_signal, noise_std=0.01):
+def frequency_noise(ecg_signal, noise_std):
     fft_ecg = scipy.fftpack.fft(ecg_signal)
     noise = np.random.normal(0, noise_std, size=fft_ecg.shape)
     return np.real(scipy.fftpack.ifft(fft_ecg + noise))
+
+def add_noise(sig, noise_std):
+    return sig + np.random.normal(0, noise_std, size=sig.shape)
 
 def round_bin(arr, threshold=0.5):
     return (arr >= threshold).astype(int)
@@ -460,6 +463,7 @@ augmentation_options = [
     lambda e: bandpass(e, 100, 5, 35, 1),
     lambda e: bandpass(e, 100, 3, 45, 1),
     lambda e: frequency_noise(e, noise_std=0.15),
+    lambda e: add_noise(e, noise_std=0.005),
 ]
 
 def my_ecg_augmentation(signal):
