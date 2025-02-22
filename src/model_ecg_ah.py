@@ -207,6 +207,8 @@ model.fit(
     steps_per_epoch=steps_per_epoch,
 )
 
+model.load_weights(weights_path)
+
 res_file = open(path.join("history", "ah_res.txt"), "w")
 res_file.close()
 
