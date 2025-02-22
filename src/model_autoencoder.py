@@ -80,7 +80,7 @@ def  create_model():
     conv_r = ResNetBlock(1, conv_r, 1024, 3, activation=layers.LeakyReLU(alpha=0.3))
     
     out = layers.Conv1D(filters=310, kernel_size=3, padding="same")(conv_r)
-    out = layers.Normalization()(out)
+    # out = layers.Normalization()(out)
     out = layers.Activation("sigmoid")(out)
     out = layers.Flatten()(out)
     
@@ -113,7 +113,7 @@ batch_size = 256
 cb_his = HistoryAutosaver(path.join("history", "ecg_autoencoder"))
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 200,
+    start_from_epoch = 100,
     patience = 10,
     # monitor = "val_single_loss",
     # mode = "min",
