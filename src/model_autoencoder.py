@@ -122,7 +122,7 @@ scaler = MinMaxScaler()
 
 if "train" in sys.argv:
     # train
-    model.load_weights(weights_path)
+    # model.load_weights(weights_path)
     
     ecgs = []
     p_list = raw_p_list[:20:]
