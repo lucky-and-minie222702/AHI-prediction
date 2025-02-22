@@ -105,7 +105,7 @@ epochs = 500
 batch_size = 128
 
 
-cb_his = HistoryAutosaver(path.join("history", "ecg_encoder"))
+cb_his = HistoryAutosaver(path.join("history", "ecg_autoencoder"))
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 400,
