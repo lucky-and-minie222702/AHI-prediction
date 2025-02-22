@@ -473,17 +473,30 @@ def load_encoder():
     
     conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
     
-    encode_out = layers.Conv1D(filters=128, kernel_size=3, padding="same")(conv)
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    
+    encode_out = layers.Conv1D(filters=256, kernel_size=3)(conv)
+    encode_out = layers.BatchNormalization()(encode_out)
+    encode_out = layers.Activation("relu")(encode_out)
+    encode_out = layers.Conv1D(filters=64, kernel_size=3)(encode_out)
+    encode_out = layers.BatchNormalization()(encode_out)
+    encode_out = layers.Reshape((160, 18))(encode_out)
     encode_out = layers.Normalization()(encode_out)
     
     encoder = Model(inputs=inp, outputs=encode_out)
