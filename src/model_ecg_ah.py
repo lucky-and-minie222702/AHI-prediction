@@ -174,7 +174,7 @@ labels = np.vstack([labels, labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 full_labels = np.round(mean_labels)
 single_labels = np.array([l[15] for l in labels])
-single_labels  =np.expand_dims(single_labels, axis=-1)
+# single_labels  =np.expand_dims(single_labels, axis=-1)
 
 
 # val
@@ -213,7 +213,7 @@ sample_weights = [total_samples / class_counts[int(x)] for x in single_labels]
 # sample_weights += mean_labels
 sample_weights = np.array(sample_weights)
 
-train_generator = DynamicAugmentedECGDataset([rpa[:len(rpa) // num_augment:], rri[:len(rri) // num_augment:]], [single_labels[:len(single_labels) // num_augment:]],  [rpa, rri], [single_labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=sample_weights).as_dataset()
+train_generator = DynamicAugmentedECGDataset([rpa[:len(rpa) // num_augment:], rri[:len(rri) // num_augment:]], [single_labels[:len(single_labels) // num_augment:]],  [rpa, rri], [single_labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=[sample_weights]).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
 steps_per_epoch //= num_augment
