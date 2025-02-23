@@ -174,6 +174,7 @@ labels = np.vstack([labels, labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 full_labels = np.round(mean_labels)
 single_labels = np.array([l[15] for l in labels])
+single_labels  =np.expand_dims(single_labels, axis=-1)
 
 
 # val
