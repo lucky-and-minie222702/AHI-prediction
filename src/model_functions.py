@@ -406,60 +406,74 @@ class MIOECGGenerator():
         
         
 class DynamicAugmentedECGDataset:
-    def __init__(self, X_original, y_original, X_augmented, y_augmented, num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
-        self.X_original = X_original  # Unaugmented ECGs
-        self.y_original = y_original  # Labels
-        self.y_augmented = y_augmented  # Labels
-        self.X_augmented = X_augmented  # Augmented dataset
-        self.sample_weights = sample_weights if sample_weights is not None else np.ones(len(y_original))  # Default weights = 1
+    def __init__(self, X_original_list, y_original_list, X_augmented_list, y_augmented_list, num_augmented_versions, batch_size=32, sample_weights=None, shuffle=True):
+        """
+        X_original_list: List of input arrays (e.g., multiple ECG leads or modalities)
+        y_original_list: List of output arrays (e.g., multiple tasks such as classification and regression)
+        X_augmented_list: List of augmented datasets corresponding to X_original_list
+        y_augmented_list: List of augmented datasets corresponding to y_original_list
+        """
+        self.X_original_list = X_original_list  # List of unaugmented inputs
+        self.y_original_list = y_original_list  # List of unaugmented outputs
+        self.X_augmented_list = X_augmented_list  # List of augmented inputs
+        self.y_augmented_list = y_augmented_list  # List of augmented outputs
         self.num_augmented_versions = num_augmented_versions  # Number of augmentations per sample
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.indices = np.arange(len(self.X_original))
-        self.on_epoch_end()  # Select augmentations for first epoch
-
+        self.sample_weights = sample_weights if sample_weights is not None else np.ones(len(y_original_list[0]))
+        
+        self.indices = np.arange(len(self.X_original_list[0]))
+        self.on_epoch_end()  # Initialize augmentations for first epoch
+    
     def on_epoch_end(self):
-        chosen_indices = np.random.randint(0, self.num_augmented_versions, size=len(self.X_original))
+        chosen_indices = np.random.randint(0, self.num_augmented_versions, size=len(self.X_original_list[0]))
         
-        self.selected_X = np.array([
-            self.X_augmented[i + len(self.X_original) * chosen_indices[i]]
-            for i in range(len(self.X_original))
-        ])
+        self.selected_X_list = [
+            np.array([
+                X_aug[i + len(X_orig) * chosen_indices[i]]
+                for i in range(len(X_orig))
+            ])
+            for X_orig, X_aug in zip(self.X_original_list, self.X_augmented_list)
+        ]
         
-        self.selected_y = np.array([
-            self.y_augmented[i + len(self.y_original) * chosen_indices[i]]
-            for i in range(len(self.y_original))
-        ])
+        self.selected_y_list = [
+            np.array([
+                y_aug[i + len(y_orig) * chosen_indices[i]]
+                for i in range(len(y_orig))
+            ])
+            for y_orig, y_aug in zip(self.y_original_list, self.y_augmented_list)
+        ]
         
         if self.shuffle:
             np.random.shuffle(self.indices)
-
+    
     def __len__(self):
-        return int(np.floor(len(self.X_original) / self.batch_size))
-
+        return int(np.floor(len(self.X_original_list[0]) / self.batch_size))
+    
     def generator(self):
-        while True:  # Infinite loop to keep generating data
+        while True:
             if self.shuffle:
                 np.random.shuffle(self.indices)
             for i in range(0, len(self.indices), self.batch_size):
                 batch_indices = self.indices[i:i + self.batch_size]
-                X_batch = self.selected_X[batch_indices]
-                # X_batch = np.expand_dims(X_batch, axis=-1)
-                y_batch = self.selected_y[batch_indices]
-                w_batch = self.sample_weights[batch_indices]  # Select corresponding sample weights
-
-                yield (X_batch, y_batch, w_batch)  # ✅ Ensure correct tuple format
-
+                
+                X_batch_list = [X[batch_indices] for X in self.selected_X_list]
+                y_batch_list = [y[batch_indices] for y in self.selected_y_list]
+                w_batch = self.sample_weights[batch_indices]
+                
+                yield (X_batch_list, y_batch_list, w_batch)
+    
     def as_dataset(self):
         output_signature = (
-            tf.TensorSpec(shape=(None, *self.X_original.shape[1::]), dtype=tf.float32),  # ✅ Input shape
-            tf.TensorSpec(shape=(None, *self.y_original.shape[1::]), dtype=tf.float32),  # ✅ Output shape (classification)
-            tf.TensorSpec(shape=(None,), dtype=tf.float32),  # ✅ Sample weights shape
+            [tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32) for X in self.X_original_list],
+            [tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32) for y in self.y_original_list],
+            tf.TensorSpec(shape=(None,), dtype=tf.float32),
         )
-
+        
         return tf.data.Dataset.from_generator(
             self.generator, output_signature=output_signature
         ).prefetch(tf.data.AUTOTUNE)
+
         
         
 def load_encoder():

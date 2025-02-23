@@ -2,7 +2,6 @@ from data_functions import *
 from model_functions import *
 # import model_framework
 from sklearn.preprocessing import MinMaxScaler
-import neurokit2 as nk
 
 ############
 
@@ -29,50 +28,72 @@ folds = 1
         
 def create_model():
     #######
-    # ecg #
+    # rpa #
     #######
-    inp = layers.Input(shape=(None, 1))
-    norm_inp = layers.Normalization()(inp)
+    rpa_inp = layers.Input(shape=(None, 1))
+    norm_inp = layers.Normalization()(rpa_inp)
     
     # down_sample
-    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
+    rpa_ds_conv = layers.Conv1D(filters=32, kernel_size=3, padding="same")(norm_inp)
+    rpa_ds_conv = layers.BatchNormalization()(rpa_ds_conv)
+    rpa_ds_conv = layers.Activation("relu")(rpa_ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
+    rpa_conv = ResNetBlock(1, rpa_ds_conv, 64, 3, change_sample=True)
+    rpa_conv = ResNetBlock(1, rpa_conv, 64, 3)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rpa_conv = layers.SpatialDropout1D(rate=0.1)(rpa_conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, )
-    conv = ResNetBlock(1, conv, 128, 3, )
+    rpa_conv = ResNetBlock(1, rpa_conv, 128, 3, change_sample=True)
+    rpa_conv = ResNetBlock(1, rpa_conv, 128, 3, )
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rpa_conv = layers.SpatialDropout1D(rate=0.1)(rpa_conv)
+
+
+    #######
+    # rri #
+    #######
+    rri_inp = layers.Input(shape=(None, 1))
+    norm_inp = layers.Normalization()(rri_inp)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, )
-    conv = ResNetBlock(1, conv, 256, 3, )
-    conv = ResNetBlock(1, conv, 256, 3, )
+    # down_sample
+    rri_ds_conv = layers.Conv1D(filters=32, kernel_size=3, padding="same")(norm_inp)
+    rri_ds_conv = layers.BatchNormalization()(rri_ds_conv)
+    rri_ds_conv = layers.Activation("relu")(rri_ds_conv)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rri_conv = ResNetBlock(1, rri_ds_conv, 64, 3, change_sample=True)
+    rri_conv = ResNetBlock(1, rri_conv, 64, 3)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, )
-    conv = ResNetBlock(1, conv, 512, 3, )
+    rri_conv = layers.SpatialDropout1D(rate=0.1)(rri_conv)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rri_conv = ResNetBlock(1, rri_conv, 128, 3, change_sample=True)
+    rri_conv = ResNetBlock(1, rri_conv, 128, 3, )
     
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, )
-    conv = ResNetBlock(1, conv, 1024, 3, )
+    rri_conv = layers.SpatialDropout1D(rate=0.1)(rri_conv)
     
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    # bottle-neck attention merge
+    rpa_btn_conv = layers.Conv1D(filters=64, kernel_size=3, padding="same")(rpa_conv)
+    rpa_btn_conv = layers.BatchNormalization()(rpa_btn_conv)
+    rpa_btn_conv = layers.Activation("relu")(rpa_btn_conv)
     
-    se1 = SEBlock()(conv)
+    rri_btn_conv = layers.Conv1D(filters=64, kernel_size=3, padding="same")(rri_conv)
+    rri_btn_conv = layers.BatchNormalization()(rri_btn_conv)
+    rri_btn_conv = layers.Activation("relu")(rri_btn_conv)
     
-    out_s = layers.GlobalAvgPool1D()(se1)
-    final_out_s = layers.Dense(1, activation="sigmoid")(out_s)
+    att_merge = MyAtt(depth=32, num_heads=8, dropout_rate=0.1)(rpa_btn_conv, rri_btn_conv, rri_btn_conv)
+    
+    
+    # final conv
+    f_conv = ResNetBlock(1, att_merge, 512, 3, change_sample=True)
+    f_conv = ResNetBlock(1, f_conv, 512, 3)
+    f_conv = layers.SpatialDropout1D(rate=0.1)(f_conv)
+    
+    # fully-connected
+    se = SEBlock()(f_conv)
+    f_out = layers.Dropout(rate=0.1)(se)
+    f_out = layers.Dense(1, activation="sigmoid")(f_out)
 
     
-    model = Model(inputs=inp, outputs=final_out_s)
+    model = Model(inputs=[rpa_inp, rri_inp], outputs=f_out)
     model.compile(
         optimizer = keras.optimizers.Adam(learning_rate=0.001), 
         loss = "binary_crossentropy",
@@ -120,7 +141,6 @@ for p in p_list:
     raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
     
     sig = clean_ecg(raw_sig)
-    sig = scaler.fit_transform(sig.reshape(-1, 1)).flatten()
     sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
     label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
     
@@ -146,7 +166,8 @@ ecgs = np.vstack([
     np.array([frequency_noise(e, noise_std=0.15) for e in ecgs]),
     np.array([add_noise(e, noise_std=0.005) for e in ecgs]),
 ])
-# ecgs = scaler.fit_transform(ecgs.T).T
+ecgs = scaler.fit_transform(ecgs.T).T
+rpa, rri = calc_ecg(ecgs, 100, seg_len + 1)
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels, labels])
@@ -164,7 +185,8 @@ val_ecgs = np.vstack([
     np.array([frequency_noise(e, noise_std=0.15) for e in val_ecgs]),
     np.array([add_noise(e, noise_std=0.005) for e in val_ecgs]),
 ])
-# val_ecgs = scaler.fit_transform(val_ecgs.T).T
+val_ecgs = scaler.fit_transform(val_ecgs.T).T
+val_rpa, val_rri = calc_ecg(val_ecgs, 100, seg_len + 1)
 
 val_labels = np.vstack(val_labels)
 val_labels = np.vstack([val_labels, val_labels, val_labels, val_labels, val_labels])
@@ -173,9 +195,7 @@ val_full_labels = np.round(val_mean_labels)
 val_single_labels = np.array([l[15] for l in val_labels])
 
 
-# encode
-# ecgs = encoder.predict(ecgs, batch_size=256)
-# val_ecgs = encoder.predict(val_ecgs, batch_size=256)
+num_augment = 5
 
 
 print(f"Total samples: {len(labels)}\n")
@@ -186,21 +206,21 @@ print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
 class_counts = np.unique(val_single_labels, return_counts=True)[1]
 print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
 class_counts = np.unique(single_labels, return_counts=True)[1]
-print(f"Train: Class 0: {class_counts[0] // 5} - Class 1: {class_counts[1] // 5}\n")
+print(f"Train: Class 0: {class_counts[0] // num_augment} - Class 1: {class_counts[1] // num_augment}\n")
 
 sample_weights = [total_samples / class_counts[int(x)] for x in single_labels]
 # sample_weights += mean_labels
 sample_weights = np.array(sample_weights)
 
-train_generator = DynamicAugmentedECGDataset(ecgs[:len(ecgs) // 5:], single_labels[:len(single_labels) // 5:],  ecgs, single_labels, batch_size=batch_size, num_augmented_versions=5, sample_weights=sample_weights).as_dataset()
+train_generator = DynamicAugmentedECGDataset([rpa[:len(rpa) // num_augment:], rri[:len(rri) // num_augment:]], [single_labels[:len(single_labels) // num_augment:]],  [rpa, rri], [single_labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=sample_weights).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
-steps_per_epoch //= 5
+steps_per_epoch //= num_augment
 
 model.fit(
     train_generator,
     epochs = epochs,
-    validation_data = (val_ecgs, val_single_labels),
+    validation_data = ([val_rpa, val_rri], val_single_labels),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
     steps_per_epoch=steps_per_epoch,
@@ -223,6 +243,7 @@ for p in p_list:
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
     raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
 
+    sig = clean_ecg(raw_sig)
     sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=100)
     label = divide_signal(raw_label, win_size=(seg_len+1), step_size=1)
 
@@ -230,10 +251,10 @@ for p in p_list:
 
     ecgs = np.array(sig)
     ecgs = scaler.fit_transform(ecgs.T).T
-    # ecgs = encoder.predict(ecgs, batch_size=256)
+    
+    rpa, rri = calc_ecg(ecgs, 100, seg_len + 1)
     
     labels = np.array(label)
-    ecgs = np.array([clean_ecg(e) for e in ecgs])
     labels = np.array(label)
     mean_labels = np.mean(labels, axis=-1)
     full_labels = np.round(mean_labels)
@@ -249,7 +270,7 @@ for p in p_list:
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
-    raw_preds = model.predict(ecgs, batch_size=batch_size)
+    raw_preds = model.predict([rpa, rri], batch_size=batch_size)
     single_preds = raw_preds
     single_preds = single_preds.flatten()
 
