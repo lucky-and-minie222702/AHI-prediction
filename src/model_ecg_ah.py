@@ -89,7 +89,8 @@ def create_model():
     
     # fully-connected
     se = SEBlock()(f_conv)
-    f_out = layers.Dropout(rate=0.1)(se)
+    f_out = layers.GlobalAvgPool1D()(se)
+    f_out = layers.Dropout(rate=0.1)(f_out)
     f_out = layers.Dense(1, activation="sigmoid")(f_out)
 
     
@@ -213,7 +214,7 @@ sample_weights = [total_samples / class_counts[int(x)] for x in single_labels]
 # sample_weights += mean_labels
 sample_weights = np.array(sample_weights)
 
-train_generator = DynamicAugmentedECGDataset([rpa[:len(rpa) // num_augment:], rri[:len(rri) // num_augment:]], [single_labels[:len(single_labels) // num_augment:]],  [rpa, rri], [single_labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=[sample_weights]).as_dataset()
+train_generator = DynamicAugmentedECGDataset([rpa[:len(rpa) // num_augment:], rri[:len(rri) // num_augment:]], [single_labels[:len(single_labels) // num_augment:]],  [rpa, rri], [single_labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=sample_weights).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
 steps_per_epoch //= num_augment
