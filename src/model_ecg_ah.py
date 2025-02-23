@@ -35,37 +35,34 @@ def create_model():
     norm_inp = layers.Normalization()(inp)
     
     # down_sample
-    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same", kernel_regularizer=reg.l1(0.0001))(norm_inp)
+    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
-    # light feature selection
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l1(0.0001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l1(0.0001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l1(0.0001))
+    conv = ResNetBlock(1, ds_conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    # normal
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, )
+    conv = ResNetBlock(1, conv, 128, 3, )
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, )
+    conv = ResNetBlock(1, conv, 256, 3, )
+    conv = ResNetBlock(1, conv, 256, 3, )
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, )
+    conv = ResNetBlock(1, conv, 512, 3, )
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 1024, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, )
+    conv = ResNetBlock(1, conv, 1024, 3, )
     
     # conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
@@ -90,12 +87,12 @@ weights_path = path.join("history", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 200,
+    start_from_epoch = 100,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
