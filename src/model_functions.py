@@ -465,55 +465,11 @@ class DynamicAugmentedECGDataset:
     
     def as_dataset(self):
         output_signature = (
-            [tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32) for X in self.X_original_list],
-            [tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32) for y in self.y_original_list],
+            tuple(tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32) for X in self.X_original_list),
+            tuple(tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32) for y in self.y_original_list),
             tf.TensorSpec(shape=(None,), dtype=tf.float32),
         )
         
         return tf.data.Dataset.from_generator(
             self.generator, output_signature=output_signature
         ).prefetch(tf.data.AUTOTUNE)
-
-        
-        
-def load_encoder():
-    inp = layers.Input(shape=(3100, 1))
-    norm_inp = layers.Normalization()(inp)
-
-    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
-    
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-    
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
-    
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
-    
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    
-    encode_out = layers.Conv1D(filters=256, kernel_size=3)(conv)
-    encode_out = layers.BatchNormalization()(encode_out)
-    encode_out = layers.Activation("relu")(encode_out)
-    encode_out = layers.Conv1D(filters=64, kernel_size=3)(encode_out)
-    encode_out = layers.BatchNormalization()(encode_out)
-    encode_out = layers.Reshape((160, 18))(encode_out)
-    encode_out = layers.Normalization()(encode_out)
-    
-    encoder = Model(inputs=inp, outputs=encode_out)
-    weights_path = path.join("history", "encoder.weights.h5")
-    encoder.load_weights(weights_path)
-    return encoder
