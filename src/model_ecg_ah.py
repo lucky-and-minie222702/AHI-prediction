@@ -230,7 +230,7 @@ for p in p_list:
 
     ecgs = np.array(sig)
     ecgs = scaler.fit_transform(ecgs.T).T
-    ecgs = encoder.predict(ecgs, batch_size=256)
+    # ecgs = encoder.predict(ecgs, batch_size=256)
     
     labels = np.array(label)
     ecgs = np.array([clean_ecg(e) for e in ecgs])
