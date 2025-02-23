@@ -142,8 +142,8 @@ for p in p_list:
     raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
     
     sig = clean_ecg(raw_sig)
-    sig = divide_signal(raw_sig, win_size=(seg_len+1)*100, step_size=1000)
-    label = divide_signal(raw_label, win_size=(seg_len+1), step_size=10)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1000)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=10)
     
     if p == p_list[-2]:
         last_p = len(ecgs)
@@ -168,13 +168,14 @@ ecgs = np.vstack([
     np.array([add_noise(e, noise_std=0.005) for e in ecgs]),
 ])
 ecgs = scaler.fit_transform(ecgs.T).T
-rpa, rri = calc_ecg(ecgs, 100, seg_len + 1)
+rpa, rri = calc_ecg(ecgs, 100, seg_len)
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 full_labels = np.round(mean_labels)
-single_labels = np.array([l[15] for l in labels])
+# single_labels = np.array([l[15] for l in labels])
+single_labels = full_labels
 # single_labels  =np.expand_dims(single_labels, axis=-1)
 
 
@@ -194,7 +195,8 @@ val_labels = np.vstack(val_labels)
 val_labels = np.vstack([val_labels, val_labels, val_labels, val_labels, val_labels])
 val_mean_labels = np.mean(val_labels, axis=-1)
 val_full_labels = np.round(val_mean_labels)
-val_single_labels = np.array([l[15] for l in val_labels])
+# val_single_labels = np.array([l[15] for l in val_labels])
+val_single_labels = val_full_labels
 
 
 num_augment = 5
@@ -261,7 +263,8 @@ for p in p_list:
     labels = np.array(label)
     mean_labels = np.mean(labels, axis=-1)
     full_labels = np.round(mean_labels)
-    single_labels = np.array([l[15] for l in labels])
+    # single_labels = np.array([l[15] for l in labels])
+    single_labels = full_labels
 
     class_counts = np.unique(single_labels, return_counts=True)[1]
     
