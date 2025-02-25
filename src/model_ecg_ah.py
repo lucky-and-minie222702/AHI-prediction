@@ -9,43 +9,26 @@ show_gpus()
 folds = 1
         
 def create_model():
-    inp = layers.Input(shape=(3000, 1))
+    inp = layers.Input(shape=(249, ))
     norm_inp = layers.Normalization()(inp)
     
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
+    x = layers.Dense(256, kernel_regularizer=reg.l1(0.0001))(norm_inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU(0.3)(x)
+    x = layers.Dense(512, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU(0.3)(x)
+    x = layers.Dense(1024, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU(0.3)(x)
+    x = layers.Dense(512, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU(0.3)(x)
+    x = layers.Dense(256, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.LeakyReLU(0.3)(x)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    # bottle-neck lstm
-    btn_conv = layers.Conv1D(filters=128, kernel_size=5, strides=2)(conv)
-    btn_conv = layers.BatchNormalization()(btn_conv)
-    btn_conv = layers.Activation("relu")(btn_conv)
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(btn_conv)
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
-    
-    fc = SEBlock()(rnn)
-    fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(256)(fc)
-    fc = layers.BatchNormalization()(fc)
-    fc = layers.Activation("relu")(fc)
-    out = layers.Dense(1, activation="sigmoid")(fc)
+    out = layers.Dense(1, activation="sigmoid")(x)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -64,12 +47,12 @@ weights_path = path.join("history", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 200,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -151,14 +134,14 @@ sample_weights = [total_samples / class_counts[int(x)] for x in labels]
 sample_weights += mean_labels[train_indices]
 sample_weights = np.array(sample_weights)
 
-# psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
-# val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
+psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
+val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
 
 model.fit(
-    ecgs,
+    psd,
     labels,
     epochs = epochs,
-    validation_data = (val_ecgs, val_labels),
+    validation_data = (psd, val_labels),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
 )
@@ -170,9 +153,9 @@ res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 res_file.close()
 
 # test
-# test_psd = [
-#     np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
-# ]
+test_psd = [
+    np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
+]
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
@@ -187,7 +170,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
-    preds = model.predict(test_ecgs[idx], batch_size=batch_size).flatten()
+    preds = model.predict(test_psd[idx], batch_size=batch_size).flatten()
     print(preds.shape, test_labels[idx].shape)
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=0))
