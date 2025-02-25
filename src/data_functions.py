@@ -11,6 +11,7 @@ from typing import *
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error, median_absolute_error, root_mean_squared_error
 import sys
 import scipy.fftpack
+from sklearn.utils import resample
 
 def count_ones_zeros(binary_seq):
     groups = ["".join(g) for _, g in groupby(binary_seq)]
@@ -490,3 +491,21 @@ def split_classes(y: np.ndarray, class_ratio: List[float] = None, max_total_samp
         class_idx.extend(np.random.choice(np.where(y==cls)[0], k, replace=False))
         
     return np.array(class_idx), np.array([int(total_samp * r) for r in class_ratio])
+
+def downsample_indices_manual(y):
+    y = np.array(y)  # Ensure it's a NumPy array
+    major_class = max(set(y), key=list(y).count)  # Find majority class
+    
+    # Get indices of major and minor classes
+    majority_indices = np.where(y == major_class)[0]
+    minority_indices = np.where(y != major_class)[0]
+    
+    # Downsample majority class
+    downsampled_majority = resample(majority_indices, 
+                                    replace=False, 
+                                    n_samples=len(minority_indices), 
+                                    random_state=42)
+    
+    # Combine indices
+    downsampled_indices = np.concatenate([downsampled_majority, minority_indices])
+    return downsampled_indices
