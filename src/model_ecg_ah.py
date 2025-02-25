@@ -12,23 +12,24 @@ def create_model():
     inp = layers.Input(shape=(249, 1))
     norm_inp = layers.Normalization()(inp)
     
-    x = layers.Dense(256)(norm_inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    conv = layers.Conv1D(64, kernel_size=3)(norm_inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
-    x = layers.Dense(256)(norm_inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    conv = layers.Conv1D(64, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
-    x = layers.Dense(256)(norm_inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    att = MyAtt(depth=32, num_heads=4, dropout_rate=0.1)(conv, conv, conv)
     
-    x = layers.Dense(256)(norm_inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
-    
-    out = layers.Dense(1, activation="sigmoid")(x)
+    fc = SEBlock()(att)
+    fc = layers.GlobalAvgPool1D()(fc)
+    fc = layers.Dense(128)(fc)
+    fc = layers.BatchNormalization()(fc)
+    fc = layers.Activation("relu")(fc)
+    out = layers.Dense(1, activation="sigmoid")(fc)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -47,12 +48,12 @@ weights_path = path.join("history", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 250,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -158,6 +159,7 @@ test_psd = [
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
+mean_res = [[] for _ in range(9)]
 
 for idx, p in enumerate(good_p_list()[15::]):
     res_file = open(path.join("history", "ah_res.txt"), "a")
@@ -175,7 +177,17 @@ for idx, p in enumerate(good_p_list()[15::]):
     
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
-        print(f"Threshold {t}: {acc_bin(test_labels[idx], round_bin(preds, t))}")
-        print(f"Threshold {t}: {acc_bin(test_labels[idx], round_bin(preds, t))}", file=res_file)
+        acc = acc_bin(test_labels[idx], round_bin(preds, t))
+        print(f"Threshold {t}: {acc}")
+        mean_res[int(t*10) - 1].append(acc)
+        print(f"Threshold {t}: {acc}", file=res_file)
     print()
+    
+    mean_res = np.array(mean_res)
+    mean_res = np.mean(mean_res, axis=-1)
+    
+    for idx, acc in enumerate(mean_res, start=1):
+        print(f"Threshold 0.{idx}: {acc}")
+        print(f"Threshold 0.{idx}: {acc}", file=res_file)
+    
     res_file.close()
