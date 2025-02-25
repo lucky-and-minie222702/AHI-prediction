@@ -22,7 +22,7 @@ def create_model():
     conv = layers.Activation("relu")(conv)
     conv = layers.MaxPool1D(pool_size=2)(conv)
     
-    att = MyAtt(depth=32, num_heads=16)(conv, conv, conv)
+    att = MyAtt(depth=32, num_heads=16, dropout_rate=0.1)(conv, conv, conv)
     
     fc = SEBlock()(att)
     fc = layers.GlobalAvgPool1D()(fc)
