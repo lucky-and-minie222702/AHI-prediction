@@ -12,3 +12,4 @@ gen_data
 *.ipynb*
 .*
 info
+res
