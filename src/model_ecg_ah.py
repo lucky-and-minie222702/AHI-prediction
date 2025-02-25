@@ -35,14 +35,14 @@ def create_model():
     
     # bottle-neck lstm
     btn_conv = layers.Conv1D(filters=128, kernel_size=5, strides=2)(conv)
-    btn_conv = layers.BatchNormalization(btn_conv)
+    btn_conv = layers.BatchNormalization()(btn_conv)
     btn_conv = layers.Activation("relu")(btn_conv)
     rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(btn_conv)
     rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
     
     fc = SEBlock()(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512)(fc)
+    fc = layers.Dense(256)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
