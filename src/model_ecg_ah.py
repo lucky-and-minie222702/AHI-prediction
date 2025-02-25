@@ -9,24 +9,35 @@ show_gpus()
 folds = 1
         
 def create_model():
-    inp = layers.Input(shape=(249, 1))
+    inp = layers.Input(shape=(3000, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(64, kernel_size=3)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.BatchNormalization()(ds_conv)
+    ds_conv = layers.Activation("relu")(ds_conv)
     
-    conv = layers.Conv1D(64, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    conv = ResNetBlock(1, ds_conv, 64, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    att = MyAtt(depth=32, num_heads=4, dropout_rate=0.1)(conv, conv, conv)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock()(att)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
+    
+    fc = SEBlock()(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(128)(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
@@ -62,7 +73,8 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=5, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+# cb_lr = WarmupCosineDecayScheduler(warmup_epochs=5, total_epochs=epochs, target_lr=0.001, min_lr=1e-5)
+cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
 seg_len = 30
 
@@ -134,14 +146,14 @@ sample_weights = [total_samples / class_counts[int(x)] for x in labels]
 sample_weights += mean_labels[train_indices]
 sample_weights = np.array(sample_weights)
 
-psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
-val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
+# psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
+# val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
 
 model.fit(
-    psd,
+    ecgs,
     labels,
     epochs = epochs,
-    validation_data = (val_psd, val_labels),
+    validation_data = (val_ecgs, val_labels),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
 )
@@ -153,9 +165,9 @@ res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 res_file.close()
 
 # test
-test_psd = [
-    np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
-]
+# test_psd = [
+#     np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
+# ]
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
@@ -170,7 +182,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
-    preds = model.predict(test_psd[idx], batch_size=batch_size).flatten()
+    preds = model.predict(test_ecgs[idx], batch_size=batch_size).flatten()
     print(preds.shape, test_labels[idx].shape)
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=0))
@@ -191,3 +203,17 @@ for idx, p in enumerate(good_p_list()[15::]):
         print(f"Threshold 0.{idx}: {acc}", file=res_file)
     
     res_file.close()
+    
+res_file = open(path.join("history", "ah_res.txt"), "a")
+
+print("\nMean Accuracy\n")
+print("\nMean Accuracy\n", file=res_file)
+
+mean_res = np.array(mean_res)
+mean_res = np.mean(mean_res, axis=-1)
+
+for idx, acc in enumerate(mean_res, start=1):
+    print(f"Threshold 0.{idx}: {acc}")
+    print(f"Threshold 0.{idx}: {acc}", file=res_file)
+
+res_file.close()
