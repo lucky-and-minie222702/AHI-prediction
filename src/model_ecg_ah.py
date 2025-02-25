@@ -9,26 +9,40 @@ show_gpus()
 folds = 1
         
 def create_model():
-    inp = layers.Input(shape=(249, ))
+    inp = layers.Input(shape=(249, 1))
     norm_inp = layers.Normalization()(inp)
     
-    x = layers.Dense(256, kernel_regularizer=reg.l1(0.00001))(norm_inp)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l1(0.00001))(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(1024, kernel_regularizer=reg.l1(0.00001))(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l1(0.00001))(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(256, kernel_regularizer=reg.l1(0.00001))(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.LeakyReLU(0.3)(x)
+    # x = layers.Dense(256, kernel_regularizer=reg.l1(0.00001))(norm_inp)
+    # x = layers.BatchNormalization()(x)
+    # x = layers.LeakyReLU(0.3)(x)
+    # x = layers.Dense(512, kernel_regularizer=reg.l1(0.00001))(x)
+    # x = layers.BatchNormalization()(x)
+    # x = layers.LeakyReLU(0.3)(x)
+    # x = layers.Dense(1024, kernel_regularizer=reg.l1(0.00001))(x)
+    # x = layers.BatchNormalization()(x)
+    # x = layers.LeakyReLU(0.3)(x)
+    # x = layers.Dense(512, kernel_regularizer=reg.l1(0.00001))(x)
+    # x = layers.BatchNormalization()(x)
+    # x = layers.LeakyReLU(0.3)(x)
+    # x = layers.Dense(256, kernel_regularizer=reg.l1(0.00001))(x)
+    # x = layers.BatchNormalization()(x)
+    # x = layers.LeakyReLU(0.3)(x)
     
-    out = layers.Dense(1, activation="sigmoid")(x)
+    conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.LeakyReLU(0.25)(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
+    
+    conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.LeakyReLU(0.25)(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
+    
+    att = MyAtt(depth=32, num_heads=32, dropout_rate=0.1)(conv)
+    
+    fc = SEBlock(reduction_ratio=4)(att)
+    fc = layers.GlobalAvgPool1D()(fc)
+    out = layers.Dense(1, activation="sigmoid")(fc)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -47,12 +61,12 @@ weights_path = path.join("history", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 200,
+    start_from_epoch = 300,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -182,13 +196,6 @@ for idx, p in enumerate(good_p_list()[25::]):
         mean_res[int(t*10) - 1].append(acc)
         print(f"Threshold {t}: {acc}", file=res_file)
     print()
-    
-    mean_res = np.array(mean_res)
-    mean_res = np.mean(mean_res, axis=-1)
-    
-    for idx, acc in enumerate(mean_res, start=1):
-        print(f"Threshold 0.{idx}: {acc}")
-        print(f"Threshold 0.{idx}: {acc}", file=res_file)
     
     res_file.close()
     
