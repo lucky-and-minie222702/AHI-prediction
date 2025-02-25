@@ -3,8 +3,6 @@ from model_functions import *
 # import model_framework
 from sklearn.preprocessing import MinMaxScaler
 
-input_scaler = MinMaxScaler()
-
 show_gpus()
 
 folds = 1
@@ -201,7 +199,9 @@ for idx, p in enumerate(good_p_list()[25::]):
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
-    preds = model.predict(test_ecgs[idx], batch_size=batch_size).flatten()
+    test_ecg = test_ecgs[idx]
+    test_ecg = scaler.fit_transform(test_ecg.T).T 
+    preds = model.predict(test_ecg, batch_size=batch_size).flatten()
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=1))
     
