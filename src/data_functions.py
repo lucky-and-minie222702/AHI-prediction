@@ -19,21 +19,21 @@ def count_ones_zeros(binary_seq):
     return count_ones, count_zeros
 
 def count_groups(binary_list):
-    if not binary_list:
+    if len(binary_list) == 0:
         return []
     
-    groups = []
+    groups = {0: [], 1: []}
     start = 0
     current_value = binary_list[0]
 
     for i in range(1, len(binary_list)):
         if binary_list[i] != current_value:
-            groups.append((start, i - start, current_value))
+            # start index, count
+            groups[current_value].append((start, i - start))
             start = i
             current_value = binary_list[i]
     
-    # Add the last group
-    groups.append((start, len(binary_list) - start, current_value))
+    groups[current_value].append((start, len(binary_list) - start))
 
     return groups
 
@@ -404,7 +404,7 @@ class Tee:
         sys.stdout.file.close() 
         sys.stdout = sys.__stdout__
     
-    def __init__(self, file: str):
+    def __init__(self, file):
         self.file = file
         self.stdout = sys.stdout
 
@@ -417,22 +417,22 @@ class Tee:
         self.file.flush()
         
         
-def calc_psd(sig):
-    f, Pxx = signal.welch(sig, fs=100, nperseg=len(sig))
+def calc_psd(sig, start_f, end_f, nperseg_factor = 3):
+    f, Pxx = signal.welch(sig, fs=100, nperseg=len(sig) // nperseg_factor)
     start = None
     end = None
     for i in range(len(f)):
-        if f[i] > 3 and start is None:
+        if f[i] > start_f and start is None:
             start = i
 
-        if f[i] > 45 and end is None:
+        if f[i] > end_f and end is None:
             end = i - 1
             break
 
     f = f[start:end:]
     Pxx = Pxx[start:end:]
     
-    return np.stack([f, Pxx], axis=1)
+    return np.array(Pxx)
 
 def calc_fft(sig):
     return np.fft.fft(sig).real[1::]
@@ -456,16 +456,12 @@ def acc_bin(y_true, y_pred):
     assert y_true.shape == y_pred.shape, "Arrays must have the same shape"
     return np.mean(y_true == y_pred)
 
+def good_p_list():
+    num_p = 37
+    bad_list = [20, 34]
+    ans = [x for x in range(1, num_p+1) if x not in bad_list]
+    return ans
 
-augmentation_options = [
-    lambda e: time_warp(e, sigma=0.2),
-    lambda e: time_shift(e, shift_max=20),
-    lambda e: bandpass(e, 100, 5, 35, 1),
-    lambda e: bandpass(e, 100, 3, 45, 1),
-    lambda e: frequency_noise(e, noise_std=0.15),
-    lambda e: add_noise(e, noise_std=0.005),
-]
-
-def my_ecg_augmentation(signal):
-    augment_fn = np.random.choice(augmentation_options)
-    return augment_fn(signal) 
+def shuffle_along_axis(arr, axis):
+    shuffled = np.random.permutation(arr.shape[axis])
+    return np.take_along_axis(arr, np.expand_dims(shuffled, axis=axis), axis=axis)

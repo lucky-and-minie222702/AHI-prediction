@@ -4,8 +4,11 @@ history
 img
 data
 database
-*zip
+*zip*
 *test*
 *.DS_Store
 weights
 gen_data
+*.ipynb*
+.*
+info
