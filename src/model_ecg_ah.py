@@ -161,7 +161,7 @@ test_labels = [
 ]
 mean_res = [[] for _ in range(9)]
 
-for idx, p in enumerate(good_p_list()[15::]):
+for idx, p in enumerate(good_p_list()[25::]):
     res_file = open(path.join("history", "ah_res.txt"), "a")
     
     print(f"\nBenh nhan {p}\n")
