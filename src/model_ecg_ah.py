@@ -13,38 +13,38 @@ def create_model():
     inp = layers.Input(shape=(None, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
+    conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
-    conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
+    conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock(reduction_ratio=4, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))(conv)
+    fc = SEBlock(reduction_ratio=4, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512, kernel_regularizer=reg.l1_l2(l1=0.0001, l2=0.0001))(fc)
+    fc = layers.Dense(512, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
@@ -73,11 +73,15 @@ cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 200,
     patience = 10,
+    mode = "min",
+    monitor = "val_binary_crossentropy"
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
+    mode = "min",
+    monitor = "val_binary_crossentropy"
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
