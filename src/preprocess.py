@@ -36,6 +36,7 @@ for order, name, ahi, sex, bmi in p_list:
     # buffer
     buffer = 300  # in seconds
     start_time = []
+    end_time = []
 
     print(f"Patient {order} - {name}:")
     
@@ -56,6 +57,7 @@ for order, name, ahi, sex, bmi in p_list:
     content = content[start_scoring:end_scoring:]
 
     start_time.append(content[0][:8:])
+    end_time.append(content[-1][:8:])
     content = list(map(lambda x: x.split(), content))
     content = list(map(lambda x: x[2::], content))
     
@@ -74,25 +76,29 @@ for order, name, ahi, sex, bmi in p_list:
     # ecg
     print(" => Loading ECG...")
     content = open(path.join("database", f"benhnhan{order}ecg.txt")).readlines()[2::]
+    
     time_ecg = [x[:11:] for x in content]
     content = content[time_ecg.count(time_ecg[0])::]
+    content = content[:len(content) - time_ecg.count(time_ecg[-1]):]
+    
     start_time.append(content[0][:8:])
+    end_time.append(content[-1][:8:])
     content = list(map(lambda x: float(x.split()[-1]) if len(x.split()) == 3 else None, content))
-    content = set_prior_none_to_zero(content)
     content = fill_missing_with_mean(content)
     content = np.array(content)
-    # content = nk.ecg.ecg_clean(content, sampling_rate=200)
     content = signal.resample(content, int(len(content) / 200 * 100))  # to 100hz
     ecg = content
     
     print(" => Loading SpO2...")
     content = open(path.join("database", f"benhnhan{order}spo2.txt")).readlines()[2::]
     start_time.append(content[0][:8:])
+    end_time.append(content[-1][:8:])
     content = list(map(lambda x: float(x.split()[-1]) if len(x.split()) == 3 else None, content))
-    content = set_prior_none_to_zero(content)
     content = fill_missing_with_mean(content)
     content = np.array(content)
     spo2 = content
+    
+    # print(spo2.shape, ecg.shape, label.shape)
         
     print(" => Processing...")
     sigs = [label, ecg, spo2]
@@ -101,22 +107,24 @@ for order, name, ahi, sex, bmi in p_list:
     ideal_len = len(label) - buffer * 2
 
     start_time = list(map(time_to_seconds, start_time))
-    ideal_time = min(start_time)
-    shift_time = [t - ideal_time for t in start_time]
-    for i in range(len(sigs)):
-        sigs[i] = sigs[i][shift_time[i]*sig_splr[i]::]
-        sigs[i] = sigs[i][buffer*sig_splr[i]:-(buffer*sig_splr[i]):]
-        if len(sigs[i]) <= ideal_len*sig_splr[i]:
-            zeros_pad = np.zeros([ideal_len*sig_splr[i] - len(sigs[i])] + ([2] if i == 0 else []))
-            sigs[i] = np.concatenate([sigs[i], zeros_pad]) 
-        else:
-            sigs[i] = sigs[i][:ideal_len*sig_splr[i]:]
+    ideal_start_time = max(start_time)
+    shift_start_time = [ideal_start_time  - t for t in start_time]
     
-    if not all(len(sigs[0]) // sig_splr[0] == len(sigs[i]) // sig_splr[i] for i in range(len(sigs))):
+    end_time = list(map(time_to_seconds, end_time))
+    ideal_end_time = min(end_time)
+    shift_end_time = [t - ideal_end_time for t in end_time]
+    shift_end_time = [len(sigs[i]) // sig_splr[i] - shift_end_time[i] for i in range(len(sigs))]
+    
+    for i in range(len(sigs)):
+        # print(shift_start_time[i], shift_end_time[i])
+        sigs[i] = sigs[i][shift_start_time[i]*sig_splr[i]:shift_end_time[i]*sig_splr[i]:]
+        sigs[i] = sigs[i][buffer*sig_splr[i]:-(buffer*sig_splr[i]):]
+    
+    if not all(len(sigs[0]) // sig_splr[0] == len(sigs[i]) // sig_splr[i] for i in range(len(sigs))) or not all(len(sigs[i]) % sig_splr[i] == 0 for i in range(len(sigs))):
         print(f" => Status: failed!")
         for i in range(len(sigs)):
             print(f"{sig_labels[i]}: {len(sigs[i])} -", end = " ")
-        print()
+        exit()
     else:
         for i in range(len(sigs)):
             if i == 0:
