@@ -170,7 +170,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     
     preds = model.predict(test_psd[idx], batch_size=batch_size).flatten()
     
-    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([labels[idx], preds], axis=0))
+    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=0))
     
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
