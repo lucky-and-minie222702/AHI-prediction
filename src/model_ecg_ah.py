@@ -110,7 +110,7 @@ labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
-new_indices = split_classes(labels, class_ratio=[0.5, 0.5])
+new_indices = split_classes(labels, class_ratio=[0.5, 0.5])[0]
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
 
