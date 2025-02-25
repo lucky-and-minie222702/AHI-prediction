@@ -32,6 +32,7 @@ def create_model():
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     fc = SEBlock(reduction_ratio=4)(conv)
     fc = layers.GlobalAvgPool1D()(fc)
@@ -57,13 +58,13 @@ weights_path = path.join("res", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 200,
-    patience = 10,
+    start_from_epoch = 50,
+    patience = 5,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
