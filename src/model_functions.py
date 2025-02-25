@@ -93,16 +93,17 @@ def ResNetBlock(dimension: int, x, filters: int, kernel_size: int, change_sample
 
 
 class SEBlock(layers.Layer):
-    def __init__(self, reduction_ratio: int = 4, activation = layers.Activation("relu"), scores_actiation = layers.Activation("sigmoid"), **kwargs):
+    def __init__(self, reduction_ratio: int = 4, activation = layers.Activation("relu"), scores_actiation = layers.Activation("sigmoid"), kernel_regularizer=None, **kwargs):
         super(SEBlock, self).__init__(**kwargs)
         self.reduction_ratio = reduction_ratio
         self.la = activation  # layers activation
         self.sa = scores_actiation
+        self.kr = kernel_regularizer
 
     def build(self, input_shape):
         self.channels = input_shape[-1]
-        self.fc1 = layers.Dense(self.channels // self.reduction_ratio, activation=self.la)
-        self.fc2 = layers.Dense(self.channels, activation=self.sa)
+        self.fc1 = layers.Dense(self.channels // self.reduction_ratio, activation=self.la, kernel_regularizer=self.kr)
+        self.fc2 = layers.Dense(self.channels, activation=self.sa, kernel_regularizer=self.kr)
 
     def call(self, inputs):
         input_rank = len(inputs.shape)
