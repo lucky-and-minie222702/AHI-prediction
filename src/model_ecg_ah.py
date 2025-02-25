@@ -156,7 +156,7 @@ res_file.close()
 test_psd = [
     np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
 ]
-test_label = [
+test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
 
