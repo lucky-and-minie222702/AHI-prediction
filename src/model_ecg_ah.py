@@ -77,7 +77,7 @@ scaler = MinMaxScaler()
 
 for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-    raw_label = np.squeeze(np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:])
+    raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
     
     sig = clean_ecg(raw_sig)    
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
@@ -167,12 +167,13 @@ for idx, p in enumerate(good_p_list()[15::]):
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
     preds = model.predict(test_psd[idx], batch_size=batch_size).flatten()
+    print(preds.shape, test_labels[idx].shape)
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=0))
     
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
-        print(f"Threshold {t}: {acc_bin(labels[idx], round_bin(preds, t))}")
-        print(f"Threshold {t}: {acc_bin(labels[idx], round_bin(preds, t))}", file=res_file)
+        print(f"Threshold {t}: {acc_bin(test_labels[idx], round_bin(preds, t))}")
+        print(f"Threshold {t}: {acc_bin(test_labels[idx], round_bin(preds, t))}", file=res_file)
     print()
     res_file.close()
