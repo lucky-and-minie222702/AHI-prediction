@@ -31,14 +31,12 @@ def create_model():
     conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.25)(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
     
     conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.25)(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
     
-    att = MyAtt(depth=32, num_heads=32, dropout_rate=0.1)(conv)
+    att = MyAtt(depth=32, num_heads=32, dropout_rate=0.1)(conv, conv, conv)
     
     fc = SEBlock(reduction_ratio=4)(att)
     fc = layers.GlobalAvgPool1D()(fc)
