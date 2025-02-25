@@ -12,19 +12,19 @@ def create_model():
     inp = layers.Input(shape=(249, ))
     norm_inp = layers.Normalization()(inp)
     
-    x = layers.Dense(256, kernel_regularizer=reg.l1(0.0001))(norm_inp)
+    x = layers.Dense(256, kernel_regularizer=reg.l1(0.00001))(norm_inp)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.Dense(512, kernel_regularizer=reg.l1(0.00001))(x)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(1024, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.Dense(1024, kernel_regularizer=reg.l1(0.00001))(x)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.Dense(512, kernel_regularizer=reg.l1(0.00001))(x)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(0.3)(x)
-    x = layers.Dense(256, kernel_regularizer=reg.l1(0.0001))(x)
+    x = layers.Dense(256, kernel_regularizer=reg.l1(0.00001))(x)
     x = layers.BatchNormalization()(x)
     x = layers.LeakyReLU(0.3)(x)
     
@@ -141,7 +141,7 @@ model.fit(
     psd,
     labels,
     epochs = epochs,
-    validation_data = (psd, val_labels),
+    validation_data = (val_psd, val_labels),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
 )
