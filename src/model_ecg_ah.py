@@ -156,6 +156,9 @@ res_file.close()
 test_psd = [
     np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
 ]
+test_label = [
+    np.mean(l, axis=-1) for l in test_labels
+]
 
 for idx, p in enumerate(good_p_list()[15::]):
     res_file = open(path.join("history", "ah_res.txt"), "a")
