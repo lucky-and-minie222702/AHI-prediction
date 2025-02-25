@@ -9,7 +9,7 @@ show_gpus()
 folds = 1
         
 def create_model():
-    inp = layers.Input(shape=(249, ))
+    inp = layers.Input(shape=(249, 1))
     norm_inp = layers.Normalization()(inp)
     
     conv = layers.Conv1D(64, kernel_size=5)(norm_inp)
