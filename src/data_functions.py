@@ -396,7 +396,7 @@ def bandpass(signal_noisy, fs, low_cutoff_hz, high_cutoff_hz, order):
     return signal.filtfilt(b_bp, a_bp, signal_noisy)
 
 def clean_ecg(sig):
-    return bandpass(sig, 100, 5, 45, 2)
+    return bandpass(sig, 100, 5, 30, 2)
 
 
 class Tee:
@@ -461,7 +461,3 @@ def good_p_list():
     bad_list = [20, 34]
     ans = [x for x in range(1, num_p+1) if x not in bad_list]
     return ans
-
-def shuffle_along_axis(arr, axis):
-    shuffled = np.random.permutation(arr.shape[axis])
-    return np.take_along_axis(arr, np.expand_dims(shuffled, axis=axis), axis=axis)

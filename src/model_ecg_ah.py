@@ -15,27 +15,37 @@ def create_model():
     nn = layers.Dense(220)(norm_inp)
     nn = layers.BatchNormalization()(nn)
     nn = layers.Activation("relu")(nn)
+    nn = layers.Dropout(rate=0.1)(nn)
     
     nn = layers.Dense(200)(norm_inp)
     nn = layers.BatchNormalization()(nn)
     nn = layers.Activation("relu")(nn)
+    nn = layers.Dropout(rate=0.1)(nn)
     
     expanded_nn = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(nn)
     
     conv = layers.Conv1D(64, kernel_size=5, strides=2)(expanded_nn)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(64, kernel_size=5, strides=2)(conv)
+    conv = layers.Conv1D(128, kernel_size=5, strides=2)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(conv)
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(rnn)
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(conv)
+    rnn = layers.BatchNormalization()(rnn)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
+    rnn = layers.BatchNormalization()(rnn)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
+    
+    att = layers.Attention(use_scale=True)([rnn, rnn, rnn])
+    att = layers.SpatialDropout1D(rate=0.1)(att)
     
     # residual connection
-    rc = layers.Add()([conv, rnn])
+    rc = layers.Add()([conv, att])
     rc = layers.Activation("relu")(rc)
     
     fc = SEBlock()(rc)
@@ -43,6 +53,7 @@ def create_model():
     fc = layers.Dense(64)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
+    fc = layers.Dropout(rate=0.1)(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
     
     
@@ -56,17 +67,17 @@ def create_model():
     return model
 
 model = create_model()
-show_params(model, "ecg_ah")
+model.summary()
 weights_path = path.join("history", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 50,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -75,7 +86,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=5, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
 
 seg_len = 30
 
@@ -108,7 +119,7 @@ for idx, p in enumerate(p_list, start=1):
 
 # train
 ecgs = np.vstack(ecgs)
-ecgs = shuffle_along_axis(ecgs, axis=0)
+np.random.shuffle(ecgs)
 ecgs = np.vstack([
     ecgs,
     np.array([time_warp(e, sigma=0.08) for e in ecgs]),
@@ -119,37 +130,42 @@ ecgs = scaler.fit_transform(ecgs.T).T
 num_augment = 3
 
 labels = np.vstack(labels)
-labels = np.vstack([labels, labels, labels, labels, labels])
+labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
 print(f"Total samples: {len(labels)}\n")
 total_samples = len(ecgs)
-ecgs, val_ecgs, labels, val_labels = train_test_split(ecgs, labels, test_size=0.2, random_state=np.random.randint(22022009))
+indices = np.arange(total_samples)
+train_indices, val_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+
+val_ecgs = ecgs[val_indices]
+val_labels = labels[val_indices]
+ecgs = ecgs[train_indices]
+labels = labels[train_indices]
 
 print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
 class_counts = np.unique(val_labels, return_counts=True)[1]
 print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
 class_counts = np.unique(labels, return_counts=True)[1]
-print(f"Train: Class 0: {class_counts[0] // num_augment} - Class 1: {class_counts[1] // num_augment}\n")
+print(f"Train: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
-
-psd = np.array([calc_psd(e) for e in ecgs])
-val_psd = np.array([calc_psd(e) for e in val_ecgs])
-
-
-# sample_weights = [total_samples / class_counts[int(x)] for x in labels]
-sample_weights = np.ones(labels.shape)
-sample_weights += mean_labels
+sample_weights = [total_samples / class_counts[int(x)] for x in labels]
+sample_weights += mean_labels[train_indices]
 sample_weights = np.array(sample_weights)
 
-train_generator = DynamicAugmentedECGDataset([psd[:len(psd) // num_augment:]], [labels[:len(labels) // num_augment:]],  [psd], [labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=sample_weights).as_dataset()
+psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
+val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
+
+
+# train_generator = DynamicAugmentedECGDataset([psd[:len(psd) // num_augment:]], [labels[:len(labels) // num_augment:]],  [psd], [labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=sample_weights).as_dataset()
 
 steps_per_epoch = len(ecgs) // batch_size
 steps_per_epoch //= num_augment
 
 model.fit(
-    train_generator,
+    psd,
+    labels,
     epochs = epochs,
     validation_data = (val_psd, val_labels),
     batch_size = batch_size,
@@ -165,7 +181,7 @@ res_file.close()
 
 # test
 test_psd = [
-    [calc_psd(e) for e in p_ecg] for p_ecg in test_ecgs
+    [calc_psd(e, start_f=5, end_f=30) for e in p_ecg] for p_ecg in test_ecgs
 ]
 
 for idx, p in enumerate(good_p_list()[15::]):
