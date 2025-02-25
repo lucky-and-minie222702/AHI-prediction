@@ -50,7 +50,7 @@ def create_model():
     
     model = Model(inputs=inp, outputs=out)
     model.compile(
-        optimizer = keras.optimizers.Adam(learning_rate=0.001), 
+        optimizer = "adam", 
         loss = "binary_crossentropy",
         metrics = [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)],
     )
