@@ -17,17 +17,18 @@ def create_model():
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(ds_conv)
+    ds_conv = layers.GaussianNoise(stddev=0.01)(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.00001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.00001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.00001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.00001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     fc = SEBlock(reduction_ratio=4)(conv)
