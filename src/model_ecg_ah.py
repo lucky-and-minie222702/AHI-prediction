@@ -19,16 +19,12 @@ def create_model():
     ds_conv = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(ds_conv)
     ds_conv = layers.GaussianNoise(stddev=0.01)(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.0001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     fc = SEBlock(reduction_ratio=4)(conv)
@@ -55,13 +51,13 @@ weights_path = path.join("res", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
-    patience = 5,
+    start_from_epoch = 40,
+    patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
@@ -69,7 +65,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=5, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
 seg_len = 30
@@ -103,7 +99,6 @@ for idx, p in enumerate(p_list, start=1):
 
 # train
 ecgs = np.vstack(ecgs)
-ecgs = shuffle_along_axis(ecgs, 0)
 ecgs = np.vstack([
     ecgs,
     np.array([time_warp(e, sigma=0.08) for e in ecgs]),
@@ -119,6 +114,7 @@ mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
 new_indices = downsample_indices_manual(labels)
+np.random.shuffle(new_indices)
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
 
@@ -171,6 +167,9 @@ test_psd = [
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
+test_labels = [
+    np.round(l) for l in test_labels
+]
 mean_res = [[] for _ in range(9)]
 
 for idx, p in enumerate(good_p_list()[25::]):
@@ -185,7 +184,7 @@ for idx, p in enumerate(good_p_list()[25::]):
     preds = model.predict(input_scaler.transform(test_psd[idx]), batch_size=batch_size).flatten()
     print(preds.shape, test_labels[idx].shape)
     
-    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=0))
+    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=1))
     
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
