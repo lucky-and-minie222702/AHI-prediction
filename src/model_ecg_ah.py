@@ -12,7 +12,7 @@ folds = 1
 def create_model():
     inp = layers.Input(shape=(249, 1))
     
-    conv = ResNetBlock(1, conv, 64, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, inp, 64, 3, change_sample=True, num_layers=3)
     conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
     conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
     conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
