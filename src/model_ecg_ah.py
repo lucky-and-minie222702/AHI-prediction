@@ -12,25 +12,28 @@ folds = 1
 def create_model():
     inp = layers.Input(shape=(249, 1))
     
-    # down-sample
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
-    
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 64, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     fc = SEBlock(reduction_ratio=4)(conv)
@@ -57,12 +60,12 @@ weights_path = path.join("res", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 150,
+    start_from_epoch = 40,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -147,7 +150,7 @@ sample_weights = np.array(sample_weights)
 psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
 psd = input_scaler.fit_transform(psd)
 val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
-val_psd  =input_scaler.transform(val_psd)
+val_psd = input_scaler.transform(val_psd)
 joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 model.fit(
@@ -184,11 +187,11 @@ for idx, p in enumerate(good_p_list()[25::]):
     print(f"\nBenh nhan {p}\n")
     print(f"\nBenh nhan {p}\n", file=res_file)
     
+    class_counts = np.unique(test_labels[idx], return_counts=True)[1] 
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
     preds = model.predict(input_scaler.transform(test_psd[idx]), batch_size=batch_size).flatten()
-    print(preds.shape, test_labels[idx].shape)
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=1))
     
