@@ -461,3 +461,32 @@ def good_p_list():
     bad_list = [20, 34]
     ans = [x for x in range(1, num_p+1) if x not in bad_list]
     return ans
+
+def split_classes(y: np.ndarray, class_ratio: List[float] = None, max_total_samples: int = None):
+    class_counts = np.unique(y, return_counts=True)[1]
+    num_classes = len(class_counts)
+    if class_ratio is None:
+        class_ratio = equally_dis(num_classes)
+    
+    # bin search
+    l = 0
+    r = len(y)
+    m = 0
+    while l <= r:
+        m = (l+r)//2
+        wrong = any([(m * class_ratio[i]) > class_counts[i] for i in range(num_classes)])
+        if wrong:
+            r = m -1
+        else:
+            l = m + 1
+    
+    total_samp = m
+    if max_total_samples is not None:
+        total_samp = min(total_samp, max_total_samples)
+
+    class_idx = []
+    for cls, i in enumerate(class_ratio):
+        k = int(total_samp * i)
+        class_idx.extend(np.random.choice(np.where(y==cls)[0], k, replace=False))
+        
+    return np.array(class_idx), np.array([int(total_samp * r) for r in class_ratio])

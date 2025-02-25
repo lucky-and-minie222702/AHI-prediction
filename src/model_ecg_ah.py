@@ -42,12 +42,13 @@ def create_model():
     return model
 
 model = create_model()
-model.summary()
+# model.summary()
+show_params(model, "ecg_ah")
 weights_path = path.join("history", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
@@ -85,7 +86,7 @@ for idx, p in enumerate(p_list, start=1):
     if idx >=15:
         t_size = len(sig) // 2
         test_ecgs.append(sig[:t_size:])
-        test_labels.append(sig[:t_size:])
+        test_labels.append(label[:t_size:])
         sig = sig[t_size::]
         label = label[t_size::]
 
@@ -108,6 +109,10 @@ labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
+
+new_indices = split_classes(labels, class_ratio=[0.5, 0.5])
+ecgs = ecgs[new_indices]
+labels = labels[new_indices]
 
 print(f"Total samples: {len(labels)}\n")
 total_samples = len(ecgs)
@@ -132,12 +137,6 @@ sample_weights = np.array(sample_weights)
 psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
 val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
 
-
-# train_generator = DynamicAugmentedECGDataset([psd[:len(psd) // num_augment:]], [labels[:len(labels) // num_augment:]],  [psd], [labels], batch_size=batch_size, num_augmented_versions=num_augment, sample_weights=sample_weights).as_dataset()
-
-steps_per_epoch = len(ecgs) // batch_size
-steps_per_epoch //= num_augment
-
 model.fit(
     psd,
     labels,
@@ -145,7 +144,6 @@ model.fit(
     validation_data = (val_psd, val_labels),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
-    steps_per_epoch = steps_per_epoch,
 )
 model.load_weights(weights_path)
 
