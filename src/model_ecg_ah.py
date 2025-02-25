@@ -83,7 +83,7 @@ for idx, p in enumerate(p_list, start=1):
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
     label = divide_signal(raw_label, win_size=seg_len, step_size=15)
     
-    if idx >=15:
+    if idx >= 25:
         t_size = len(sig) // 2
         test_ecgs.append(sig[:t_size:])
         test_labels.append(label[:t_size:])
