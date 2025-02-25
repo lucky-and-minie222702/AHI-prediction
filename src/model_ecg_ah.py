@@ -16,8 +16,6 @@ def create_model():
     ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=3, strides=2, padding="same")(ds_conv)
-    ds_conv = layers.GaussianNoise(stddev=0.01)(ds_conv)
     
     conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
     conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
@@ -27,9 +25,17 @@ def create_model():
     conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
     fc = SEBlock(reduction_ratio=4)(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(256)(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
@@ -51,12 +57,12 @@ weights_path = path.join("res", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 300 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 40,
+    start_from_epoch = 100,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
