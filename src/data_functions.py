@@ -509,3 +509,7 @@ def downsample_indices_manual(y):
     # Combine indices
     downsampled_indices = np.concatenate([downsampled_majority, minority_indices])
     return downsampled_indices
+
+def shuffle_along_axis(a, axis):
+    idx = np.random.rand(*a.shape).argsort(axis=axis)
+    return np.take_along_axis(a,idx,axis=axis)

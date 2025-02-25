@@ -103,7 +103,7 @@ for idx, p in enumerate(p_list, start=1):
 
 # train
 ecgs = np.vstack(ecgs)
-np.random.shuffle(ecgs)
+ecgs = shuffle_along_axis(ecgs, 0)
 ecgs = np.vstack([
     ecgs,
     np.array([time_warp(e, sigma=0.08) for e in ecgs]),
