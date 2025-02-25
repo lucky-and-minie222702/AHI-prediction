@@ -12,24 +12,23 @@ def create_model():
     inp = layers.Input(shape=(249, 1))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(64, kernel_size=5)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    x = layers.Dense(256)(norm_inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
     
-    conv = layers.Conv1D(64, kernel_size=5)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    x = layers.Dense(256)(norm_inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
     
-    att = MyAtt(depth=32, num_heads=16, dropout_rate=0.1)(conv, conv, conv)
+    x = layers.Dense(256)(norm_inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
     
-    fc = SEBlock()(att)
-    fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512)(fc)
-    fc = layers.BatchNormalization()(fc)
-    fc = layers.Activation("relu")(fc)
-    out = layers.Dense(1, activation="sigmoid")(fc)
+    x = layers.Dense(256)(norm_inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    
+    out = layers.Dense(1, activation="sigmoid")(x)
     
     
     model = Model(inputs=inp, outputs=out)
