@@ -11,8 +11,9 @@ folds = 1
         
 def create_model():
     inp = layers.Input(shape=(249, 1))
+    norm_inp = layers.Normalization()(inp)
     
-    conv = ResNetBlock(1, inp, 64, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, num_layers=3)
     conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
     conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
     conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
@@ -148,10 +149,10 @@ sample_weights += mean_labels[train_indices]
 sample_weights = np.array(sample_weights)
 
 psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
-psd = input_scaler.fit_transform(psd)
+# psd = input_scaler.fit_transform(psd)
 val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
-val_psd = input_scaler.transform(val_psd)
-joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
+# val_psd = input_scaler.transform(val_psd)
+# joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 model.fit(
     psd,
@@ -191,7 +192,7 @@ for idx, p in enumerate(good_p_list()[25::]):
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
-    preds = model.predict(input_scaler.transform(test_psd[idx]), batch_size=batch_size).flatten()
+    preds = model.predict(test_psd[idx], batch_size=batch_size).flatten()
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=1))
     
