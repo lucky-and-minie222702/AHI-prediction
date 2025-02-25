@@ -12,48 +12,23 @@ def create_model():
     inp = layers.Input(shape=(249, ))
     norm_inp = layers.Normalization()(inp)
     
-    nn = layers.Dense(220)(norm_inp)
-    nn = layers.BatchNormalization()(nn)
-    nn = layers.Activation("relu")(nn)
-    nn = layers.Dropout(rate=0.1)(nn)
-    
-    nn = layers.Dense(200)(norm_inp)
-    nn = layers.BatchNormalization()(nn)
-    nn = layers.Activation("relu")(nn)
-    nn = layers.Dropout(rate=0.1)(nn)
-    
-    expanded_nn = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(nn)
-    
-    conv = layers.Conv1D(64, kernel_size=5, strides=2)(expanded_nn)
+    conv = layers.Conv1D(64, kernel_size=5)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
-    conv = layers.Conv1D(128, kernel_size=5, strides=2)(conv)
+    conv = layers.Conv1D(64, kernel_size=5)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(conv)
-    rnn = layers.BatchNormalization()(rnn)
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(rnn)
-    rnn = layers.BatchNormalization()(rnn)
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
+    att = MyAtt(depth=32, num_heads=16)(conv, conv, conv)
     
-    att = layers.Attention(use_scale=True)([rnn, rnn, rnn])
-    att = layers.SpatialDropout1D(rate=0.1)(att)
-    
-    # residual connection
-    rc = layers.Add()([conv, att])
-    rc = layers.Activation("relu")(rc)
-    
-    fc = SEBlock()(rc)
+    fc = SEBlock()(att)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(64)(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
-    fc = layers.Dropout(rate=0.1)(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
     
     
@@ -181,7 +156,7 @@ res_file.close()
 
 # test
 test_psd = [
-    [calc_psd(e, start_f=5, end_f=30) for e in p_ecg] for p_ecg in test_ecgs
+    np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
 ]
 
 for idx, p in enumerate(good_p_list()[15::]):
