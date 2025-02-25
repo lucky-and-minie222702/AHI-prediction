@@ -24,14 +24,17 @@ def create_model():
     
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
     
     fc = SEBlock(reduction_ratio=4)(conv)
+    fc = layers.GlobalAvgPool1D()(fc)
     fc = layers.Dense(256)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
