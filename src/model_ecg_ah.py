@@ -1,12 +1,12 @@
 from data_functions import *
 from model_functions import *
 # import model_framework
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import lightgbm as lgb
 
 show_gpus()
 
-input_scaler = MinMaxScaler()
+input_scaler = StandardScaler()
         
 # def create_model():
 #     inp = layers.Input(shape=(249,))
