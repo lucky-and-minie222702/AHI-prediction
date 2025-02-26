@@ -19,6 +19,7 @@ def create_model():
     s = layers.BatchNormalization()(s)
     s = layers.Activation("sigmoid")(s)
     fs = layers.Multiply()([s, norm_inp])
+    fc = layers.Normalization()(fs)
 
     expanded_inp = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(fs)
     
