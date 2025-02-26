@@ -115,7 +115,7 @@ params = {
     "boosting_type": "gbdt",  # Gradient boosting decision tree
     "num_leaves": 64,  #
     "learning_rate": 0.05,
-    "device_type": "cuda",
+    # "device_type": "cuda",
 }
 
 seg_len = 30
