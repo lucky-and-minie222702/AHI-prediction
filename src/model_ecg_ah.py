@@ -206,7 +206,7 @@ joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 dtrain = lgb.Dataset(psd, label=labels)
 dval = lgb.Dataset(val_psd, val_labels)
-model = lgb.train(params, dtrain, num_boost_round=1000, valid_sets=[dval], valid_names=["Validation"], verbose_eval=10, callbacks=[lgb.early_stopping(stopping_rounds=15)])
+model = lgb.train(params, dtrain, num_boost_round=1000, valid_sets=[dval], valid_names=["Validation"], callbacks=[lgb.early_stopping(stopping_rounds=15)])
 model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
 model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
 
