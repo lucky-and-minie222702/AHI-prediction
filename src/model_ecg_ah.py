@@ -194,10 +194,10 @@ val_psd = input_scaler.transform(val_psd)
 joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 model.fit(
-    ecgs,
+    psd,
     labels,
     epochs = epochs,
-    validation_data = (val_ecgs, val_labels),
+    validation_data = (val_psd, val_labels),
     batch_size = batch_size,
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
 )
