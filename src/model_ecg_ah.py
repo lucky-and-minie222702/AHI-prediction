@@ -134,8 +134,8 @@ for idx, p in enumerate(p_list, start=1):
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
     
     sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=100)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=1)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=300)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=3)
     
     if idx >= 15:
         t_size = len(sig) // 2
