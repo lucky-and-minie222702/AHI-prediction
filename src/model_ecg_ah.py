@@ -12,10 +12,10 @@ def create_model():
     norm_inp = layers.Normalization()(inp)
     
     # feature selection
-    s = layers.Dense(249, kernel_regularizer=reg.l1(0.01))(norm_inp)  # score
+    s = layers.Dense(249)(norm_inp)  # score
     s = layers.BatchNormalization()(s)
     s = layers.Activation("relu")(s)
-    s = layers.Dense(249, kernel_regularizer=reg.l1(0.01))(s)
+    s = layers.Dense(249)(s)
     s = layers.BatchNormalization()(s)
     s = layers.Activation("sigmoid")(s)
     fs = layers.Multiply()([s, norm_inp])
@@ -23,23 +23,23 @@ def create_model():
 
     expanded_inp = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(fs)
     
-    conv = ResNetBlock(1, expanded_inp, 64, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, expanded_inp, 64, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock(reduction_ratio=1, kernel_regularizer=reg.l2(0.01))(conv)
+    fc = SEBlock(reduction_ratio=1)(conv)
     fc = layers.GlobalAvgPool1D()(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
     
