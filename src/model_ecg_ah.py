@@ -22,28 +22,28 @@ def create_model():
     fs = layers.Multiply()([s, norm_inp])
     fs = layers.Normalization()(fs)
     
-    shortcut = layers.Dense(512, kernel_regularizer=reg.l2(0.00001))(fs)
+    shortcut = layers.Dense(256, kernel_regularizer=reg.l2(0.00001))(fs)
     shortcut = layers.BatchNormalization()(shortcut)
     shortcut = layers.Activation("relu")(shortcut)
     shortcut = layers.Dropout(rate=0.5)(shortcut)
-    shortcut = layers.Dense(512, kernel_regularizer=reg.l2(0.00001))(shortcut)
+    shortcut = layers.Dense(256, kernel_regularizer=reg.l2(0.00001))(shortcut)
     shortcut = layers.BatchNormalization()(shortcut)
     shortcut = layers.Activation("relu")(shortcut)
     shortcut = layers.Dropout(rate=0.5)(shortcut)
-    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.00001))(shortcut)
+    x = layers.Dense(256, kernel_regularizer=reg.l2(0.00001))(shortcut)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
-    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.00001))(shortcut)
+    x = layers.Dense(256, kernel_regularizer=reg.l2(0.00001))(shortcut)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l2(0.00001))(x)
+    x = layers.Dense(256, kernel_regularizer=reg.l2(0.00001))(x)
     x = layers.Add()([x, shortcut])
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Dropout(rate=0.5)(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l2(0.00001))(x)
+    x = layers.Dense(128, kernel_regularizer=reg.l2(0.00001))(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     out = layers.Dense(1, activation="sigmoid")(x)
@@ -87,12 +87,12 @@ weights_path = path.join("res", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 1000 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 250,
+    start_from_epoch = 500,
     patience = 10,
     mode = "min",
     monitor = "val_binary_crossentropy"
