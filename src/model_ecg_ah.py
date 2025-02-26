@@ -21,16 +21,23 @@ def create_model():
     fs = layers.Multiply()([s, norm_inp])
 
     
-    x = layers.Dense(256, kernel_regularizer=reg.l2(0.001))(fs)
+    shortcut = layers.Dense(256, kernel_regularizer=reg.l2(0.001))(fs)
+    shortcut = layers.BatchNormalization()(shortcut)
+    shortcut = layers.Activation("relu")(shortcut)
+    shortcut = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(shortcut)
+    shortcut = layers.BatchNormalization()(shortcut)
+    shortcut = layers.Activation("relu")(shortcut)
+    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.001))(shortcut)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    
+    x = layers.Dropout(rate=0.5)(x)
+    
+    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.001))(shortcut)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
-    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.001))(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
-    x = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(x)
+    x = layers.Add()([x, shortcut])
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     x = layers.Dense(256, kernel_regularizer=reg.l2(0.001))(x)
@@ -231,7 +238,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     test_ecg = test_ecgs[idx][new_indices]
     test_label = test_labels[idx][new_indices]
     
-    test_psds = test_psds[new_indices]
+    test_psds = test_psds[idx][new_indices]
     test_psd = input_scaler.transform(test_psd)
     
     class_counts = np.unique(test_label, return_counts=True)[1] 
