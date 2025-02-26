@@ -86,12 +86,12 @@ weights_path = path.join("res", "ecg_ah.weights.h5")
 # encoder = load_encoder()
 # model.save_weights(weights_path)
 
-epochs = 250 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 200,
+    start_from_epoch = 50,
     patience = 10,
     mode = "min",
     monitor = "val_binary_crossentropy"
