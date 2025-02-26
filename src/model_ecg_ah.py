@@ -5,47 +5,69 @@ from sklearn.preprocessing import MinMaxScaler
 
 show_gpus()
 
-folds = 1
+input_scaler = MinMaxScaler()
         
 def create_model():
-    inp = layers.Input(shape=(None, 1))
+    inp = layers.Input(shape=(249,))
     norm_inp = layers.Normalization()(inp)
     
-    conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    x = layers.Dense(256, kernel_regularizer=reg.l1(0.001))(norm_inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dense(512, kernel_regularizer=reg.l1(0.001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dense(1024, kernel_regularizer=reg.l1(0.001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dense(512, kernel_regularizer=reg.l1(0.001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dense(256, kernel_regularizer=reg.l1(0.001))(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    out = layers.Dense(1, activation="sigmoid")(x)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    # ds_conv = layers.Conv1D(filters=64, kernel_size=7, kernel_regularizer=reg.l2(0.001), padding="same")(norm_inp)
+    # ds_conv = layers.BatchNormalization()(ds_conv)
+    # ds_conv = layers.Activation("relu")(ds_conv)
+    # ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    # conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 64, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    # conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 128, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    # conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 256, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock(reduction_ratio=4, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))(conv)
-    fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512, kernel_regularizer=reg.l1_l2(l1=0.00001, l2=0.00001))(fc)
-    fc = layers.BatchNormalization()(fc)
-    fc = layers.Activation("relu")(fc)
-    out = layers.Dense(1, activation="sigmoid")(fc)
+    # conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 512, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    # conv = ResNetBlock(1, conv, 1024, 3, change_sample=True, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 1024, 3, num_layers=3, kernel_regularizer=reg.l2(0.001))
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    # fc = SEBlock(reduction_ratio=4, kernel_regularizer=reg.l2(0.001))(conv)
+    # fc = layers.GlobalAvgPool1D()(fc)
+    # fc = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(fc)
+    # fc = layers.BatchNormalization()(fc)
+    # fc = layers.Activation("relu")(fc)
+    # out = layers.Dense(1, activation="sigmoid")(fc)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -101,10 +123,10 @@ for idx, p in enumerate(p_list, start=1):
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
     
     sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=15)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=500)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=5)
     
-    if idx >= 25:
+    if idx >= 15:
         t_size = len(sig) // 2
         test_ecgs.append(sig[:t_size:])
         test_labels.append(label[:t_size:])
@@ -155,11 +177,11 @@ sample_weights = [total_samples / class_counts[int(x)] for x in labels]
 sample_weights += mean_labels[train_indices]
 sample_weights = np.array(sample_weights)
 
-# psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
-# psd = input_scaler.fit_transform(psd)
-# val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
-# val_psd = input_scaler.transform(val_psd)
-# joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
+psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
+psd = input_scaler.fit_transform(psd)
+val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
+val_psd = input_scaler.transform(val_psd)
+joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 model.fit(
     ecgs,
@@ -170,7 +192,7 @@ model.fit(
     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
 )
 model.load_weights(weights_path)
-input_scaler  =joblib.load(path.join("res", "ecg_psd.scaler"))
+input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
 print("\nTesting\n")
 
@@ -178,9 +200,9 @@ res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 res_file.close()
 
 # test
-# test_psd = [
-#     np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
-# ]
+test_psds = [
+    np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
+]
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
@@ -189,25 +211,31 @@ test_labels = [
 ]
 mean_res = [[] for _ in range(9)]
 
-for idx, p in enumerate(good_p_list()[25::]):
+for idx, p in enumerate(good_p_list()[15::]):
     res_file = open(path.join("history", "ah_res.txt"), "a")
     
     print(f"\nBenh nhan {p}\n")
     print(f"\nBenh nhan {p}\n", file=res_file)
     
-    class_counts = np.unique(test_labels[idx], return_counts=True)[1] 
+    new_indices = downsample_indices_manual(test_labels[idx])
+    test_ecg = test_ecgs[idx][new_indices]
+    test_label = test_labels[idx][new_indices]
+    
+    test_psds = test_psds[new_indices]
+    test_psd = input_scaler.transform(test_psd)
+    
+    class_counts = np.unique(test_label, return_counts=True)[1] 
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
     
-    test_ecg = test_ecgs[idx]
     test_ecg = scaler.fit_transform(test_ecg.T).T 
-    preds = model.predict(test_ecg, batch_size=batch_size).flatten()
+    preds = model.predict(test_psd, batch_size=batch_size).flatten()
     
-    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels[idx], preds], axis=1))
+    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_label, preds], axis=1))
     
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
-        acc = acc_bin(test_labels[idx], round_bin(preds, t))
+        acc = acc_bin(test_label, round_bin(preds, t))
         print(f"Threshold {t}: {acc}")
         mean_res[int(t*10) - 1].append(acc)
         print(f"Threshold {t}: {acc}", file=res_file)
