@@ -36,7 +36,7 @@ def create_model():
     
     x = layers.Dropout(rate=0.5)(x)
     
-    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.01))(shortcut)
+    x = layers.Dense(1024, kernel_regularizer=reg.l2(0.01))(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
     
