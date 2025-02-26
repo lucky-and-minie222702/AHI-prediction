@@ -257,3 +257,7 @@ for idx, acc in enumerate(mean_res, start=1):
     print(f"Threshold 0.{idx}: {acc}", file=res_file)
 
 res_file.close()
+
+if "additional_test" in sys.argv:
+    pred = model.predict(psd)
+    np.save(path.join("history", "ecg_ah_predontrain"), pred)
