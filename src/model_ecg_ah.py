@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 199, 
+    "num_leaves": 128, 
     "learning_rate": 0.075,
     # "device_type": "cuda",
 }
@@ -155,7 +155,7 @@ ecgs = np.vstack([
     np.array([time_shift(e, shift_max=20) for e in ecgs]),
     np.array([add_noise(e, noise_std=0.005) for e in ecgs]),
 ])
-ecgs = scaler.fit_transform(ecgs.T).T
+ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 num_augment = 3
 
 labels = np.vstack(labels)
@@ -252,7 +252,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     test_ecg = test_ecgs[idx][new_indices]
     test_label = test_labels[idx][new_indices]
     
-    test_ecg = scaler.fit_transform(test_ecg.T).T
+    test_ecg = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in test_ecg])
     test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecg])
     test_psd = input_scaler.transform(test_psd)
     
