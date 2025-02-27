@@ -113,8 +113,8 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 128, 
-    "learning_rate": 0.075,
+    "num_leaves": 64, 
+    "learning_rate": 0.08,
     # "device_type": "cuda",
 }
 
@@ -209,10 +209,10 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 2000, 
+    num_boost_round = 1000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
-    callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
+    callbacks = [lgb.early_stopping(stopping_rounds=10, first_metric_only=True)]
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
@@ -265,6 +265,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_label, preds], axis=1))
     
+    print(f"AUC: {roc_auc_score(test_label, preds)}") 
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
         acc = acc_bin(test_label, round_bin(preds, t))
