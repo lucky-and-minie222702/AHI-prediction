@@ -158,7 +158,6 @@ ecgs = np.vstack([
     np.array([add_noise(e, noise_std=0.005) for e in ecgs]),
 ])
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
-num_augment = 3
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
@@ -228,80 +227,73 @@ print(f"Training time {convert_seconds(total_time)}")
 # exit()
 
 model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
-model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
+# model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
 # input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
 print("\nTesting\n")
 
-res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
-res_file.close()
-
 # test
-test_labels = [
-    np.array([l[extra_seg_len:-extra_seg_len:] for l in label]) for label in test_labels
-]
-test_labels = [
-    np.mean(l, axis=-1) for l in test_labels
-]
-test_labels = [
-    np.round(l) for l in test_labels
-]
-mean_res = [[] for _ in range(9)]
+# test_labels = [
+#     np.array([l[extra_seg_len:-extra_seg_len:] for l in label]) for label in test_labels
+# ]
+# test_labels = [
+#     np.mean(l, axis=-1) for l in test_labels
+# ]
+# test_labels = [
+#     np.round(l) for l in test_labels
+# ]
+# mean_res = [[] for _ in range(9)]
 
-for idx, p in enumerate(good_p_list()[15::]):
-    res_file = open(path.join("history", "ecg_ah_res.txt"), "a")
-    
-    print(f"\nBenh nhan {p}\n")
-    print(f"\nBenh nhan {p}\n", file=res_file)
-    
-    new_indices = downsample_indices_manual(test_labels[idx])
-    # new_indices = np.arange(len(test_ecgs[idx]))
-    test_ecg = test_ecgs[idx][new_indices]
-    test_label = test_labels[idx][new_indices]
-    
-    test_ecg = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in test_ecg])
-    test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecg])
-    test_psd = input_scaler.transform(test_psd)
-    
-    class_counts = np.unique(test_label, return_counts=True)[1] 
-    print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
-    print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
-     
-    # preds = model.predict(test_psd, batch_size=batch_size).flatten()
-    preds = model.predict(test_psd)
-    
-    np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_label, preds], axis=1))
-    
-    print(f"AUC: {roc_auc_score(test_label, preds)}")
-    print(f"Log loss: {log_loss(test_label, preds)}")
-    
-    print(f"AUC: {roc_auc_score(test_label, preds)}", file=res_file)
-    print(f"Log loss: {log_loss(test_label, preds)}", file=res_file)    
-    
-    
-    for t in np.linspace(0, 1, 11)[1:-1:]:
-        t = round(t, 3)
-        acc = acc_bin(test_label, round_bin(preds, t))
-        print(f"Threshold {t}: {acc}")
-        mean_res[int(t*10) - 1].append(acc)
-        print(f"Threshold {t}: {acc}", file=res_file)
-    print()
-    
-    res_file.close()
-    
-res_file = open(path.join("history", "ecg_ah_res.txt"), "a")
+test_ecgs = np.vstack(test_ecgs)
+test_ecgs = np.vstack([
+    test_ecgs,
+    np.array([time_warp(e, sigma=0.08) for e in test_ecgs]),
+    np.array([time_shift(e, shift_max=20) for e in test_ecgs]),
+    np.array([add_noise(e, noise_std=0.005) for e in test_ecgs]),
+])
+test_ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in test_ecgs])
 
-print("\nMean Accuracy\n")
-print("\nMean Accuracy\n", file=res_file)
+test_labels = np.vstack(test_labels)
+test_labels = np.vstack([test_labels, test_labels, test_labels, test_labels])
+test_labels = np.array([l[extra_seg_len:-extra_seg_len:] for l in test_labels])
+test_mean_labels = np.mean(test_labels, axis=-1)
+test_labels = np.round(test_mean_labels)
 
-mean_res = np.array(mean_res)
-mean_res = np.mean(mean_res, axis=-1)
+new_indices = downsample_indices_manual(test_labels)
+# new_indices = np.arange(len(ecgs))
+np.random.shuffle(new_indices)
+test_ecgs = test_ecgs[new_indices]
+test_labels = test_labels[new_indices]
 
-for idx, acc in enumerate(mean_res, start=1):
-    print(f"Threshold 0.{idx}: {acc}")
-    print(f"Threshold 0.{idx}: {acc}", file=res_file)
+test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecgs])
+test_psd = input_scaler.transform(test_psd)
+
+res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
+
+class_counts = np.unique(test_labels, return_counts=True)[1] 
+print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
+print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
+
+preds = model.predict(test_psd)
+
+np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels, preds], axis=1))
+
+print(f"AUC: {roc_auc_score(test_labels, preds)}")
+print(f"Log loss: {log_loss(test_labels, preds)}")
+
+print(f"AUC: {roc_auc_score(test_labels, preds)}", file=res_file)
+print(f"Log loss: {log_loss(test_labels, preds)}", file=res_file)    
+
+
+for t in np.linspace(0, 1, 11)[1:-1:]:
+    t = round(t, 3)
+    acc = acc_bin(test_labels, round_bin(preds, t))
+    print(f"Threshold {t}: {acc}")
+    print(f"Threshold {t}: {acc}", file=res_file)
+print()
 
 res_file.close()
+    
 
 if "additional_test" in sys.argv:
     pred = model.predict(psd)
