@@ -113,8 +113,8 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 96, 
-    "learning_rate": 0.075,
+    "num_leaves": 64, 
+    "learning_rate": 0.08,
     # "device_type": "cuda",
 }
 
