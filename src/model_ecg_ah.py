@@ -206,6 +206,7 @@ joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 dtrain = lgb.Dataset(psd, label=labels)
 dval = lgb.Dataset(val_psd, val_labels)
+start_time = timer()
 model = lgb.train(
     params, dtrain, 
     num_boost_round = 2000, 
@@ -213,6 +214,8 @@ model = lgb.train(
     valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
 )
+total_time = timer() - start_time
+print(f"Training time {convert_seconds(total_time)}")
 # res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 # print(res)
 #_print(res, file=res_file)
