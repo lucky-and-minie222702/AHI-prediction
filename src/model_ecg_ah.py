@@ -212,7 +212,7 @@ res = lgb.cv(
     num_boost_round = 1000, 
     # valid_sets=[dval], 
     # valid_names=["Validation"], 
-    callbacks = [lgb.early_stopping(stopping_rounds=10, first_metric_only=True)]
+    callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
 )
 res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 print(res)
