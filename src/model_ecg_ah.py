@@ -151,7 +151,7 @@ ecgs = np.vstack([
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 
 labels = np.vstack(labels)
-labels = np.vstack([labels, labels, labels, labels])
+labels = np.vstack([labels, labels])
 labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
