@@ -207,7 +207,7 @@ joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 dtrain = lgb.Dataset(psd, label=labels)
 dval = lgb.Dataset(val_psd, val_labels)
 lgb.train
-res = lgb.train(
+model = lgb.train(
     params, dtrain, 
     num_boost_round = 1500, 
     valid_sets=[dval], 
