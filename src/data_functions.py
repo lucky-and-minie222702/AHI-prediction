@@ -6,7 +6,7 @@ from scipy import signal
 from itertools import groupby
 from scipy.interpolate import interp1d
 from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, matthews_corrcoef, log_loss
 from typing import *
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error, median_absolute_error, root_mean_squared_error
 import sys

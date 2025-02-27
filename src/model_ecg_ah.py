@@ -265,7 +265,13 @@ for idx, p in enumerate(good_p_list()[15::]):
     
     np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_label, preds], axis=1))
     
-    print(f"AUC: {roc_auc_score(test_label, preds)}") 
+    print(f"AUC: {roc_auc_score(test_label, preds)}")
+    print(f"Log loss: {log_loss(test_label, preds)}")
+    
+    print(f"AUC: {roc_auc_score(test_label, preds)}", file=res_file)
+    print(f"Log loss: {log_loss(test_label, preds)}", file=res_file)    
+    
+    
     for t in np.linspace(0, 1, 11)[1:-1:]:
         t = round(t, 3)
         acc = acc_bin(test_label, round_bin(preds, t))
