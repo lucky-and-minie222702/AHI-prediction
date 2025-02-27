@@ -114,7 +114,7 @@ params = {
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
     "num_leaves": 128, 
-    "learning_rate": 0.075,
+    "learning_rate": 0.08,
     # "device_type": "cuda",
 }
 
@@ -162,12 +162,10 @@ ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs]
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
-# labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
 new_indices = downsample_indices_manual(labels)
-# new_indices = np.arange(len(ecgs))
 np.random.shuffle(new_indices)
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
@@ -187,10 +185,6 @@ class_counts = np.unique(val_labels, return_counts=True)[1]
 print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
 class_counts = np.unique(labels, return_counts=True)[1]
 print(f"Train: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
-
-# sample_weights = [total_samples / class_counts[int(x)] for x in labels]
-# sample_weights += mean_labels[train_indices]
-# sample_weights = np.array(sample_weights)
 
 psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
 psd = input_scaler.fit_transform(psd)
