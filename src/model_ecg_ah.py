@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 128, 
+    "num_leaves": 96, 
     "learning_rate": 0.08,
     # "device_type": "cuda",
 }
@@ -139,17 +139,18 @@ for idx, p in enumerate(p_list, start=1):
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
     label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
     
-    if idx >= 15:
-        t_size = len(sig) // 2
-        test_ecgs.append(sig[:t_size:])
-        test_labels.append(label[:t_size:])
-        sig = sig[t_size::]
-        label = label[t_size::]
-
     ecgs.append(sig)
     labels.append(label)
 
 # train
+	
+test_ecgs = ecgs[25::]
+test_labels = labels[25::]
+
+ecgs = ecgs[:25:]
+labels = labels[:25:]
+ 
+ 
 ecgs = np.vstack(ecgs)
 ecgs = np.vstack([
     ecgs,
@@ -215,30 +216,12 @@ model = lgb.train(
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
-# res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
-# print(res)
-#_print(res, file=res_file)
-# res_file.close()
-
-# exit()
 
 model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
 # model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
 # input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
 print("\nTesting\n")
-
-# test
-# test_labels = [
-#     np.array([l[extra_seg_len:-extra_seg_len:] for l in label]) for label in test_labels
-# ]
-# test_labels = [
-#     np.mean(l, axis=-1) for l in test_labels
-# ]
-# test_labels = [
-#     np.round(l) for l in test_labels
-# ]
-# mean_res = [[] for _ in range(9)]
 
 test_ecgs = np.vstack(test_ecgs)
 test_ecgs = np.vstack([
@@ -272,7 +255,7 @@ print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_fil
 
 preds = model.predict(test_psd)
 
-np.save(path.join("history", f"ecg_ah_res_p{p}"), np.stack([test_labels, preds], axis=1))
+np.save(path.join("history", f"ecg_ah_predontest"), np.stack([test_labels, preds], axis=1))
 
 print(f"AUC: {roc_auc_score(test_labels, preds)}")
 print(f"Log loss: {log_loss(test_labels, preds)}")
