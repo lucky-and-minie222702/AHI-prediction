@@ -418,8 +418,8 @@ class Tee:
         self.file.flush()
         
         
-def calc_psd(sig, start_f, end_f, nperseg_factor = 3):
-    f, Pxx = signal.welch(sig, fs=100, nperseg=len(sig) // nperseg_factor)
+def calc_psd(sig, start_f, end_f):
+    f, Pxx = signal.welch(sig, fs=100, nperseg=1000)
     start = None
     end = None
     for i in range(len(f)):

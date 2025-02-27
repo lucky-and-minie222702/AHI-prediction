@@ -118,8 +118,9 @@ params = {
     # "device_type": "cuda",
 }
 
-seg_len = 30
-extra_seg_len = 10
+seg_len = 10
+extra_seg_len = 0
+step_size = 3
 
 ecgs = []
 labels = []
@@ -136,8 +137,8 @@ for idx, p in enumerate(p_list, start=1):
     raw_label = raw_label[10:-10:]
     
     sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=500)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=5)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
     
     if idx >= 15:
         t_size = len(sig) // 2
@@ -161,7 +162,7 @@ ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs]
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
-labels = np.array([l[extra_seg_len:-extra_seg_len:] for l in labels])
+labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
@@ -255,7 +256,7 @@ test_ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in 
 
 test_labels = np.vstack(test_labels)
 test_labels = np.vstack([test_labels, test_labels, test_labels, test_labels])
-test_labels = np.array([l[extra_seg_len:-extra_seg_len:] for l in test_labels])
+test_labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in test_labels])
 test_mean_labels = np.mean(test_labels, axis=-1)
 test_labels = np.round(test_mean_labels)
 
