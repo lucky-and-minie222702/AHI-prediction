@@ -134,8 +134,8 @@ for idx, p in enumerate(p_list, start=1):
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
     
     sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=500)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=5)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=15)
     
     if idx >= 15:
         t_size = len(sig) // 2
@@ -163,7 +163,8 @@ labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
-new_indices = downsample_indices_manual(labels)
+# new_indices = downsample_indices_manual(labels)
+new_indices = np.arange(len(ecgs))
 np.random.shuffle(new_indices)
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
@@ -248,7 +249,8 @@ for idx, p in enumerate(good_p_list()[15::]):
     print(f"\nBenh nhan {p}\n")
     print(f"\nBenh nhan {p}\n", file=res_file)
     
-    new_indices = downsample_indices_manual(test_labels[idx])
+    # new_indices = downsample_indices_manual(test_labels[idx])
+    new_indices = np.arange(len(test_ecgs[idx]))
     test_ecg = test_ecgs[idx][new_indices]
     test_label = test_labels[idx][new_indices]
     
