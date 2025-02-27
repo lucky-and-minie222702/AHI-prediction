@@ -136,8 +136,8 @@ for idx, p in enumerate(p_list, start=1):
     raw_label = raw_label[10:-10:]
     
     sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=100)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=1)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=500)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=5)
     
     if idx >= 15:
         t_size = len(sig) // 2
