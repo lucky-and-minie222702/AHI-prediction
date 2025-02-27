@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 96, 
+    "num_leaves": 128, 
     "learning_rate": 0.075,
     # "device_type": "cuda",
 }
@@ -162,7 +162,7 @@ ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs]
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
-labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
+# labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
@@ -213,7 +213,7 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 3000, 
+    num_boost_round = 2000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
@@ -256,7 +256,7 @@ test_ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in 
 
 test_labels = np.vstack(test_labels)
 test_labels = np.vstack([test_labels, test_labels, test_labels, test_labels])
-test_labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in test_labels])
+# test_labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in test_labels])
 test_mean_labels = np.mean(test_labels, axis=-1)
 test_labels = np.round(test_mean_labels)
 
