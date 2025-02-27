@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 64, 
+    "num_leaves": 96, 
     "learning_rate": 0.08,
     # "device_type": "cuda",
 }
@@ -210,10 +210,10 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 1000, 
+    num_boost_round = 2000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
-    callbacks = [lgb.early_stopping(stopping_rounds=10, first_metric_only=True)]
+    callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
@@ -225,7 +225,7 @@ print(f"Training time {convert_seconds(total_time)}")
 # exit()
 
 model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
-model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
+# model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
 
 input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
