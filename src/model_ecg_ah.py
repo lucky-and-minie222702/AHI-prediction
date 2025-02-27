@@ -114,19 +114,17 @@ params = {
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
     "num_leaves": 96, 
-    "learning_rate": 0.08,
+    "learning_rate": 0.075,
     # "device_type": "cuda",
 }
 
 seg_len = 30
-extra_seg_len = 10
+extra_seg_len = 0
 step_size = 5
 
 ecgs = []
 labels = []
 
-test_ecgs = []
-test_labels = []
 p_list = good_p_list()
 
 scaler = MinMaxScaler()
@@ -143,12 +141,6 @@ for idx, p in enumerate(p_list, start=1):
     labels.append(label)
 
 # train
-	
-test_ecgs = ecgs[25::]
-test_labels = labels[25::]
-
-ecgs = ecgs[:25:]
-labels = labels[:25:]
  
  
 ecgs = np.vstack(ecgs)
@@ -175,10 +167,13 @@ labels = labels[new_indices]
 print(f"Total samples: {len(labels)}\n")
 total_samples = len(ecgs)
 indices = np.arange(total_samples)
-train_indices, val_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+train_indices, val_indices = train_test_split(train_indices, test_size=0.2, random_state=np.random.randint(22022009))
 
 val_ecgs = ecgs[val_indices]
 val_labels = labels[val_indices]
+test_ecgs = ecgs[test_indices]
+test_labels = labels[test_indices]
 ecgs = ecgs[train_indices]
 labels = labels[train_indices]
 
@@ -192,6 +187,8 @@ psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
 psd = input_scaler.fit_transform(psd)
 val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
 val_psd = input_scaler.transform(val_psd)
+test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecgs])
+test_psd = input_scaler.transform(test_psd)
 joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 # model.fit(
@@ -222,30 +219,6 @@ model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
 # input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
 print("\nTesting\n")
-
-test_ecgs = np.vstack(test_ecgs)
-test_ecgs = np.vstack([
-    test_ecgs,
-    np.array([time_warp(e, sigma=0.08) for e in test_ecgs]),
-    np.array([time_shift(e, shift_max=20) for e in test_ecgs]),
-    np.array([add_noise(e, noise_std=0.005) for e in test_ecgs]),
-])
-test_ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in test_ecgs])
-
-test_labels = np.vstack(test_labels)
-test_labels = np.vstack([test_labels, test_labels, test_labels, test_labels])
-test_labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in test_labels])
-test_mean_labels = np.mean(test_labels, axis=-1)
-test_labels = np.round(test_mean_labels)
-
-new_indices = downsample_indices_manual(test_labels)
-# new_indices = np.arange(len(ecgs))
-np.random.shuffle(new_indices)
-test_ecgs = test_ecgs[new_indices]
-test_labels = test_labels[new_indices]
-
-test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecgs])
-test_psd = input_scaler.transform(test_psd)
 
 res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 
