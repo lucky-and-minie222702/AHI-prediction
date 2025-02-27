@@ -119,7 +119,7 @@ params = {
 }
 
 seg_len = 30
-extra_seg_len = 0
+extra_seg_len = 10
 step_size = 5
 
 ecgs = []
@@ -134,7 +134,6 @@ scaler = MinMaxScaler()
 for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
-    raw_label = raw_label[10:-10:]
     
     sig = clean_ecg(raw_sig)    
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
@@ -162,10 +161,12 @@ ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs]
 
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
+labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
 new_indices = downsample_indices_manual(labels)
+# new_indices = np.arange(len(ecgs))
 np.random.shuffle(new_indices)
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
@@ -207,7 +208,7 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 2000, 
+    num_boost_round = 3000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
@@ -250,7 +251,7 @@ test_ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in 
 
 test_labels = np.vstack(test_labels)
 test_labels = np.vstack([test_labels, test_labels, test_labels, test_labels])
-# test_labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in test_labels])
+test_labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in test_labels])
 test_mean_labels = np.mean(test_labels, axis=-1)
 test_labels = np.round(test_mean_labels)
 
