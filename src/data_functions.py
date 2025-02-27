@@ -419,7 +419,7 @@ class Tee:
         
         
 def calc_psd(sig, start_f, end_f):
-    f, Pxx = signal.welch(sig, fs=100, nperseg=1000)
+    f, Pxx = signal.welch(sig, fs=100, nperseg=2000)
     start = None
     end = None
     for i in range(len(f)):

@@ -111,15 +111,15 @@ input_scaler = StandardScaler()
 
 params = {
     "objective": "binary",  # Binary classification
-    "metric": ["binary_logloss", "auc"],
+    "metric": ["binary_logloss"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 128, 
-    "learning_rate": 0.1,
+    "num_leaves": 256, 
+    "learning_rate": 0.075,
     # "device_type": "cuda",
 }
 
 seg_len = 30
-extra_seg_len = 0
+extra_seg_len = 10
 step_size = 5
 
 ecgs = []
@@ -146,7 +146,7 @@ for idx, p in enumerate(p_list, start=1):
 ecgs = np.vstack(ecgs)
 ecgs = np.vstack([
     ecgs,
-    np.array([add_noise(e, noise_std=0.005) for e in ecgs]),
+    np.array([add_noise(e, noise_std=0.02) for e in ecgs]),
 ])
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 
@@ -204,10 +204,10 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 3000, 
-    valid_sets=[dval], 
-    valid_names=["Validation"], 
-    callbacks = [lgb.early_stopping(stopping_rounds=15, first_metric_only=True)]
+    num_boost_round = 10000, 
+    valid_sets = [dval], 
+    valid_names = ["Validation"], 
+    callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
