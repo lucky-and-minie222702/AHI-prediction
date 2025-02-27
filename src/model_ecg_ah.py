@@ -220,8 +220,8 @@ model = lgb.train(
 
 # exit()
 
-# model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
-# model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
+model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
+model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
 
 input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
