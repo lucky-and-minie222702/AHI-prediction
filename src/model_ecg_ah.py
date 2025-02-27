@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 192, 
+    "num_leaves": 199, 
     "learning_rate": 0.075,
     # "device_type": "cuda",
 }
@@ -206,10 +206,9 @@ joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 dtrain = lgb.Dataset(psd, label=labels)
 dval = lgb.Dataset(val_psd, val_labels)
-lgb.train
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 1500, 
+    num_boost_round = 2000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
@@ -221,8 +220,8 @@ model = lgb.train(
 
 # exit()
 
-model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
-model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
+# model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
+# model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
 
 input_scaler = joblib.load(path.join("res", "ecg_psd.scaler"))
 
@@ -232,9 +231,6 @@ res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 res_file.close()
 
 # test
-test_psds = [
-    np.vstack([calc_psd(e, start_f=5, end_f=30) for e in p_ecg]) for p_ecg in test_ecgs
-]
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
@@ -253,9 +249,9 @@ for idx, p in enumerate(good_p_list()[15::]):
     test_ecg = test_ecgs[idx][new_indices]
     test_label = test_labels[idx][new_indices]
     
-    test_psd = test_psds[idx][new_indices]
-    test_psd = input_scaler.transform(test_psd)
     test_ecg = scaler.fit_transform(test_ecg.T).T
+    test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecg])
+    test_psd = input_scaler.transform(test_psd)
     
     class_counts = np.unique(test_label, return_counts=True)[1] 
     print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
