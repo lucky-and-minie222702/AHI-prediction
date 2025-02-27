@@ -206,10 +206,10 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 4000, 
+    num_boost_round = 1000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
-    callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
+    callbacks = [lgb.early_stopping(stopping_rounds=10, first_metric_only=True)]
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
