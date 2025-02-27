@@ -114,7 +114,7 @@ params = {
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
     "num_leaves": 128, 
-    "learning_rate": 0.1,
+    "learning_rate": 0.075,
     # "device_type": "cuda",
 }
 
@@ -209,7 +209,7 @@ dtrain = lgb.Dataset(psd, label=labels)
 lgb.train
 res = lgb.cv(
     params, dtrain, 
-    num_boost_round = 100, 
+    num_boost_round = 1000, 
     # valid_sets=[dval], 
     # valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=10, first_metric_only=True)]
