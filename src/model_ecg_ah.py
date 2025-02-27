@@ -119,6 +119,7 @@ params = {
 }
 
 seg_len = 30
+extra_seg_len = 10
 
 ecgs = []
 labels = []
@@ -132,10 +133,11 @@ scaler = MinMaxScaler()
 for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
+    raw_label = raw_label[10:-10:]
     
     sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=1500)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=15)
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=100)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=1)
     
     if idx >= 15:
         t_size = len(sig) // 2
@@ -161,6 +163,7 @@ num_augment = 3
 labels = np.vstack(labels)
 labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
+labels = np.array([l[extra_seg_len:-extra_seg_len:] for l in labels])
 labels = np.round(mean_labels)
 
 new_indices = downsample_indices_manual(labels)
@@ -235,6 +238,9 @@ res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 res_file.close()
 
 # test
+test_labels = [
+    np.array([l[extra_seg_len:-extra_seg_len:] for l in label]) for label in test_labels
+]
 test_labels = [
     np.mean(l, axis=-1) for l in test_labels
 ]
