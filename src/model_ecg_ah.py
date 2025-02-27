@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 96, 
+    "num_leaves": 128, 
     "learning_rate": 0.08,
     # "device_type": "cuda",
 }
@@ -163,8 +163,8 @@ labels = np.vstack([labels, labels, labels, labels])
 mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
-# new_indices = downsample_indices_manual(labels)
-new_indices = np.arange(len(ecgs))
+new_indices = downsample_indices_manual(labels)
+# new_indices = np.arange(len(ecgs))
 np.random.shuffle(new_indices)
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
@@ -210,7 +210,7 @@ dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
 model = lgb.train(
     params, dtrain, 
-    num_boost_round = 2000, 
+    num_boost_round = 3000, 
     valid_sets=[dval], 
     valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
@@ -249,8 +249,8 @@ for idx, p in enumerate(good_p_list()[15::]):
     print(f"\nBenh nhan {p}\n")
     print(f"\nBenh nhan {p}\n", file=res_file)
     
-    # new_indices = downsample_indices_manual(test_labels[idx])
-    new_indices = np.arange(len(test_ecgs[idx]))
+    new_indices = downsample_indices_manual(test_labels[idx])
+    # new_indices = np.arange(len(test_ecgs[idx]))
     test_ecg = test_ecgs[idx][new_indices]
     test_label = test_labels[idx][new_indices]
     
