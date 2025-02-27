@@ -113,7 +113,7 @@ params = {
     "objective": "binary",  # Binary classification
     "metric": ["binary_logloss", "auc"],
     "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 128, 
+    "num_leaves": 192, 
     "learning_rate": 0.075,
     # "device_type": "cuda",
 }
@@ -137,12 +137,12 @@ for idx, p in enumerate(p_list, start=1):
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=500)
     label = divide_signal(raw_label, win_size=seg_len, step_size=5)
     
-    # if idx >= 15:
-    #     t_size = len(sig) // 2
-    #     test_ecgs.append(sig[:t_size:])
-    #     test_labels.append(label[:t_size:])
-    #     sig = sig[t_size::]
-    #     label = label[t_size::]
+    if idx >= 15:
+        t_size = len(sig) // 2
+        test_ecgs.append(sig[:t_size:])
+        test_labels.append(label[:t_size:])
+        sig = sig[t_size::]
+        label = label[t_size::]
 
     ecgs.append(sig)
     labels.append(label)
@@ -170,17 +170,17 @@ labels = labels[new_indices]
 
 print(f"Total samples: {len(labels)}\n")
 total_samples = len(ecgs)
-# indices = np.arange(total_samples)
-# train_indices, val_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+indices = np.arange(total_samples)
+train_indices, val_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
 
-# val_ecgs = ecgs[val_indices]
-# val_labels = labels[val_indices]
-# ecgs = ecgs[train_indices]
-# labels = labels[train_indices]
+val_ecgs = ecgs[val_indices]
+val_labels = labels[val_indices]
+ecgs = ecgs[train_indices]
+labels = labels[train_indices]
 
-# print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
-# class_counts = np.unique(val_labels, return_counts=True)[1] 
-# print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
+print(f"Train - Val: {len(ecgs)} - {len(val_ecgs)}")
+class_counts = np.unique(val_labels, return_counts=True)[1] 
+print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
 class_counts = np.unique(labels, return_counts=True)[1]
 print(f"Train: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
@@ -190,8 +190,8 @@ print(f"Train: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
 psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
 psd = input_scaler.fit_transform(psd)
-# val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
-# val_psd = input_scaler.transform(val_psd)
+val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
+val_psd = input_scaler.transform(val_psd)
 joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 
 # model.fit(
@@ -205,21 +205,21 @@ joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
 # model.load_weights(weights_path)
 
 dtrain = lgb.Dataset(psd, label=labels)
-# dval = lgb.Dataset(val_psd, val_labels)
+dval = lgb.Dataset(val_psd, val_labels)
 lgb.train
-res = lgb.cv(
+res = lgb.train(
     params, dtrain, 
-    num_boost_round = 1000, 
-    # valid_sets=[dval], 
-    # valid_names=["Validation"], 
+    num_boost_round = 1500, 
+    valid_sets=[dval], 
+    valid_names=["Validation"], 
     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
 )
-res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
-print(res)
-print(res, file=res_file)
-res_file.close()
+# res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
+# print(res)
+#_print(res, file=res_file)
+# res_file.close()
 
-exit()
+# exit()
 
 model.save_model(path.join("res", "ecg_ah_lightgbm.txt"))
 model = lgb.Booster(model_file=path.join("res", "ecg_ah_lightgbm.txt"))
@@ -244,7 +244,7 @@ test_labels = [
 mean_res = [[] for _ in range(9)]
 
 for idx, p in enumerate(good_p_list()[15::]):
-    res_file = open(path.join("history", "ah_res.txt"), "a")
+    res_file = open(path.join("history", "ecg_ah_res.txt"), "a")
     
     print(f"\nBenh nhan {p}\n")
     print(f"\nBenh nhan {p}\n", file=res_file)
@@ -276,7 +276,7 @@ for idx, p in enumerate(good_p_list()[15::]):
     
     res_file.close()
     
-res_file = open(path.join("history", "ah_res.txt"), "a")
+res_file = open(path.join("history", "ecg_ah_res.txt"), "a")
 
 print("\nMean Accuracy\n")
 print("\nMean Accuracy\n", file=res_file)
