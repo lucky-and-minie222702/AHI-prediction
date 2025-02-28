@@ -49,7 +49,7 @@ memory_ecgs = memory_ecgs[:last_p:]
 memory_labels = memory_labels[:last_p:]
 
 memory_indices = np.arange(len(memory_labels))
-test_indices = np.arange(len(test_labels))
+test_indices = downsample_indices_manual(test_labels)
 np.random.shuffle(memory_indices)
 np.random.shuffle(test_indices)
 
