@@ -370,6 +370,7 @@ def create_ecg_encoder():
 
 def prototypical_loss(support_set, query_sample):
     support_means = tf.math.reduce_mean(support_set, axis=1)  # Compute class prototypes
+    print(support_means.shape, query_sample.shape)
     dists = tf.norm(query_sample - support_means, axis=1)  # Compute distances
     return tf.nn.softmax(-dists)  # Class probabilities
 
