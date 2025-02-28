@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 show_gpus()
 
 def augment_ecg(signal):
-    signal = time_warp(signal, sigma=0.08)
+    signal = time_warp(signal, sigma=0.075)
     signal = add_noise(signal, noise_std=0.05)
     signal = time_shift(signal, shift_max=20)
     return signal
