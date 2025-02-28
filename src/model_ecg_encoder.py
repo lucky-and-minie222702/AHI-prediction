@@ -9,6 +9,7 @@ def augment_ecg(signal):
     signal = time_warp(signal, sigma=0.075)
     signal = add_noise(signal, noise_std=0.05)
     signal = time_shift(signal, shift_max=20)
+    signal *= np.random.randint(80, 120) / 100
     return signal
 
 def data_generator(X, y, X_aug, batch_size):
@@ -31,30 +32,28 @@ def data_generator(X, y, X_aug, batch_size):
     ))
 
 
-def contrastive_loss(temperature=1):
+def contrastive_loss(temperature):
     def loss_fn(y_true, y_pred):
         hidden = y_pred
-        LARGE_NUM = 1e9
         
         hidden = tf.math.l2_normalize(hidden, -1)
         hidden1, hidden2 = tf.split(hidden, 2, 0)
         batch_size = tf.shape(hidden1)[0]
         
-        labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
-        masks = tf.one_hot(tf.range(batch_size), batch_size)
+        labels = tf.range(batch_size)
 
         logits_aa = tf.matmul(hidden1, hidden1, transpose_b=True) / temperature
-        logits_aa = logits_aa - masks * LARGE_NUM
         logits_bb = tf.matmul(hidden2, hidden2, transpose_b=True) / temperature
-        logits_bb = logits_bb - masks * LARGE_NUM
         logits_ab = tf.matmul(hidden1, hidden2, transpose_b=True) / temperature
         logits_ba = tf.matmul(hidden2, hidden1, transpose_b=True) / temperature
 
-        loss_a = tf.nn.softmax_cross_entropy_with_logits(
-            labels, tf.concat([logits_ab, logits_aa], 1))
-        loss_b = tf.nn.softmax_cross_entropy_with_logits(
-            labels, tf.concat([logits_ba, logits_bb], 1))
-        loss = tf.reduce_mean(loss_a + loss_b)
+        loss_aa = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_aa, from_logits=True)
+        loss_ab = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ab, from_logits=True)
+        loss_bb = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_bb, from_logits=True)
+        loss_ba = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ba, from_logits=True)
+        
+        
+        loss = tf.reduce_mean(loss_aa + loss_ab + loss_bb + loss_ba)
         return loss
     return loss_fn
         
@@ -62,7 +61,7 @@ def create_model():
     inp = layers.Input(shape=(1000, 1))
     norm_inp = layers.Normalization()(inp)
     
-    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
@@ -79,16 +78,16 @@ def create_model():
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(128)(encoder_out)
+    ph = layers.Dense(256)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(32)(ph)
+    ph_out = layers.Dense(128)(ph)
     
     encoder = model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
     model.compile(
         optimizer = "adam", 
-        loss = contrastive_loss(),
+        loss = contrastive_loss(temperature=0.5),
     )
 
     return encoder, model
