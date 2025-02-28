@@ -32,7 +32,7 @@ for idx, p in enumerate(p_list, start=1):
     memory_ecgs.append(sig)
     memory_labels.append(label) 
     
-    if idx == 10:
+    if idx == 25:
         last_p  = sum([len(e) for e in memory_ecgs])
 
 memory_ecgs = np.vstack(memory_ecgs)
@@ -67,7 +67,7 @@ print(f"Class 0: {class_count[0]} - Class 1: {class_count[1]}")
 
 print("Test - Prediction")
 for idx in range(len(test_labels)):
-    test_preds.append(np.argmax(predict_using_ecg_encoder(ecg_encoder, memory_ecgs, memory_labels, test_ecgs[idx], num_sample_per_class=5000)))
+    test_preds.append(np.argmax(predict_using_ecg_encoder(ecg_encoder, memory_ecgs, memory_labels, test_ecgs[idx], num_sample_per_class=15000)))
     print(f"{idx} / {len(test_labels)}: {test_labels[idx]}  - {test_preds[idx]} Accuracy: {sum([test_labels[i] == test_preds[i] for i in range(len(test_preds))]) / len(test_preds)}", end="\r")
     sys.stdout.flush()
 
