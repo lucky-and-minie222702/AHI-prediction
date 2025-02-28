@@ -67,14 +67,14 @@ def create_model():
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, change_sample=True)
+    conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
     
     fc = SEBlock(reduction_ratio=1)(conv)
     fc = layers.GlobalAvgPool1D()(fc)
