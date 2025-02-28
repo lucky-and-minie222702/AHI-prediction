@@ -93,7 +93,7 @@ model.save_weights(weights_path)
 
 epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 8192
+batch_size = 4096
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 250,
