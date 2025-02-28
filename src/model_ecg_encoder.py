@@ -39,12 +39,12 @@ def contrastive_loss(temperature=1):
         hidden1, hidden2 = tf.split(hidden, 2, 0)
         batch_size = tf.shape(hidden1)[0]
         
-        labels = tf.one_hot(tf.range(batch_size), batch_size)
         logits_ab = tf.matmul(hidden1, hidden2, transpose_b=True) / temperature
         logits_ba = tf.matmul(hidden2, hidden1, transpose_b=True) / temperature
+        labels = tf.one_hot(tf.range(batch_size), batch_size)
 
-        loss_a = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ab, from_logits=True)
-        loss_b = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ba, from_logits=True)
+        loss_a = tf.keras.losses.categorical_crossentropy(labels, logits_ab, from_logits=True)
+        loss_b = tf.keras.losses.categorical_crossentropy(labels, logits_ba, from_logits=True)
         loss = tf.reduce_mean(loss_a + loss_b)
         return loss
     return loss_fn
