@@ -93,7 +93,6 @@ def create_model():
 
 model = create_model()
 model.summary()
-exit()
 show_params(model, "ecg_encoder")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
@@ -111,20 +110,20 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_best_only = True,
     save_weights_only = True,
 )
-# cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
+cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
 seg_len = 30
 extra_seg_len = 10
-step_size = 5
+step_size = 15
 
 ecgs = []
 labels = []
 
 p_list = good_p_list()
 
-scaler = MinMaxScaler()
+scaler = StandardScaler()
 
 for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
@@ -163,7 +162,7 @@ model.fit(
     epochs = epochs,
     validation_data = (val_ecgs, val_labels),
     batch_size = batch_size,
-    callbacks = [cb_early_stopping, cb_lr, cb_checkpoint],
+    callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
