@@ -80,10 +80,10 @@ def create_model():
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(256)(encoder_out)
+    ph = layers.Dense(128)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(128)(ph)
+    ph_out = layers.Dense(32)(ph)
     
     encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
@@ -113,7 +113,7 @@ cb_early_stopping = cbk.EarlyStopping(
 #     save_weights_only = True,
 # )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(base_lr=0.001, warmup_steps=10, total_steps=epochs, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epochs=epochs, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
