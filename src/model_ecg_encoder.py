@@ -158,6 +158,7 @@ train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in
 val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
 
 steps_per_epoch = total_samples // batch_size
+validation_steps = len(val_labels) // batch_size
 
 
 start_time = timer()
@@ -166,6 +167,7 @@ model.fit(
     epochs = epochs,
     validation_data = val_generator,
     steps_per_epoch = steps_per_epoch,
+    validation_steps = validation_steps,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
 total_time = timer() - start_time
