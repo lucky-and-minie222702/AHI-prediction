@@ -61,6 +61,7 @@ test_labels = test_labels[test_indices]
 test_preds = []
 print("Test - Prediction")
 for idx in range(len(test_labels)):
+    print(test_ecgs[idx].shape)
     test_preds.append(np.argmax(predict_using_ecg_encoder(memory_ecgs, memory_labels, test_ecgs[idx], num_sample_per_class=5000)))
     print(f"{test_labels[idx] - test_preds[idx]}", end="\r")
     sys.stdout.flush()
