@@ -40,17 +40,15 @@ def contrastive_loss(temperature=1):
         hidden1, hidden2 = tf.split(hidden, 2, 0)
         batch_size = tf.shape(hidden1)[0]
         
-        hidden1_large = hidden1
-        hidden2_large = hidden2
         labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
         masks = tf.one_hot(tf.range(batch_size), batch_size)
 
-        logits_aa = tf.matmul(hidden1, hidden1_large, transpose_b=True) / temperature
+        logits_aa = tf.matmul(hidden1, hidden1, transpose_b=True) / temperature
         logits_aa = logits_aa - masks * LARGE_NUM
-        logits_bb = tf.matmul(hidden2, hidden2_large, transpose_b=True) / temperature
+        logits_bb = tf.matmul(hidden2, hidden2, transpose_b=True) / temperature
         logits_bb = logits_bb - masks * LARGE_NUM
-        logits_ab = tf.matmul(hidden1, hidden2_large, transpose_b=True) / temperature
-        logits_ba = tf.matmul(hidden2, hidden1_large, transpose_b=True) / temperature
+        logits_ab = tf.matmul(hidden1, hidden2, transpose_b=True) / temperature
+        logits_ba = tf.matmul(hidden2, hidden1, transpose_b=True) / temperature
 
         loss_a = tf.nn.softmax_cross_entropy_with_logits(
             labels, tf.concat([logits_ab, logits_aa], 1))
@@ -61,14 +59,13 @@ def contrastive_loss(temperature=1):
     return loss_fn
         
 def create_model():
-    inp = layers.Input(shape=(3000, 1))
+    inp = layers.Input(shape=(1000, 1))
     norm_inp = layers.Normalization()(inp)
     
     ds_conv = layers.Conv1D(filters=64, kernel_size=7, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
-    
     
     conv = ResNetBlock(1, ds_conv, 64, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 64, 3)
@@ -81,7 +78,7 @@ def create_model():
     
     fc = SEBlock(reduction_ratio=1)(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    out = layers.Dense(256)(fc)
+    out = layers.Dense(128)(fc)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -99,7 +96,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 1024
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
@@ -111,12 +108,12 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-5)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
-seg_len = 30
-extra_seg_len = 10
-step_size = 15
+seg_len = 10
+extra_seg_len = 0
+step_size = 10
 
 ecgs = []
 labels = []
