@@ -369,8 +369,7 @@ def create_ecg_encoder():
     
 
 def prototypical_loss(support_set, query_sample):
-    support_means = tf.math.reduce_mean(support_set, axis=1)  # Compute class prototypes
-    print(support_means.shape, query_sample.shape)
+    support_means = tf.reduce_mean(support_set, axis=1)  # Compute class prototypes
     dists = tf.norm(query_sample - support_means, axis=1)  # Compute distances
     return tf.nn.softmax(-dists)  # Class probabilities
 
@@ -391,7 +390,6 @@ def predict_using_ecg_encoder(ecg_encoder, X_ecg, y_labels, X_new, num_sample_pe
     support_ecgs = tf.convert_to_tensor(support_ecgs)
     query_ecg = tf.convert_to_tensor([X_new])
     cls0 = ecg_encoder(support_ecgs[0])
-    print(support_ecgs[0].shape)
     cls1 = ecg_encoder(support_ecgs[1])
-    probs = prototypical_loss(tf.concat([cls0, cls1], axis=0), ecg_encoder(query_ecg))
+    probs = prototypical_loss(tf.stack([cls0, cls1], axis=0), ecg_encoder(query_ecg))
     return probs.numpy()
