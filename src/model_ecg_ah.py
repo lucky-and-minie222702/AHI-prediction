@@ -44,7 +44,7 @@ memory_labels = np.mean(memory_labels, axis=-1)
 memory_labels = np.round(memory_labels)
 
 test_ecgs = memory_ecgs[last_p::]
-test_labels = test_labels[last_p::]
+test_labels = memory_labels[last_p::]
 memory_ecgs = memory_ecgs[:last_p:]
 memory_labels = memory_labels[:last_p:]
 
