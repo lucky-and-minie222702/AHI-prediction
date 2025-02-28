@@ -13,16 +13,17 @@ def augment_ecg(signal):
 
 def data_generator(X, y, X_aug, batch_size):
     def generator():
-        indices = np.arange(len(X))
-        np.random.shuffle(indices)
-        for start in range(0, len(X), batch_size):
-            end = min(start + batch_size, len(X))
-            batch_indices = indices[start:end]
-            X_batch = X[batch_indices]
-            y_batch = y[batch_indices]
-            X_aug_batch = X_aug[batch_indices]
-            y_aug_batch = y_batch
-            yield np.concatenate([X_batch, X_aug_batch], axis=0), np.concatenate([y_batch, y_aug_batch], axis=0)
+        while True:
+            indices = np.arange(len(X))
+            np.random.shuffle(indices)
+            for start in range(0, len(X), batch_size):
+                end = min(start + batch_size, len(X))
+                batch_indices = indices[start:end]
+                X_batch = X[batch_indices]
+                y_batch = y[batch_indices]
+                X_aug_batch = X_aug[batch_indices]
+                y_aug_batch = y_batch
+                yield np.concatenate([X_batch, X_aug_batch], axis=0), np.concatenate([y_batch, y_aug_batch], axis=0)
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
         tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32),
@@ -98,7 +99,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 1024 + 512
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
