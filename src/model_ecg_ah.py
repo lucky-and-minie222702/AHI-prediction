@@ -8,115 +8,88 @@ show_gpus()
 
 input_scaler = StandardScaler()
         
-# def create_model():
-#     inp = layers.Input(shape=(249,))
-#     norm_inp = layers.Normalization()(inp)
+def create_model():
+    inp = layers.Input(shape=(499,))
+    norm_inp = layers.Normalization()(inp)
     
-#     # feature selection
-#     s = layers.Dense(249)(norm_inp)  # score
-#     s = layers.BatchNormalization()(s)
-#     s = layers.Activation("relu")(s)
-#     s = layers.Dropout(rate=0.5)(s)
-#     s = layers.Dense(249)(s)
-#     s = layers.BatchNormalization()(s)
-#     s = layers.Activation("sigmoid")(s)
-#     fs = layers.Multiply()([s, norm_inp])
-#     fs = layers.Normalization()(fs)
-    
-#     shortcut = layers.Dense(256)(fs)
-#     shortcut = layers.BatchNormalization()(shortcut)
-#     shortcut = layers.Activation("relu")(shortcut)
-#     shortcut = layers.Dropout(rate=0.5)(shortcut)
-#     shortcut = layers.Dense(256)(shortcut)
-#     shortcut = layers.BatchNormalization()(shortcut)
-#     shortcut = layers.Activation("relu")(shortcut)
-#     shortcut = layers.Dropout(rate=0.5)(shortcut)
-#     x = layers.Dense(512)(shortcut)
-#     x = layers.BatchNormalization()(x)
-#     x = layers.Activation("relu")(x)
-#     x = layers.Dropout(rate=0.5)(x)
-#     x = layers.Dense(512)(shortcut)
-#     x = layers.BatchNormalization()(x)
-#     x = layers.Activation("relu")(x)
-#     x = layers.Dropout(rate=0.5)(x)
-#     x = layers.Dense(256)(x)
-#     x = layers.Add()([x, shortcut])
-#     x = layers.BatchNormalization()(x)
-#     x = layers.Activation("relu")(x)
-#     x = layers.Dropout(rate=0.5)(x)
-#     x = layers.Dense(128)(x)
-#     x = layers.BatchNormalization()(x)
-#     x = layers.Activation("relu")(x)
-#     out = layers.Dense(1, activation="sigmoid")(x)
+    # feature selection
+    s = layers.Dense(299)(norm_inp)  # score
+    s = layers.BatchNormalization()(s)
+    s = layers.Activation("relu")(s)
+    s = layers.Dropout(rate=0.5)(s)
+    s = layers.Dense(499)(s)
+    s = layers.BatchNormalization()(s)
+    s = layers.Activation("sigmoid")(s)
+    fs = layers.Multiply()([s, norm_inp])
+    fs = layers.Normalization()(fs)
 
-    # expanded_inp = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(fs)
+    expanded_inp = layers.Lambda(lambda x: tf.expand_dims(x, axis=-1))(fs)
     
-    # conv = ResNetBlock(1, expanded_inp, 64, 3, change_sample=True, num_layers=3)
-    # conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = ResNetBlock(1, expanded_inp, 64, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 64, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    # conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3)
-    # conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 128, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    # conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3)
-    # conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 256, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    # conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3)
-    # conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, num_layers=3)
+    conv = ResNetBlock(1, conv, 512, 3, num_layers=3)
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    # fc = SEBlock(reduction_ratio=1)(conv)
-    # fc = layers.GlobalAvgPool1D()(fc)
-    # out = layers.Dense(1, activation="sigmoid")(fc)
+    fc = SEBlock(reduction_ratio=1)(conv)
+    fc = layers.GlobalAvgPool1D()(fc)
+    out = layers.Dense(1, activation="sigmoid")(fc)
     
     
-    # model = Model(inputs=inp, outputs=out)
-    # model.compile(
-    #     optimizer = "adam", 
-    #     loss = "binary_crossentropy",
-    #     metrics = [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)] + ["binary_crossentropy"],
-    # )
+    model = Model(inputs=inp, outputs=out)
+    model.compile(
+        optimizer = "adam", 
+        loss = "binary_crossentropy",
+        metrics = [metrics.BinaryAccuracy(name = f"t=0.{t}", threshold = t/10) for t in range(1, 10)] + ["binary_crossentropy"],
+    )
 
-    # return model
+    return model
 
-# model = create_model()
-# model.summary()
-# show_params(model, "ecg_ah")
-# weights_path = path.join("res", "ecg_ah.weights.h5")
-# encoder = load_encoder()
-# model.save_weights(weights_path)
+model = create_model()
+model.summary()
+show_params(model, "ecg_ah")
+weights_path = path.join("res", "ecg_ah.weights.h5")
+model.save_weights(weights_path)
 
-# epochs = 1000 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 1000 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-# batch_size = 512
-# cb_early_stopping = cbk.EarlyStopping(
-#     restore_best_weights = True,
-#     start_from_epoch = 500,
-#     patience = 10,
-#     mode = "min",
-#     monitor = "val_binary_crossentropy"
-# )
-# cb_checkpoint = cbk.ModelCheckpoint(
-#     weights_path, 
-#     save_best_only = True,
-#     save_weights_only = True,
-#     mode = "min",
-#     monitor = "val_binary_crossentropy"
-# )
-# cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
-# cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
-# cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
+batch_size = 512
+cb_early_stopping = cbk.EarlyStopping(
+    restore_best_weights = True,
+    start_from_epoch = 500,
+    patience = 10,
+    mode = "min",
+    monitor = "val_binary_crossentropy"
+)
+cb_checkpoint = cbk.ModelCheckpoint(
+    weights_path, 
+    save_best_only = True,
+    save_weights_only = True,
+    mode = "min",
+    monitor = "val_binary_crossentropy"
+)
+cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
-params = {
-    "objective": "binary",  # Binary classification
-    "metric": ["binary_logloss"],
-    "boosting_type": "gbdt",  # Gradient boosting decision tree
-    "num_leaves": 512, 
-    "learning_rate": 0.075,
-    # "device_type": "cuda",
-}
+# params = {
+#     "objective": "binary",  # Binary classification
+#     "metric": ["binary_logloss"],
+#     "boosting_type": "gbdt",  # Gradient boosting decision tree
+#     "num_leaves": 512, 
+#     "learning_rate": 0.075,
+#     # "device_type": "cuda",
+# }
 
 seg_len = 30
 extra_seg_len = 10
@@ -138,10 +111,7 @@ for idx, p in enumerate(p_list, start=1):
     label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
     
     ecgs.append(sig)
-    labels.append(label)
-
-# train
- 
+    labels.append(label) 
  
 ecgs = np.vstack(ecgs)
 ecgs = np.vstack([
@@ -157,7 +127,6 @@ mean_labels = np.mean(labels, axis=-1)
 labels = np.round(mean_labels)
 
 new_indices = downsample_indices_manual(labels)
-# new_indices = np.arange(len(ecgs))
 np.random.shuffle(new_indices)
 ecgs = ecgs[new_indices]
 labels = labels[new_indices]
@@ -181,34 +150,26 @@ print(f"Val: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}")
 class_counts = np.unique(labels, return_counts=True)[1]
 print(f"Train: Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 
-psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in ecgs])
-psd = input_scaler.fit_transform(psd)
-val_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in val_ecgs])
-val_psd = input_scaler.transform(val_psd)
-test_psd = np.array([calc_psd(e, start_f=5, end_f=30) for e in test_ecgs])
-test_psd = input_scaler.transform(test_psd)
-joblib.dump(input_scaler, path.join("res", "ecg_psd.scaler"))
-
-# model.fit(
-#     psd,
-#     labels,
-#     epochs = epochs,
-#     validation_data = (val_psd, val_labels),
-#     batch_size = batch_size,
-#     callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
-# )
-# model.load_weights(weights_path)
-
-dtrain = lgb.Dataset(psd, label=labels)
-dval = lgb.Dataset(val_psd, val_labels)
 start_time = timer()
-model = lgb.train(
-    params, dtrain, 
-    num_boost_round = 10000, 
-    valid_sets = [dval], 
-    valid_names = ["Validation"], 
-    callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
+model.fit(
+    ecgs,
+    labels,
+    epochs = epochs,
+    validation_data = (val_ecgs, val_labels),
+    batch_size = batch_size,
+    callbacks = [cb_early_stopping, cb_lr, cb_his, cb_checkpoint],
 )
+model.load_weights(weights_path)
+
+# dtrain = lgb.Dataset(psd, label=labels)
+# dval = lgb.Dataset(val_psd, val_labels)
+# model = lgb.train(
+#     params, dtrain, 
+#     num_boost_round = 10000, 
+#     valid_sets = [dval], 
+#     valid_names = ["Validation"], 
+#     callbacks = [lgb.early_stopping(stopping_rounds=20, first_metric_only=True)]
+# )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
@@ -224,7 +185,7 @@ class_counts = np.unique(test_labels, return_counts=True)[1]
 print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n")
 print(f"Class 0: {class_counts[0]} - Class 1: {class_counts[1]}\n", file=res_file)
 
-preds = model.predict(test_psd)
+preds = model.predict(test_ecgs)
 
 np.save(path.join("history", f"ecg_ah_predontest"), np.stack([test_labels, preds], axis=1))
 
