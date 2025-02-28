@@ -34,17 +34,26 @@ def data_generator(X, y, X_aug, batch_size):
 def contrastive_loss(temperature=1):
     def loss_fn(y_true, y_pred):
         hidden = y_pred
+        LARGE_NUM = 1e9
         
         hidden = tf.math.l2_normalize(hidden, -1)
         hidden1, hidden2 = tf.split(hidden, 2, 0)
         batch_size = tf.shape(hidden1)[0]
         
+        labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
+        masks = tf.one_hot(tf.range(batch_size), batch_size)
+
+        logits_aa = tf.matmul(hidden1, hidden1, transpose_b=True) / temperature
+        logits_aa = logits_aa - masks * LARGE_NUM
+        logits_bb = tf.matmul(hidden2, hidden2, transpose_b=True) / temperature
+        logits_bb = logits_bb - masks * LARGE_NUM
         logits_ab = tf.matmul(hidden1, hidden2, transpose_b=True) / temperature
         logits_ba = tf.matmul(hidden2, hidden1, transpose_b=True) / temperature
-        labels = tf.range(batch_size)
 
-        loss_a = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ab, from_logits=True)
-        loss_b = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ba, from_logits=True)
+        loss_a = tf.nn.softmax_cross_entropy_with_logits(
+            labels, tf.concat([logits_ab, logits_aa], 1))
+        loss_b = tf.nn.softmax_cross_entropy_with_logits(
+            labels, tf.concat([logits_ba, logits_bb], 1))
         loss = tf.reduce_mean(loss_a + loss_b)
         return loss
     return loss_fn
@@ -64,11 +73,9 @@ def create_model():
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
     
     fc = layers.GlobalAvgPool1D()(conv)
-    out = layers.Dense(512)(fc)
+    out = layers.Dense(256)(fc)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -86,7 +93,7 @@ model.save_weights(weights_path)
 
 epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 1024
+batch_size = 2048
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 250,
