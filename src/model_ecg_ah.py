@@ -46,7 +46,7 @@ memory_labels = np.round(memory_labels)
 test_ecgs = memory_ecgs[last_p::]
 test_labels = test_labels[last_p::]
 memory_ecgs = memory_ecgs[:last_p:]
-test_ecgs = test_ecgs[:last_p:]
+memory_ecgs = test_ecgs[:last_p:]
 
 memory_indices = np.arange(len(memory_labels))
 test_indices = np.arange(len(test_labels))
