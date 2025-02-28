@@ -384,12 +384,11 @@ def generate_support_query_sets(X, y, num_classes, num_samples_per_class):
     
     return np.array(support_set), np.array(support_labels)
 
-def predict_using_ecg_encoder(X_ecg, y_labels, X_new, num_sample_per_class):
+def predict_using_ecg_encoder(ecg_encoder, X_ecg, y_labels, X_new, num_sample_per_class):
     support_ecgs, _ = generate_support_query_sets(X_ecg, y_labels, num_classes=2, num_samples_per_class=num_sample_per_class)
-    ecg_encoder = create_ecg_encoder()
     # Convert to TensorFlow format
     support_ecgs = tf.convert_to_tensor(support_ecgs)
-    query_ecg = tf.convert_to_tensor(X_new)
+    query_ecg = tf.convert_to_tensor([X_new])
     cls0 = ecg_encoder(support_ecgs[0])
     print(support_ecgs[0].shape)
     cls1 = ecg_encoder(support_ecgs[1])
