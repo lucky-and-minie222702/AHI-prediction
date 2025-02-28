@@ -69,9 +69,12 @@ def create_model():
     
     conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     
     fc = layers.GlobalAvgPool1D()(conv)
@@ -93,7 +96,7 @@ model.save_weights(weights_path)
 
 epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 4096
+batch_size = 1024
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 250,
