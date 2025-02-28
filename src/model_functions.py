@@ -339,3 +339,56 @@ class WarmupCosineDecayScheduler(cbk.Callback):
             lr = self.min_lr + (self.target_lr - self.min_lr) * (1 + np.cos(np.pi * decay_epoch / decay_total)) / 2
             
         tf.keras.backend.set_value(self.model.optimizer.lr, lr)
+        
+        
+## 
+def create_ecg_encoder():
+    inp = layers.Input(shape=(1000, 1))
+    norm_inp = layers.Normalization()(inp)
+    
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.BatchNormalization()(ds_conv)
+    ds_conv = layers.Activation("relu")(ds_conv)
+    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
+    
+    conv = ResNetBlock(1, ds_conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    
+    fc = layers.GlobalAvgPool1D()(conv)
+    out = layers.Dense(256)(fc)
+    
+    model = Model(inputs=inp, outputs=out)
+    model.load_weights(path.join("res", "ecg_encoder.weights.h5"))
+    
+    return model
+    
+    
+
+def prototypical_loss(support_set, query_sample):
+    support_means = tf.math.reduce_mean(support_set, axis=1)  # Compute class prototypes
+    dists = tf.norm(query_sample - support_means, axis=1)  # Compute distances
+    return tf.nn.softmax(-dists)  # Class probabilities
+
+def generate_support_query_sets(X, y, num_classes, num_samples_per_class):
+    support_set, support_labels = [], []
+    
+    for cls in range(num_classes):
+        indices = np.where(y == cls)[0]
+        sampled_indices = np.random.choice(indices, size=num_samples_per_class, replace=False)
+        support_set.append(X[sampled_indices[:-1]])
+        support_labels.append(np.full((num_samples_per_class,), cls))
+    
+    return np.array(support_set), np.array(support_labels)
+
+def predict_using_ecg_encoder(X_ecg, y_labels, X_new, num_sample_per_class):
+    support_ecgs, _ = generate_support_query_sets(X_ecg, y_labels, num_classes=2, num_samples_per_class=num_sample_per_class)
+    ecg_encoder = create_ecg_encoder()
+    # Convert to TensorFlow format
+    support_ecgs = tf.convert_to_tensor(support_ecgs)
+    query_ecg = tf.convert_to_tensor(query_ecg)
+    probs = prototypical_loss(ecg_encoder(support_ecgs), ecg_encoder(query_ecg))
+    return probs.numpy()
