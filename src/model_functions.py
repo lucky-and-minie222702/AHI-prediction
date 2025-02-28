@@ -390,8 +390,8 @@ def predict_using_ecg_encoder(X_ecg, y_labels, X_new, num_sample_per_class):
     # Convert to TensorFlow format
     support_ecgs = tf.convert_to_tensor(support_ecgs)
     query_ecg = tf.convert_to_tensor(X_new)
-    print(query_ecg.shape)
     cls0 = ecg_encoder(support_ecgs[0])
+    print(support_ecgs[0].shape)
     cls1 = ecg_encoder(support_ecgs[1])
     probs = prototypical_loss(tf.concat([cls0, cls1], axis=0), ecg_encoder(query_ecg))
     return probs.numpy()
