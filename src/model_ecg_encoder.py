@@ -103,7 +103,7 @@ batch_size = 1024
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 250,
-    patience = 10,
+    patience = 20,
 )
 # cb_checkpoint = cbk.ModelCheckpoint(
 #     weights_path, 
