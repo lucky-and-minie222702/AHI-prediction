@@ -34,26 +34,17 @@ def data_generator(X, y, X_aug, batch_size):
 def contrastive_loss(temperature=1):
     def loss_fn(y_true, y_pred):
         hidden = y_pred
-        LARGE_NUM = 1e9
         
         hidden = tf.math.l2_normalize(hidden, -1)
         hidden1, hidden2 = tf.split(hidden, 2, 0)
         batch_size = tf.shape(hidden1)[0]
         
-        labels = tf.one_hot(tf.range(batch_size), batch_size * 2)
-        masks = tf.one_hot(tf.range(batch_size), batch_size)
-
-        logits_aa = tf.matmul(hidden1, hidden1, transpose_b=True) / temperature
-        logits_aa = logits_aa - masks * LARGE_NUM
-        logits_bb = tf.matmul(hidden2, hidden2, transpose_b=True) / temperature
-        logits_bb = logits_bb - masks * LARGE_NUM
+        labels = tf.one_hot(tf.range(batch_size), batch_size)
         logits_ab = tf.matmul(hidden1, hidden2, transpose_b=True) / temperature
         logits_ba = tf.matmul(hidden2, hidden1, transpose_b=True) / temperature
 
-        loss_a = tf.nn.softmax_cross_entropy_with_logits(
-            labels, tf.concat([logits_ab, logits_aa], 1))
-        loss_b = tf.nn.softmax_cross_entropy_with_logits(
-            labels, tf.concat([logits_ba, logits_bb], 1))
+        loss_a = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ab, from_logits=True)
+        loss_b = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ba, from_logits=True)
         loss = tf.reduce_mean(loss_a + loss_b)
         return loss
     return loss_fn
@@ -62,7 +53,7 @@ def create_model():
     inp = layers.Input(shape=(1000, 1))
     norm_inp = layers.Normalization()(inp)
     
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, padding="same")(norm_inp)
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
