@@ -62,34 +62,38 @@ def create_model():
     inp = layers.Input(shape=(1000, 1))
     norm_inp = layers.Normalization()(inp)
     
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
+    ds_conv = layers.Conv1D(filters=32, kernel_size=7, strides=2, padding="same")(norm_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
     conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
+
+    encoder_out = layers.GlobalAvgPool1D()(conv)
     
-    fc = layers.GlobalAvgPool1D()(conv)
-    out = layers.Dense(256)(fc)
+    # projection head
+    ph = layers.Dense(128)(encoder_out)
+    ph = layers.BatchNormalization()(ph)
+    ph = layers.Activation("relu")(ph)
+    ph_out = layers.Dense(32)(ph)
     
-    
-    model = Model(inputs=inp, outputs=out)
+    encoder = model(inputs=inp, outputs=encoder_out)
+    model = Model(inputs=inp, outputs=ph_out)
     model.compile(
         optimizer = "adam", 
         loss = contrastive_loss(),
     )
 
-    return model
+    return encoder, model
 
-model = create_model() 
+encoder, model = create_model() 
 show_params(model, "ecg_encoder")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
@@ -102,13 +106,14 @@ cb_early_stopping = cbk.EarlyStopping(
     start_from_epoch = 250,
     patience = 10,
 )
-cb_checkpoint = cbk.ModelCheckpoint(
-    weights_path, 
-    save_best_only = True,
-    save_weights_only = True,
-)
+# cb_checkpoint = cbk.ModelCheckpoint(
+#     weights_path, 
+#     save_best_only = True,
+#     save_weights_only = True,
+# )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
+cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
 seg_len = 10
@@ -165,7 +170,7 @@ model.fit(
     validation_data = val_generator,
     steps_per_epoch = steps_per_epoch,
     validation_steps = validation_steps,
-    callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
+    callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
