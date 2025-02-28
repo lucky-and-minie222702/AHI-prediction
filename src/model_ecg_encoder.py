@@ -83,7 +83,7 @@ def create_model():
     ph = layers.Activation("relu")(ph)
     ph_out = layers.Dense(128)(ph)
     
-    encoder = model(inputs=inp, outputs=encoder_out)
+    encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
     model.compile(
         optimizer = "adam", 
@@ -93,7 +93,7 @@ def create_model():
     return encoder, model
 
 encoder, model = create_model() 
-show_params(model, "ecg_encoder")
+show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
