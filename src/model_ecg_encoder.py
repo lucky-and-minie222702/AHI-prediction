@@ -11,7 +11,7 @@ def augment_ecg(signal):
     signal = time_shift(signal, shift_max=20)
     return signal
 
-def data_generator(X, y, X_aug,batch_size):
+def data_generator(X, y, X_aug, batch_size):
     def generator():
         indices = np.arange(len(X))
         np.random.shuffle(indices)
@@ -91,8 +91,7 @@ def create_model():
 
     return model
 
-model = create_model()
-model.summary()
+model = create_model() 
 show_params(model, "ecg_encoder")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
@@ -140,7 +139,6 @@ ecgs = np.vstack(ecgs)
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 
 labels = np.vstack(labels)
-labels = np.vstack([labels, labels])
 labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 labels = np.mean(labels, axis=-1)
 labels = np.round(labels)
@@ -153,15 +151,20 @@ val_labels = labels[val_indices]
 ecgs = ecgs[train_indices]
 labels = labels[train_indices]
 
-print(f"Total samples: {len(labels)}\n")
+total_samples = len(labels)
+print(f"Total samples: {total_samples}\n")
+train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in ecgs]), batch_size=batch_size)
+val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
+
+steps_per_epoch = total_samples // batch_size
+
 
 start_time = timer()
 model.fit(
-    ecgs,
-    labels,
+    train_generator,
     epochs = epochs,
-    validation_data = (val_ecgs, val_labels),
-    batch_size = batch_size,
+    validation_data = val_generator,
+    steps_per_epoch = steps_per_epoch,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
 total_time = timer() - start_time
