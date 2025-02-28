@@ -55,8 +55,8 @@ np.random.shuffle(test_indices)
 
 memory_ecgs = memory_ecgs[memory_indices]
 memory_labels = memory_labels[memory_indices]
-test_ecgs = memory_ecgs[test_indices]
-test_labels = memory_labels[test_indices]
+test_ecgs = test_ecgs[test_indices]
+test_labels = test_labels[test_indices]
 
 test_preds = []
 for idx in range(len(test_labels)):
