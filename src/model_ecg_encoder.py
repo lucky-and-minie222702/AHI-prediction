@@ -113,7 +113,7 @@ cb_early_stopping = cbk.EarlyStopping(
 #     save_weights_only = True,
 # )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecaySchedule(base_lr=0.001, warmup_steps=10, total_steps=epochs, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(base_lr=0.001, warmup_steps=10, total_steps=epochs, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 

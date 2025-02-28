@@ -320,43 +320,25 @@ def show_data_size(train: np.ndarray, test: np.ndarray, val: np.ndarray):
             print(f" | Class {cls[idx]}: {counts[idx]}")
     
 
-class WarmupSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(self, base_lr, warmup_steps):
-        super().__init__()
-        self.base_lr = base_lr
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        # Linear warmup: Increase LR gradually over warmup steps
-        warmup_factor = tf.cast(step, tf.float32) / tf.cast(self.warmup_steps, tf.float32)
-        return self.base_lr * tf.minimum(1.0, warmup_factor)
-
-
-class CosineDecaySchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(self, base_lr, total_steps, min_lr):
-        super().__init__()
-        self.base_lr = base_lr
-        self.total_steps = total_steps
+class WarmupCosineDecayScheduler(cbk.Callback):
+    def __init__(self, warmup_epochs, total_epochs, target_lr, min_lr):
+        super(WarmupCosineDecayScheduler, self).__init__()
+        self.warmup_epochs = warmup_epochs
+        self.total_epochs = total_epochs
+        self.target_lr = target_lr
         self.min_lr = min_lr
 
-    def __call__(self, step):
-        decay_factor = 0.5 * (1 + tf.cos(np.pi * tf.cast(step, tf.float32) / self.total_steps))
-        return self.min_lr + (self.base_lr - self.min_lr) * decay_factor
-
-class WarmupCosineDecaySchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(self, base_lr, warmup_steps, total_steps, min_lr):
-        super().__init__()
-        self.warmup_schedule = WarmupSchedule(base_lr, warmup_steps)
-        self.cosine_decay_schedule = CosineDecaySchedule(base_lr, total_steps, min_lr)
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        return tf.cond(
-            step < self.warmup_steps,
-            lambda: self.warmup_schedule(step),
-            lambda: self.cosine_decay_schedule(step - self.warmup_steps)
-        )
-
+    def on_epoch_begin(self, epoch, logs=None):
+        if epoch < self.warmup_epochs:
+            # Linear warmup
+            lr = (epoch + 1) / self.warmup_epochs * self.target_lr
+        else:
+            # Cosine Decay
+            decay_epoch = epoch - self.warmup_epochs
+            decay_total = self.total_epochs - self.warmup_epochs
+            lr = self.min_lr + (self.target_lr - self.min_lr) * (1 + np.cos(np.pi * decay_epoch / decay_total)) / 2
+            
+        tf.keras.backend.set_value(self.model.optimizer.lr, lr)
         
         
 ## 
