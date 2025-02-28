@@ -76,9 +76,8 @@ def create_model():
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
     
-    fc = SEBlock(reduction_ratio=1)(conv)
-    fc = layers.GlobalAvgPool1D()(fc)
-    out = layers.Dense(128)(fc)
+    fc = layers.GlobalAvgPool1D()(conv)
+    out = layers.Dense(512)(fc)
     
     
     model = Model(inputs=inp, outputs=out)
@@ -94,12 +93,12 @@ show_params(model, "ecg_encoder")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 500 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 1024
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 250,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -108,7 +107,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-5)
+cb_lr = WarmupCosineDecayScheduler(warmup_epochs=10, total_epochs=epochs, target_lr=0.001, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 
 seg_len = 10
