@@ -379,7 +379,7 @@ def generate_support_query_sets(X, y, num_classes, num_samples_per_class):
     for cls in range(num_classes):
         indices = np.where(y == cls)[0]
         sampled_indices = np.random.choice(indices, size=num_samples_per_class, replace=False)
-        support_set.append(X[sampled_indices[:-1]])
+        support_set.append(X[sampled_indices])
         support_labels.append(np.full((num_samples_per_class,), cls))
     
     return np.array(support_set), np.array(support_labels)
@@ -390,5 +390,7 @@ def predict_using_ecg_encoder(X_ecg, y_labels, X_new, num_sample_per_class):
     # Convert to TensorFlow format
     support_ecgs = tf.convert_to_tensor(support_ecgs)
     query_ecg = tf.convert_to_tensor(X_new)
-    probs = prototypical_loss(ecg_encoder(support_ecgs), ecg_encoder(query_ecg))
+    cls0 = ecg_encoder(support_ecgs[0])
+    cls1 = ecg_encoder(support_ecgs[1])
+    probs = prototypical_loss(tf.concat([cls0, cls1], axis=0), ecg_encoder(query_ecg))
     return probs.numpy()
