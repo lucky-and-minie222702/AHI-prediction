@@ -23,6 +23,8 @@ def data_generator(X, y, batch_size):
             np.random.shuffle(indices1)
             for start in range(0, len(X0), batch_size):
                 end = min(start + batch_size, len(X0))
+                if (end - start + 1) % 2 != 0:
+                    end -= 1
                 batch_indices0 = indices0[start:end]
                 batch_indices1 = indices1[start:end]
                 X0_batch = X0[batch_indices0]
@@ -171,8 +173,8 @@ model.fit(
     train_generator,
     epochs = epochs,
     validation_data = val_generator,
-    steps_per_epoch = steps_per_epoch // 2,
-    validation_steps = validation_steps // 2,
+    steps_per_epoch = steps_per_epoch,
+    validation_steps = validation_steps,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time
