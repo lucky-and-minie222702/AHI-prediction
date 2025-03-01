@@ -46,9 +46,9 @@ def contrastive_loss(temperature):
         x1 = y_pred[:cut:]
         x2 = y_pred[cut::]
 
-        logits = tf.matmul(x1, x2, transpose_b=True) / temperature
+        logits = tf.matmul(x2, x1, transpose_b=True) / temperature
 
-        labels = tf.fill((cut,), 0)
+        labels = tf.fill((cut-2,), 0)
 
         loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
         
