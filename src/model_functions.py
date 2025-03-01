@@ -401,7 +401,7 @@ def predict_using_ecg_encoder(ecg_encoder, X_ecg, y_labels, X_new, num_sample_pe
     cls0 = ecg_encoder(cls0)
     cls1 = ecg_encoder(cls1)
     
-    rpa, rri = calc_ecg(query_ecg, 100, 30, max_rpa=90, max_rri=90)
+    rpa, rri = calc_ecg(X_new, 100, 30, max_rpa=90, max_rri=90)
     query = tf.stack([rpa, rri], axis=-1)
     
     cls0 = tf.convert_to_tensor(cls0)
