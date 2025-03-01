@@ -13,6 +13,8 @@ def augment_ecg(signal):
     return signal
 
 def data_generator(X, y, X_aug, batch_size):
+    rpa, rri = calc_ecg(X, 100, 30, max_rpa=90, max_rri=90)
+    rpa_aug, rri_aug = calc_ecg(X_aug, 100, 30, max_rpa=90, max_rri=90)
     def generator():
         while True:
             indices = np.arange(len(X))
@@ -20,14 +22,17 @@ def data_generator(X, y, X_aug, batch_size):
             for start in range(0, len(X), batch_size):
                 end = min(start + batch_size, len(X))
                 batch_indices = indices[start:end]
-                X_batch = X[batch_indices]
-                y_batch = y[batch_indices]
-                X_aug_batch = X_aug[batch_indices]
-                y_aug_batch = y_batch
-                yield np.concatenate([X_batch, X_aug_batch], axis=0), np.concatenate([y_batch, y_aug_batch], axis=0)
+                rpa_batch = rpa[batch_indices]
+                rri_batch = rri[batch_indices]
+                rpa_aug_batch = rpa_aug[batch_indices]
+                rri_aug_batch = rri_aug[batch_indices]
+                yield np.concatenate([
+                        np.stack([rpa_batch, rri_batch], axis=1), 
+                        np.stack([rpa_aug_batch, rri_aug_batch], axis=1)
+                ], axis=0), np.array([0])
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
-        tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, 90, 2), dtype=tf.float32),
         tf.TensorSpec(shape=(None, *y.shape[1:]), dtype=tf.float32)
     ))
 
@@ -77,14 +82,26 @@ def contrastive_loss_no_augment(temperature):
 
         
 def create_model():
-    rri_inp = layers.Input(shape=(None, 1))
-    rri_norm_inp = layers.Normalization()(rri_inp)
+    inp = layers.Input(shape=(None, 2))
+    norm_inp = layers.Normalization()(inp)
     
+    conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=128, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=256, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=512, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
     
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(128)(encoder_out)
+    ph = layers.Dense(256)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
     ph_out = layers.Dense(128)(ph)
@@ -105,7 +122,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 8192 * 2
+batch_size = 8192
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
@@ -117,8 +134,8 @@ cb_early_stopping = cbk.EarlyStopping(
 #     save_weights_only = True,
 # )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-# cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
-cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=20, min_lr=1e-5)
+cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
+# cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=20, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 10
