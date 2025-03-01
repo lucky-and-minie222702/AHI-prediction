@@ -77,7 +77,7 @@ def contrastive_loss_no_augment(temperature):
 
         
 def create_model():
-    inp = layers.Input(shape=(3000, 1))
+    inp = layers.Input(shape=(1000, 1))
     norm_inp = layers.Normalization()(inp)
     
     conv = layers.Conv1D(filters=64, kernel_size=13, strides=2)(norm_inp)
@@ -135,9 +135,9 @@ cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epoch
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
-seg_len = 30
+seg_len = 10
 extra_seg_len = 0
-step_size = 30
+step_size = 10
 
 ecgs = []
 labels = []
