@@ -31,6 +31,9 @@ def data_generator(X, y, batch_size):
                 y0_batch = np.full((batch_size,), 0)
                 X1_batch = X1[batch_indices1]
                 y1_batch = np.full((batch_size,), 1)
+                if np.random.rand() >= 0.5:
+                    X0_batch, X1_batch  = X1_batch, X0_batch
+                    y0_batch, y1_batch  = y1_batch, y0_batch
                 yield np.concatenate([X0_batch, X1_batch], axis=0), np.concatenate([y0_batch, y1_batch], axis=0)
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
@@ -44,13 +47,13 @@ def contrastive_loss(temperature):
         y_pred = tf.math.l2_normalize(y_pred, -1)
         batch_size = tf.shape(y_pred)[0]    
         
-        cut = batch_size // 2 + 1
+        cut = batch_size // 2 - 1
         x1 = y_pred[:cut:]
         x2 = y_pred[cut::]
 
-        logits = tf.matmul(x2, x1, transpose_b=True) / temperature
+        logits = tf.matmul(x1, x2, transpose_b=True) / temperature
 
-        labels = tf.fill((tf.shape(logits)[0],), tf.shape(logits)[1] - 1)
+        labels = tf.fill((tf.shape(logits)[0],), 0)
 
         loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
         
@@ -69,25 +72,25 @@ def create_model():
     
     conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
     
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(512)(encoder_out)
+    ph = layers.Dense(128)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(256)(ph)
+    ph_out = layers.Dense(64)(ph)
     
     encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
