@@ -43,7 +43,7 @@ def data_generator(X, y, batch_size):
                 rri = np.concatenate([rri0_batch, rri1_batch], axis=0)
                 y = np.concatenate([y0_batch, y1_batch], axis=0)
 
-                yield tuple(rpa, rri), y 
+                yield tuple([rpa, rri]), y 
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
         tuple([tf.TensorSpec(shape=(None, *rpa0.shape[1:]), dtype=tf.float32), tf.TensorSpec(shape=(None, *rri0.shape[1:]), dtype=tf.float32)]),
