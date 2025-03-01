@@ -107,7 +107,7 @@ def create_model():
     model = Model(inputs=inp, outputs=ph_out)
     model.compile(
         optimizer = "adam", 
-        loss = contrastive_loss_no_augment(temperature=0.5),
+        loss = contrastive_loss_with_augment(temperature=0.5),
     )
 
     return encoder, model
