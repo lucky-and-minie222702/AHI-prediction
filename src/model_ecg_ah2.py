@@ -46,7 +46,7 @@ def contrastive_loss(temperature):
         x1 = y_pred[:cut:]
         x2 = y_pred[cut::]
 
-        logits = tf.matmul(x2, x1, transpose_b=True) / temperature
+        logits = tf.matmul(x1, x2, transpose_b=True) / temperature
 
         labels = tf.fill((cut,), 0)
 
