@@ -98,7 +98,7 @@ def create_model():
 
 encoder, model = create_model() 
 show_params(model, "ecg_encoder + projection_head")
-weights_path = path.join("res", "ecg_encoder.weights.h5")
+weights_path = path.join("res", "ecg_encoder_ah.weights.h5")
 model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
