@@ -57,7 +57,6 @@ def contrastive_loss_with_augment(temperature):
         loss_bb = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_bb, from_logits=True)
         loss_ba = tf.keras.losses.sparse_categorical_crossentropy(labels, logits_ba, from_logits=True)
         
-        
         loss = tf.reduce_mean(loss_aa + loss_ab + loss_bb + loss_ba)
         return loss
     return loss_fn
@@ -98,13 +97,14 @@ def create_model():
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
+    conv = SEBlock()(conv)
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(256)(encoder_out)
+    ph = layers.Dense(128)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(128)(ph)
+    ph_out = layers.Dense(32)(ph)
     
     encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
