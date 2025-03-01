@@ -32,6 +32,7 @@ from timeit import default_timer as timer
 import random
 from typing import *
 from tensorflow.keras.utils import Sequence
+from data_functions import *
         
 def show_gpus(limit_mem: bool = True):
     gpus = tf.config.list_physical_devices('GPU')
@@ -401,5 +402,14 @@ def predict_using_ecg_encoder(ecg_encoder, X_ecg, y_labels, X_new, num_sample_pe
     query_ecg = tf.convert_to_tensor([X_new])
     cls0 = ecg_encoder(support_ecgs[0])
     cls1 = ecg_encoder(support_ecgs[1])
-    probs = prototypical_loss(tf.stack([cls0, cls1], axis=0), ecg_encoder(query_ecg))
+    
+    rpa, rri = calc_ecg(cls0, 100, 30, max_rpa=90, max_rri=90)
+    cls0 = tf.stack([rpa, rri], axis=-1)
+    rpa, rri = calc_ecg(cls1, 100, 30, max_rpa=90, max_rri=90)
+    cls1 = tf.stack([rpa, rri], axis=-1)
+    
+    rpa, rri = calc_ecg(query_ecg, 100, 30, max_rpa=90, max_rri=90)
+    query = tf.stack([rpa, rri], axis=-1)
+    
+    probs = prototypical_loss(tf.stack([cls0, cls1], axis=0), ecg_encoder(query))
     return probs.numpy()
