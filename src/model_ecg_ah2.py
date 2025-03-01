@@ -48,7 +48,7 @@ def contrastive_loss(temperature):
 
         logits = tf.matmul(x2, x1, transpose_b=True) / temperature
 
-        labels = tf.fill((cut-2,), 0)
+        labels = tf.fill((tf.shape(logits)[0],), 0)
 
         loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
         
@@ -82,10 +82,10 @@ def create_model():
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(256)(encoder_out)
+    ph = layers.Dense(512)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(128)(ph)
+    ph_out = layers.Dense(256)(ph)
     
     encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
