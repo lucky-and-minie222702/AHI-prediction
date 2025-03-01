@@ -106,10 +106,10 @@ def create_model():
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(64)(encoder_out)
+    ph = layers.Dense(128)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(32)(ph)
+    ph_out = layers.Dense(128)(ph)
     
     encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
@@ -127,7 +127,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 8192
+batch_size = 8192 * 2
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
