@@ -149,9 +149,7 @@ labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 labels = np.mean(labels, axis=-1)
 labels = np.round(labels)
 
-indices = downsample_indices_manual(labels)
-ecgs = ecgs[indices]
-labels = labels[indices]
+indices = np.arange(len(labels))
 train_indices, val_indices = train_test_split(indices, test_size=0.2)
 
 val_ecgs = ecgs[val_indices]
