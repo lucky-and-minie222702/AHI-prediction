@@ -67,8 +67,9 @@ print(f"Class 0: {class_count[0]} - Class 1: {class_count[1]}")
 
 print("Test - Prediction")
 for idx in range(len(test_labels)):
-    test_preds.append(np.argmax(predict_using_ecg_encoder(ecg_encoder, memory_ecgs, memory_labels, test_ecgs[idx], num_sample_per_class=10000)))
-    print(f"{idx} / {len(test_labels)} Accuracy: {sum([test_labels[i] == test_preds[i] for i in range(len(test_preds))]) / len(test_preds)}", end="\r")
+    raw_pred = predict_using_ecg_encoder(ecg_encoder, memory_ecgs, memory_labels, test_ecgs[idx], num_sample_per_class=10000)
+    test_preds.append(np.argmax(raw_pred))
+    print(f"{idx} / {len(test_labels)} Accuracy: {sum([test_labels[i] == test_preds[i] for i in range(len(test_preds))]) / len(test_preds)} [{np.max(raw_pred)}]", end="\r")
     sys.stdout.flush()
 
 print()

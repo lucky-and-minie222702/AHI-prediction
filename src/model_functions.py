@@ -355,13 +355,16 @@ def create_ecg_encoder():
     conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
+
+    encoder_out = layers.GlobalAvgPool1D()(conv)
     
-    fc = layers.GlobalAvgPool1D()(conv)
-    out = layers.Dense(256)(fc)
-    
-    model = Model(inputs=inp, outputs=out)
+    model = Model(inputs=inp, outputs=encoder_out)
     model.load_weights(path.join("res", "ecg_encoder.weights.h5"))
     
     return model
