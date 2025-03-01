@@ -389,20 +389,24 @@ def generate_support_query_sets(X, y, num_classes, num_samples_per_class):
 
 def predict_using_ecg_encoder(ecg_encoder, X_ecg, y_labels, X_new, num_sample_per_class):
     support_ecgs, _ = generate_support_query_sets(X_ecg, y_labels, num_classes=2, num_samples_per_class=num_sample_per_class)
-    # Convert to TensorFlow format
-    support_ecgs = tf.convert_to_tensor(support_ecgs)
-    query_ecg = tf.convert_to_tensor([X_new])
+    
+    cls0 = support_ecgs[0]
+    cls1 = support_ecgs[1]
     
     rpa, rri = calc_ecg(cls0, 100, 30, max_rpa=90, max_rri=90)
     cls0 = tf.stack([rpa, rri], axis=-1)
     rpa, rri = calc_ecg(cls1, 100, 30, max_rpa=90, max_rri=90)
     cls1 = tf.stack([rpa, rri], axis=-1)
     
-    cls0 = ecg_encoder(support_ecgs[0])
-    cls1 = ecg_encoder(support_ecgs[1])
+    cls0 = ecg_encoder(cls0)
+    cls1 = ecg_encoder(cls1)
     
     rpa, rri = calc_ecg(query_ecg, 100, 30, max_rpa=90, max_rri=90)
     query = tf.stack([rpa, rri], axis=-1)
+    
+    cls0 = tf.convert_to_tensor(cls0)
+    cls1 = tf.convert_to_tensor(cls1)
+    query = tf.convert_to_tensor(query)
     
     probs = prototypical_loss(tf.stack([cls0, cls1], axis=0), ecg_encoder(query))
     return probs.numpy()
