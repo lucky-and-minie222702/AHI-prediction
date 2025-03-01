@@ -183,15 +183,13 @@ def calc_time(start: str, end: str) -> int:
     elapsed_seconds = int((end_time - start_time).total_seconds())
     return elapsed_seconds
 
-def calc_ecg(signals, splr: int, duration: int):
+def calc_ecg(signals, splr: int, duration: int, max_rpa = 0, max_rri = 0):
     """
     Return rpa, rri
     """
     rri_res = []
     rpa_res = []
     
-    max_rpa = 0
-    max_rri = 0
     t = np.linspace(0, duration, splr * duration)
     for sig in signals:
         peaks = nk.ecg_findpeaks(sig, sampling_rate=splr, method="pantompkins1985")["ECG_R_Peaks"]

@@ -13,15 +13,14 @@ def augment_ecg(signal):
     return signal
 
 def data_generator(X, y, batch_size):
-    rpa0, rri0 = calc_ecg(X[np.where(y == 0)[0]], 100, 30)
-    rpa1, rri1 = calc_ecg(X[np.where(y == 1)[0]], 100, 30)
+    rpa0, rri0 = calc_ecg(X[np.where(y == 0)[0]], 100, 30, max_rpa=90, max_rri=90)
+    rpa1, rri1 = calc_ecg(X[np.where(y == 1)[0]], 100, 30, max_rpa=90, max_rri=90)
     def generator():
         while True:
             indices0 = np.arange(len(rpa0))
             indices1 = np.arange(len(rpa1))
             np.random.shuffle(indices0)
             np.random.shuffle(indices1)
-            print(rpa0.shape, rpa1.shape, indices0.shape, indices1.shape)
             for start in range(0, len(rpa0), batch_size):
                 end = min(start + batch_size, len(rpa0))
                 batch_indices0 = indices0[start:end]
@@ -31,7 +30,7 @@ def data_generator(X, y, batch_size):
                 rri0_batch = rri0[batch_indices0]
                 y0_batch = np.full((end-start+1,), 0)
                 
-                rpa1_batch = rpa1[batch_indices0]
+                rpa1_batch = rpa1[batch_indices1]
                 rri1_batch = rri1[batch_indices1]
                 y1_batch = np.full((end-start+1,), 1)
                 
