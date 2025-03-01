@@ -77,31 +77,9 @@ def contrastive_loss_no_augment(temperature):
 
         
 def create_model():
-    inp = layers.Input(shape=(1000, 1))
-    norm_inp = layers.Normalization()(inp)
+    rri_inp = layers.Input(shape=(None, 1))
+    rri_norm_inp = layers.Normalization()(rri_inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=13, strides=2)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=64, kernel_size=11, strides=2)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    conv = layers.Conv1D(filters=64, kernel_size=9, strides=2)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=7, strides=2)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=5, strides=2)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=3, strides=2)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     encoder_out = layers.GlobalAvgPool1D()(conv)
     

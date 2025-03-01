@@ -13,35 +13,42 @@ def augment_ecg(signal):
     return signal
 
 def data_generator(X, y, batch_size):
-    X0 = X[np.where(y == 0)[0]]
-    X1 = X[np.where(y == 1)[0]]
+    rpa0, rri0 = calc_ecg(X[np.where(y == 0)[0]], 100, 30)
+    rpa1, rri1 = calc_ecg(X[np.where(y == 1)[0]], 100, 30)
     def generator():
         while True:
-            indices0 = np.arange(len(X0))
-            indices1 = np.arange(len(X1))
+            indices0 = np.arange(len(rpa0))
+            indices1 = np.arange(len(rpa1))
             np.random.shuffle(indices0)
             np.random.shuffle(indices1)
-            for start in range(0, len(X0), batch_size):
-                end = min(start + batch_size, len(X0))
+            for start in range(0, len(rpa0), batch_size):
+                end = min(start + batch_size, len(rpa0))
                 if (end - start + 1) % 2 != 0:
                     end -= 1
                 batch_indices0 = indices0[start:end]
                 batch_indices1 = indices1[start:end]
-                X0_batch = X0[batch_indices0]
-                y0_batch = np.full((batch_size,), 0)
-                X1_batch = X1[batch_indices1]
-                y1_batch = np.full((batch_size,), 1)
+                
+                rpa0_batch = rpa0[batch_indices0]
+                rri0_batch = rri0[batch_indices0]
+                y0_batch = np.full((end-start+1,), 0)
+                
+                rpa1_batch = rpa1[batch_indices0]
+                rri1_batch = rri1[batch_indices1]
+                y1_batch = np.full((end-start+1,), 1)
+                
                 if np.random.rand() >= 0.5:
-                    X0_batch, X1_batch  = X1_batch, X0_batch
+                    rpa0_batch, rpa1_batch  = rpa1_batch, rpa0_batch
+                    rri0_batch, rri1_batch  = rri1_batch, rri0_batch
                     y0_batch, y1_batch  = y1_batch, y0_batch
-                X = np.concatenate([X0_batch, X1_batch], axis=0)
+                    
+                rpa = np.concatenate([rpa0_batch, rpa1_batch], axis=0)
+                rri = np.concatenate([rri0_batch, rri1_batch], axis=0)
                 y = np.concatenate([y0_batch, y1_batch], axis=0)
-                print(X.shape, y.shape)
-                exit()
-                yield X, y 
+
+                yield tuple(rpa, rri), y 
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
-        tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32),
+        [tf.TensorSpec(shape=(None, *rpa0.shape[1:]), dtype=tf.float32), tf.TensorSpec(shape=(None, *rri0.shape[1:]), dtype=tf.float32)],
         tf.TensorSpec(shape=(None,), dtype=tf.float32)
     ))
 
@@ -66,38 +73,51 @@ def contrastive_loss(temperature):
     return loss_fn
         
 def create_model():
-    inp = layers.Input(shape=(3000, 1))
-    norm_inp = layers.Normalization()(inp)
+    rpa_inp = layers.Input(shape=(None, 1))
+    rpa_norm_inp = layers.Normalization()(rpa_inp)
     
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
+    rpa_conv = layers.Conv1D(filters=64, kernel_size=3)(rpa_norm_inp)
+    rpa_conv = layers.BatchNormalization()(rpa_conv)
+    rpa_conv = layers.Activation("relu")(rpa_conv)
+    rpa_conv = layers.MaxPool1D(pool_size=2)(rpa_conv)
+    rpa_conv = layers.Conv1D(filters=128, kernel_size=3)(rpa_norm_inp)
+    rpa_conv = layers.BatchNormalization()(rpa_conv)
+    rpa_conv = layers.Activation("relu")(rpa_conv)
+    rpa_conv = layers.MaxPool1D(pool_size=2)(rpa_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
+    rri_inp = layers.Input(shape=(None, 1))
+    rri_norm_inp = layers.Normalization()(rri_inp)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
+    rri_conv = layers.Conv1D(filters=64, kernel_size=3)(rri_norm_inp)
+    rri_conv = layers.BatchNormalization()(rri_conv)
+    rri_conv = layers.Activation("relu")(rri_conv)
+    rri_conv = layers.MaxPool1D(pool_size=2)(rri_conv)
+    rri_conv = layers.Conv1D(filters=128, kernel_size=3)(rri_norm_inp)
+    rri_conv = layers.BatchNormalization()(rri_conv)
+    rri_conv = layers.Activation("relu")(rri_conv)
+    rri_conv = layers.MaxPool1D(pool_size=2)(rri_conv)
     
-    encoder_out = layers.GlobalAvgPool1D()(conv)
+    
+    merged = layers.Concatenate()([rpa_conv, rri_conv])
+    merged_conv = layers.Conv1D(filters=256, kernel_size=3)(merged)
+    merged_conv = layers.BatchNormalization()(merged_conv)
+    merged_conv = layers.Activation("relu")(merged_conv)
+    merged_conv = layers.MaxPool1D(pool_size=2)(merged_conv)
+    merged_conv = layers.Conv1D(filters=512, kernel_size=3)(merged_conv)
+    merged_conv = layers.BatchNormalization()(merged_conv)
+    merged_conv = layers.Activation("relu")(merged_conv)
+    merged_conv = layers.MaxPool1D(pool_size=2)(merged_conv)
+    
+    encoder_out = layers.GlobalAvgPool1D()(merged_conv)
     
     # projection head
-    ph = layers.Dense(128)(encoder_out)
+    ph = layers.Dense(256)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(64)(ph)
+    ph_out = layers.Dense(128)(ph)
     
-    encoder = Model(inputs=inp, outputs=encoder_out)
-    model = Model(inputs=inp, outputs=ph_out)
+    encoder = Model(inputs=[rpa_inp, rri_inp], outputs=encoder_out)
+    model = Model(inputs=[rpa_inp, rri_inp], outputs=ph_out)
     model.compile(
         optimizer = "adam", 
         loss = contrastive_loss(temperature=0.5),
@@ -112,7 +132,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 1024
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
@@ -152,8 +172,13 @@ for idx, p in enumerate(p_list, start=1):
  
 ecgs = np.vstack(ecgs)
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
+ecgs = np.vstack([
+    ecgs,
+    [augment_ecg(e) for e in ecgs]
+])
 
 labels = np.vstack(labels)
+labels = np.vstack([labels, labels])
 labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 labels = np.mean(labels, axis=-1)
 labels = np.round(labels)
