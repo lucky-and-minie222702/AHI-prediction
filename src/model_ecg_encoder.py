@@ -32,7 +32,7 @@ def data_generator(X, y, X_aug, batch_size):
     ))
 
 
-def contrastive_loss(temperature):
+def contrastive_loss_with_augment(temperature):
     def loss_fn(y_true, y_pred):
         hidden = y_pred
         
@@ -56,9 +56,27 @@ def contrastive_loss(temperature):
         loss = tf.reduce_mean(loss_aa + loss_ab + loss_bb + loss_ba)
         return loss
     return loss_fn
+
+
+def contrastive_loss_no_augment(temperature):
+    def loss_fn(y_true, y_pred):
+        hidden = y_pred
+        
+        hidden = tf.math.l2_normalize(hidden, -1)
+
+        logits= tf.matmul(hidden, hidden, transpose_b=True) / temperature
+        
+        labels = tf.range(batch_size)
+        
+        raw_loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
+        loss = tf.reduce_mean(raw_loss)
+        
+        return loss
+    return loss_fn
+
         
 def create_model():
-    inp = layers.Input(shape=(1000, 1))
+    inp = layers.Input(shape=(3000, 1))
     norm_inp = layers.Normalization()(inp)
     
     ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
@@ -68,6 +86,7 @@ def create_model():
     
     conv = ResNetBlock(1, ds_conv, 64, 3)
     conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
     conv = ResNetBlock(1, conv, 128, 3)
@@ -76,6 +95,10 @@ def create_model():
     conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 1024, 3)
+    conv = ResNetBlock(1, conv, 1024, 3)
 
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
@@ -89,7 +112,7 @@ def create_model():
     model = Model(inputs=inp, outputs=ph_out)
     model.compile(
         optimizer = "adam", 
-        loss = contrastive_loss(temperature=0.5),
+        loss = contrastive_loss_no_augment(temperature=0.5),
     )
 
     return encoder, model
@@ -99,13 +122,13 @@ show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 1000 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 2048
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 800,
-    patience = 20,
+    start_from_epoch = 100,
+    patience = 10,
 )
 # cb_checkpoint = cbk.ModelCheckpoint(
 #     weights_path, 
@@ -113,13 +136,13 @@ cb_early_stopping = cbk.EarlyStopping(
 #     save_weights_only = True,
 # )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epochs=epochs, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
-seg_len = 10
+seg_len = 30
 extra_seg_len = 0
-step_size = 10
+step_size = 30
 
 ecgs = []
 labels = []
@@ -157,20 +180,21 @@ labels = labels[train_indices]
 
 total_samples = len(labels)
 print(f"Total samples: {total_samples}\n")
-train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in ecgs]), batch_size=batch_size)
-val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
+# train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in ecgs]), batch_size=batch_size)
+# val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
 
-steps_per_epoch = total_samples // batch_size
-validation_steps = len(val_labels) // batch_size
+# steps_per_epoch = total_samples // batch_size
+# validation_steps = len(val_labels) // batch_size
 
 
 start_time = timer()
 model.fit(
-    train_generator,
+    ecgs,
+    labels,
     epochs = epochs,
-    validation_data = val_generator,
-    steps_per_epoch = steps_per_epoch,
-    validation_steps = validation_steps,
+    validation_data = (val_ecgs, val_labels),
+    # steps_per_epoch = steps_per_epoch,
+    # validation_steps = validation_steps,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time

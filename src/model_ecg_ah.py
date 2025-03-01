@@ -69,7 +69,7 @@ print("Test Progress")
 for idx in range(len(test_labels)):
     raw_pred = predict_using_ecg_encoder(ecg_encoder, memory_ecgs, memory_labels, test_ecgs[idx], num_sample_per_class=100)
     test_preds.append(np.argmax(raw_pred))
-    print(f"{idx} / {len(test_labels)} Accuracy: {round(sum([test_labels[i] == test_preds[i] for i in range(len(test_preds))]) / len(test_preds), 4)} [round({np.max(raw_pred)}, 4)]", end="\r")
+    print(f"{idx} / {len(test_labels)} Accuracy: {round(sum([test_labels[i] == test_preds[i] for i in range(len(test_preds))]) / len(test_preds), 4)} [{round(np.max(raw_pred), 4)}]", end="\r")
     sys.stdout.flush()
 
 print()
