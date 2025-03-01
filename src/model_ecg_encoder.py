@@ -27,8 +27,8 @@ def data_generator(X, y, X_aug, batch_size):
                 rpa_aug_batch = rpa_aug[batch_indices]
                 rri_aug_batch = rri_aug[batch_indices]
                 yield np.concatenate([
-                        np.stack([rpa_batch, rri_batch], axis=1), 
-                        np.stack([rpa_aug_batch, rri_aug_batch], axis=1)
+                        np.stack([rpa_batch, rri_batch], axis=0), 
+                        np.stack([rpa_aug_batch, rri_aug_batch], axis=0)
                 ], axis=0), np.array([0])
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
