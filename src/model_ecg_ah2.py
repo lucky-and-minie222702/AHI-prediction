@@ -48,7 +48,7 @@ def data_generator(X, y, batch_size):
                 yield tuple(rpa, rri), y 
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
-        [tf.TensorSpec(shape=(None, *rpa0.shape[1:]), dtype=tf.float32), tf.TensorSpec(shape=(None, *rri0.shape[1:]), dtype=tf.float32)],
+        tuple([tf.TensorSpec(shape=(None, *rpa0.shape[1:]), dtype=tf.float32), tf.TensorSpec(shape=(None, *rri0.shape[1:]), dtype=tf.float32)]),
         tf.TensorSpec(shape=(None,), dtype=tf.float32)
     ))
 
