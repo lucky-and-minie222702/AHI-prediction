@@ -34,7 +34,9 @@ def data_generator(X, y, batch_size):
                 if np.random.rand() >= 0.5:
                     X0_batch, X1_batch  = X1_batch, X0_batch
                     y0_batch, y1_batch  = y1_batch, y0_batch
-                yield np.concatenate([X0_batch, X1_batch], axis=0), np.concatenate([y0_batch, y1_batch], axis=0)
+                X = np.concatenate([X0_batch, X1_batch], axis=0)
+                y = np.concatenate([y0_batch, y1_batch], axis=0)
+                yield X, y 
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
         tf.TensorSpec(shape=(None, *X.shape[1:]), dtype=tf.float32),
