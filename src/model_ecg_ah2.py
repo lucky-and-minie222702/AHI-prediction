@@ -149,7 +149,9 @@ labels = np.array([l[extra_seg_len:len(l)-extra_seg_len:] for l in labels])
 labels = np.mean(labels, axis=-1)
 labels = np.round(labels)
 
-indices = np.arange(len(labels))
+indices = downsample_indices_manual(labels)
+ecgs = ecgs[indices]
+labels = labels[indices]
 train_indices, val_indices = train_test_split(indices, test_size=0.2)
 
 val_ecgs = ecgs[val_indices]
@@ -159,8 +161,8 @@ labels = labels[train_indices]
 
 total_samples = len(labels)
 print(f"Total samples: {total_samples}\n")
-train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in ecgs]), batch_size=batch_size)
-val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
+train_generator = data_generator(ecgs, labels, batch_size=batch_size)
+val_generator = data_generator(val_ecgs, val_labels, batch_size=batch_size)
 
 steps_per_epoch = total_samples // batch_size
 validation_steps = len(val_labels) // batch_size
@@ -171,8 +173,8 @@ model.fit(
     train_generator,
     epochs = epochs,
     validation_data = val_generator,
-    steps_per_epoch = steps_per_epoch,
-    validation_steps = validation_steps,
+    steps_per_epoch = steps_per_epoch // 2,
+    validation_steps = validation_steps // 2,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time
