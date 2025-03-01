@@ -21,10 +21,9 @@ def data_generator(X, y, batch_size):
             indices1 = np.arange(len(rpa1))
             np.random.shuffle(indices0)
             np.random.shuffle(indices1)
+            print(rpa0.shape, rpa1.shape, indices0.shape, indices1.shape)
             for start in range(0, len(rpa0), batch_size):
                 end = min(start + batch_size, len(rpa0))
-                if (end - start + 1) % 2 != 0:
-                    end -= 1
                 batch_indices0 = indices0[start:end]
                 batch_indices1 = indices1[start:end]
                 

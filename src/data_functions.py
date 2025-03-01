@@ -212,8 +212,8 @@ def calc_ecg(signals, splr: int, duration: int):
 
     # print(max_rri, max_rpa)
     
-    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
     rpa_res = np.array([np.pad(seq, (0, max_rpa - len(seq)), 'constant', constant_values=0) for seq in rpa_res])
+    rri_res = np.array([np.pad(seq, (0, max_rri - len(seq)), 'constant', constant_values=0) for seq in rri_res])
     
     return rpa_res, rri_res
 
