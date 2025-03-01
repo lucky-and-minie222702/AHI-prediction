@@ -171,8 +171,8 @@ model.fit(
     train_generator,
     epochs = epochs,
     validation_data = val_generator,
-    steps_per_epoch = steps_per_epoch,
-    validation_steps = validation_steps,
+    steps_per_epoch = steps_per_epoch // 2,
+    validation_steps = validation_steps // 2,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time
