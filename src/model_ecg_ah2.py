@@ -36,6 +36,8 @@ def data_generator(X, y, batch_size):
                     y0_batch, y1_batch  = y1_batch, y0_batch
                 X = np.concatenate([X0_batch, X1_batch], axis=0)
                 y = np.concatenate([y0_batch, y1_batch], axis=0)
+                print(X.shape, y.shape)
+                exit()
                 yield X, y 
     
     return tf.data.Dataset.from_generator(generator, output_signature=(
