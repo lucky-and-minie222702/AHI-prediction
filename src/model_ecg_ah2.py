@@ -48,7 +48,7 @@ def contrastive_loss(temperature):
 
         logits = tf.matmul(x2, x1, transpose_b=True) / temperature
 
-        labels = tf.fill((tf.shape(logits)[0],), 0)
+        labels = tf.fill((tf.shape(logits)[0],), tf.shape(logits)[1] - 1)
 
         loss = tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
         
@@ -120,7 +120,7 @@ cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=15, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 30
-extra_seg_len = -10
+extra_seg_len = 10
 step_size = 15
 
 ecgs = []
@@ -171,8 +171,8 @@ model.fit(
     train_generator,
     epochs = epochs,
     validation_data = val_generator,
-    steps_per_epoch = steps_per_epoch // 2,
-    validation_steps = validation_steps // 2,
+    steps_per_epoch = steps_per_epoch,
+    validation_steps = validation_steps,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time
