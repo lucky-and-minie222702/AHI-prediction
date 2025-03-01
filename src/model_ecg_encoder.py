@@ -80,34 +80,26 @@ def create_model():
     inp = layers.Input(shape=(3000, 1))
     norm_inp = layers.Normalization()(inp)
     
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
-    ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
+    conv = layers.Conv1D(filters=64, kernel_size=13, strides=2)(norm_inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=128, kernel_size=11, strides=2)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=256, kernel_size=9, strides=2)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.Conv1D(filters=512, kernel_size=7, strides=2)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 128, 3)
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 256, 3)
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 512, 3)
-    conv = ResNetBlock(1, conv, 1024, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    conv = ResNetBlock(1, conv, 1024, 3)
-
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
     # projection head
-    ph = layers.Dense(512)(encoder_out)
+    ph = layers.Dense(256)(encoder_out)
     ph = layers.BatchNormalization()(ph)
     ph = layers.Activation("relu")(ph)
-    ph_out = layers.Dense(256)(ph)
+    ph_out = layers.Dense(128)(ph)
     
     encoder = Model(inputs=inp, outputs=encoder_out)
     model = Model(inputs=inp, outputs=ph_out)
@@ -125,7 +117,7 @@ model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 8192
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
@@ -181,21 +173,20 @@ labels = labels[train_indices]
 
 total_samples = len(labels)
 print(f"Total samples: {total_samples}\n")
-# train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in ecgs]), batch_size=batch_size)
-# val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
+train_generator = data_generator(ecgs, labels, np.array([augment_ecg(e) for e in ecgs]), batch_size=batch_size)
+val_generator = data_generator(val_ecgs, val_labels, np.array([augment_ecg(e) for e in val_ecgs]), batch_size=batch_size)
 
-# steps_per_epoch = total_samples // batch_size
-# validation_steps = len(val_labels) // batch_size
+steps_per_epoch = total_samples // batch_size
+validation_steps = len(val_labels) // batch_size
 
 
 start_time = timer()
 model.fit(
-    ecgs,
-    labels,
+    train_generator,
     epochs = epochs,
-    validation_data = (val_ecgs, val_labels),
-    # steps_per_epoch = steps_per_epoch,
-    # validation_steps = validation_steps,
+    validation_data = val_generator,
+    steps_per_epoch = steps_per_epoch,
+    validation_steps = validation_steps,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
 total_time = timer() - start_time
