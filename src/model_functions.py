@@ -344,41 +344,33 @@ class WarmupCosineDecayScheduler(cbk.Callback):
         
 ## 
 def create_ecg_encoder():
-    inp = layers.Input(shape=(1000, 1))
+    inp = layers.Input(shape=(None, 2))
     norm_inp = layers.Normalization()(inp)
     
-    conv = layers.Conv1D(filters=64, kernel_size=13, strides=2)(norm_inp)
+    conv = layers.Conv1D(filters=32, kernel_size=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=64, kernel_size=11, strides=2)(conv)
+    conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    conv = layers.Conv1D(filters=64, kernel_size=9, strides=2)(conv)
+    conv = layers.Conv1D(filters=128, kernel_size=3)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=7, strides=2)(conv)
+    conv = layers.Conv1D(filters=256, kernel_size=3)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=5, strides=2)(conv)
+    conv = layers.Conv1D(filters=512, kernel_size=3)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=3, strides=2)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-
+    
+    conv = SEBlock()(conv)
     encoder_out = layers.GlobalAvgPool1D()(conv)
     
-    model = Model(inputs=inp, outputs=encoder_out)
-    model.load_weights(path.join("res", "ecg_encoder.weights.h5"))
+    encoder = Model(inputs=inp, outputs=encoder_out)
+    encoder.load_weights(path.join("res", "ecg_encoder.weights.h5"))
     
-    return model
+    return encoder
     
-    
-
 def prototypical_loss(support_set, query_sample):
     support_means = tf.reduce_mean(support_set, axis=1)  # Compute class prototypes
     dists = tf.norm(query_sample - support_means, axis=1)  # Compute distances
