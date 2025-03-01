@@ -84,6 +84,9 @@ def create_model():
     inp = layers.Input(shape=(None, 2))
     norm_inp = layers.Normalization()(inp)
     
+    conv = layers.Conv1D(filters=32, kernel_size=3)(norm_inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
     conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
@@ -120,13 +123,13 @@ show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 1000 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 8192
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
-    patience = 10,
+    start_from_epoch = 800,
+    patience = 20,
 )
 # cb_checkpoint = cbk.ModelCheckpoint(
 #     weights_path, 
@@ -134,7 +137,7 @@ cb_early_stopping = cbk.EarlyStopping(
 #     save_weights_only = True,
 # )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epochs=epochs, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=20, min_lr=1e-5)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
