@@ -61,7 +61,7 @@ def create_model():
     norm_inp = layers.Normalization()(inp)
     
     ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding="same")(norm_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)(ds_conv)
+    ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     ds_conv = layers.MaxPool1D(pool_size=2)(ds_conv)
     
@@ -70,8 +70,10 @@ def create_model():
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
     conv = ResNetBlock(1, conv, 256, 3)
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
