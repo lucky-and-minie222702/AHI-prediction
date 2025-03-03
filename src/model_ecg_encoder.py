@@ -29,7 +29,6 @@ def create_model():
     en = ResNetBlock(1, en, 128, 7, True)
     en = ResNetBlock(1, en, 128, 7)
     en = ResNetBlock(1, en, 128, 7)
-    en = ResNetBlock(1, en, 128, 7)
     
     en = ResNetBlock(1, en, 256, 5, True)
     en = ResNetBlock(1, en, 256, 5)
@@ -37,7 +36,6 @@ def create_model():
     en = ResNetBlock(1, en, 256, 5)
     
     en = ResNetBlock(1, en, 512, 3, True)
-    en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     
@@ -50,7 +48,6 @@ def create_model():
     expanded_en = layers.Reshape((640, 8))(en)
 
     de = ResNetBlock(1, expanded_en, 64, 3, True)
-    de = ResNetBlock(1, de, 64, 3)
     de = ResNetBlock(1, de, 64, 3)
     de = ResNetBlock(1, de, 64, 3)
     
