@@ -22,20 +22,22 @@ def create_model():
     en = layers.Activation("relu")(en)
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
-    en = ResNetBlock(1, en, 64, 9, True)
-    en = ResNetBlock(1, en, 64, 9)
-    en = ResNetBlock(1, en, 64, 9)
+    en = ResNetBlock(1, en, 64, 3, True)
+    en = ResNetBlock(1, en, 64, 3)
+    en = ResNetBlock(1, en, 64, 3)
        
-    en = ResNetBlock(1, en, 128, 7, True)
-    en = ResNetBlock(1, en, 128, 7)
-    en = ResNetBlock(1, en, 128, 7)
+    en = ResNetBlock(1, en, 128, 3, True)
+    en = ResNetBlock(1, en, 128, 3)
+    en = ResNetBlock(1, en, 128, 3)
+    en = ResNetBlock(1, en, 128, 3)
     
-    en = ResNetBlock(1, en, 256, 5, True)
-    en = ResNetBlock(1, en, 256, 5)
-    en = ResNetBlock(1, en, 256, 5)
-    en = ResNetBlock(1, en, 256, 5)
+    en = ResNetBlock(1, en, 256, 3, True)
+    en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3)
     
     en = ResNetBlock(1, en, 512, 3, True)
+    en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     
@@ -113,6 +115,20 @@ def create_model():
     encoder = Model(
         inputs = inp,
         outputs = expanded_en,
+    )
+    
+    autoencoder.compile(
+        optimizer = "adam",
+        loss = {
+            "ecg": "mse",
+            "rri": "mse",
+            "rpa": "mse",
+        },
+        metrics = {
+            "ecg": "mae",
+            "rri": "mae",
+            "rpa": "mae",
+        },
     )
     
     return autoencoder, encoder
