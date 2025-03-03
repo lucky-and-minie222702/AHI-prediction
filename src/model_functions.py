@@ -341,72 +341,21 @@ class WarmupCosineDecayScheduler(cbk.Callback):
             
         tf.keras.backend.set_value(self.model.optimizer.lr, lr)
         
-        
-## 
-def create_ecg_encoder():
-    inp = layers.Input(shape=(None, 2))
-    norm_inp = layers.Normalization()(inp)
-    
-    conv = layers.Conv1D(filters=32, kernel_size=3)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=64, kernel_size=3)(norm_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=128, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=256, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.Conv1D(filters=512, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    
-    conv = SEBlock()(conv)
-    encoder_out = layers.GlobalAvgPool1D()(conv)
-    
-    encoder = Model(inputs=inp, outputs=encoder_out)
-    encoder.load_weights(path.join("res", "ecg_encoder.weights.h5"))
-    
-    return encoder
-    
-def prototypical_loss(support_set, query_sample):
-    support_means = tf.reduce_mean(support_set, axis=1)  # Compute class prototypes
-    dists = tf.norm(query_sample - support_means, axis=1)  # Compute distances
-    return tf.nn.softmax(-dists)  # Class probabilities
 
-def generate_support_query_sets(X, y, num_classes, num_samples_per_class):
-    support_set, support_labels = [], []
-    
-    for cls in range(num_classes):
-        indices = np.where(y == cls)[0]
-        sampled_indices = np.random.choice(indices, size=num_samples_per_class, replace=False)
-        support_set.append(X[sampled_indices])
-        support_labels.append(np.full((num_samples_per_class,), cls))
-    
-    return np.array(support_set), np.array(support_labels)
+def online_augmen_generator(X, y_origin, augment_version, batch_size):
+    def generator():
+        indices = np.arange(len(X) // len(y_origin))
+        np.random.shuffle(indices)
+        for start in range(0, len(X), batch_size):
+            end = min(start + batch_size, len(X))
+            batch_indices = indices[start:end]
+            chosen_ver = np.random.randint(augment_version, size=batch_indices.shape)
+            augment_indices = np.array([batch_indices[i] + chosen_ver[i] * len(y_origin) for i in range(len(batch_indices))])
+            X_batch = X[augment_indices]
+            y_batch = y_origin[batch_indices]
+            yield X_batch, y_batch
 
-def predict_using_ecg_encoder(ecg_encoder, X_ecg, y_labels, X_new, num_sample_per_class):
-    support_ecgs, _ = generate_support_query_sets(X_ecg, y_labels, num_classes=2, num_samples_per_class=num_sample_per_class)
-    
-    cls0 = support_ecgs[0]
-    cls1 = support_ecgs[1]
-    
-    rpa, rri = calc_ecg(cls0, 100, 30, max_rpa=90, max_rri=90)
-    cls0 = tf.stack([rpa, rri], axis=-1)
-    rpa, rri = calc_ecg(cls1, 100, 30, max_rpa=90, max_rri=90)
-    cls1 = tf.stack([rpa, rri], axis=-1)
-    
-    cls0 = ecg_encoder(cls0)
-    cls1 = ecg_encoder(cls1)
-    
-    rpa, rri = calc_ecg([X_new], 100, 30, max_rpa=90, max_rri=90)
-    query = tf.stack([rpa, rri], axis=-1)
-    
-    cls0 = tf.convert_to_tensor(cls0)
-    cls1 = tf.convert_to_tensor(cls1)
-    query = tf.convert_to_tensor(query)
-    
-    probs = prototypical_loss(tf.stack([cls0, cls1], axis=0), ecg_encoder(query))
-    return probs.numpy()
+    return tf.data.Dataset.from_generator(generator, output_signature=(
+        tf.TensorSpec(shape=(None, *X.shape[1::]), dtype=tf.float32),
+        tf.TensorSpec(shape=(None, *y_origin.shape[1::]), dtype=tf.float32)
+    ))
