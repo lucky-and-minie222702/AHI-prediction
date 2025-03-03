@@ -35,6 +35,7 @@ def create_model():
     en = ResNetBlock(1, en, 256, 3)
     en = ResNetBlock(1, en, 256, 3)
     en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3)
     
     en = ResNetBlock(1, en, 512, 3, True)
     en = ResNetBlock(1, en, 512, 3)
@@ -138,12 +139,12 @@ show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256 + 128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 200,
     patience = 20,
 )
 # cb_checkpoint = cbk.ModelCheckpoint(
@@ -181,7 +182,7 @@ ecgs = np.vstack(ecgs)
 rpa, rri = calc_ecg(ecgs, splr=100, duration=60, max_rpa=180, max_rri=180)
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 
-total_samples = len(labels)
+total_samples = len(ecgs)
 print(f"Total samples: {total_samples}\n")
 
 start_time = timer()
