@@ -176,7 +176,7 @@ model.fit(
     np.vstack([ecgs, [augment_ecg(e) for e in ecgs]]).reshape(-1, 600, 10),
     [np.vstack([ecgs, ecgs]), np.vstack([rpa, rpa]), np.vstack([rri, rri])],
     epochs = epochs,
-    bacth_size = batch_size,
+    batch_size = batch_size,
     validation_split = 0.2,
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_save_encoder],
 )
