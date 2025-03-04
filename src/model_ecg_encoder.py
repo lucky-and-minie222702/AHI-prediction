@@ -61,6 +61,7 @@ def create_model():
     de = ResNetBlock(1, de, 512, 3, transpose=True)
     
     de = layers.Conv1D(filters=1, kernel_size=9)(de)
+    de = layers.Flatten(name="ecg")(de)
     
     de_rpa = ResNetBlock(1, en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
