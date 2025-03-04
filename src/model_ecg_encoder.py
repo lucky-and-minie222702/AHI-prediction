@@ -39,8 +39,10 @@ def create_model():
     en = ResNetBlock(1, en, 512, 3)
     
     en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same")(en)
-    en = layers.Conv1D(filters=32, kernel_size=3, padding="same")(en)
-    en = layers.Conv1D(filters=8, kernel_size=3, padding="same")(en)
+    en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same")(en)
+    en = layers.Conv1DTranspose(filters=8, kernel_size=3, padding="same")(en)
+    
+    # en shape (188, 8)
 
     de = ResNetBlock(1, en, 64, 3, True, transpose=True)
     de = ResNetBlock(1, de, 64, 3, transpose=True)
@@ -95,7 +97,7 @@ def create_model():
     
     encoder = Model(
         inputs = inp,
-        outputs = expanded_en,
+        outputs = en,
     )
     
     autoencoder.compile(
@@ -160,8 +162,8 @@ for idx, p in enumerate(p_list, start=1):
  
 ecgs = np.vstack(ecgs)
 ecgs = np.vstack([ecgs, [augment_ecg(e) for e in ecgs]])
-rpa, rri = calc_ecg(ecgs, splr=100, duration=60, max_rpa=90, max_rri=90)
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
+rpa, rri = calc_ecg(ecgs, splr=100, duration=60, max_rpa=90, max_rri=90)
 
 total_samples = len(ecgs)
 print(f"Total samples: {total_samples}\n")
