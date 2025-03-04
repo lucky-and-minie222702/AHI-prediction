@@ -171,7 +171,7 @@ print(f"Total samples: {total_samples}\n")
 start_time = timer()
 model.fit(
     ecgs,
-    [rpa, rri],
+    [ecgs, rpa, rri],
     epochs = epochs,
     batch_size = batch_size,
     validation_split = 0.2,
