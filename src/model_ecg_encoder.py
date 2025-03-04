@@ -122,12 +122,12 @@ show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 400 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 200,
+    start_from_epoch = 100,
     patience = 20,
 )
 # cb_checkpoint = cbk.ModelCheckpoint(
@@ -141,7 +141,7 @@ cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epoc
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 30
-step_size = 15
+step_size = 30
 
 ecgs = []
 labels = []
