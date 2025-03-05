@@ -16,24 +16,25 @@ def augment_ecg(signal):
         
 def create_model():
     inp = layers.Input(shape=(188, 8))
+    norm_inp = layers.Normalization()(inp)
     
-    conv = ResNetBlock(1, inp, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.0001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.0001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.0001))
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.0001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
@@ -63,12 +64,12 @@ show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 100 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 100,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -77,7 +78,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epochs=epochs, min_lr=1e-6)
+cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=20, min_lr=1e-5)
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
