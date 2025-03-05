@@ -123,6 +123,7 @@ weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 0 if "encode" in sys.argv else epochs
 
 batch_size = 128
 cb_early_stopping = cbk.EarlyStopping(
@@ -141,7 +142,7 @@ cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epoc
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 30
-step_size = 30
+step_size = 15
 
 ecgs = []
 labels = []
@@ -164,6 +165,11 @@ for idx, p in enumerate(p_list, start=1):
 ecgs = np.vstack(ecgs)
 ecgs = np.vstack([ecgs, [augment_ecg(e) for e in ecgs]])
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
+labels = np.vstack(labels)
+labels = np.vstack([labels, labels])
+labels = np.array([
+    1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
+])
 rpa, rri = calc_ecg(ecgs, splr=100, duration=60, max_rpa=90, max_rri=90)
 
 total_samples = len(ecgs)
@@ -180,3 +186,9 @@ model.fit(
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
+
+if "encode" in sys.argv:
+    encoder.load_weights(weights_path)
+    encoded_ecg = encoder.predict(ecgs, batch_size=batch_size)
+    np.save(path.join("gen_data", "merged_ecg.py"), encoded_ecg)
+    np.save(path.join("gen_data"))
