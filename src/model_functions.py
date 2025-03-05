@@ -360,21 +360,26 @@ def online_augmen_generator(X, y_origin, augment_version, batch_size):
         tf.TensorSpec(shape=(None, *y_origin.shape[1::]), dtype=tf.float32)
     ))
     
-def generate_sine_wave(duration, sample_rate, frequency_variation=10):
-    base_frequency = 400  # Base frequency for class 0
-    frequency = base_frequency + np.random.uniform(-frequency_variation, frequency_variation)
-    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-    return 0.5 * np.sin(2 * np.pi * frequency * t)
+def generate_class_0(duration, num_samples):
+    t = np.linspace(0, duration, num_samples, endpoint=False)
+    base_freq = 400 + np.random.uniform(-20, 20)  # Random frequency variation
+    mod_freq = 2  # Modulation frequency (slow variation)
+    mod_signal = 1 + 0.5 * np.sin(2 * np.pi * mod_freq * t)  # Amplitude Modulation
+    signal_wave = mod_signal * np.sin(2 * np.pi * base_freq * t)
+    noise = np.random.normal(0, 0.05, num_samples)  # Small Gaussian noise
+    return signal_wave + noise
 
-def generate_square_wave(duration, sample_rate, frequency_variation=10):
-    """Generate a square wave with slight frequency variation."""
-    base_frequency = 800  # Base frequency for class 1
-    frequency = base_frequency + np.random.uniform(-frequency_variation, frequency_variation)
-    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-    return 0.5 * np.sign(np.sin(2 * np.pi * frequency * t))
+def generate_class_1(duration, num_samples):
+    t = np.linspace(0, duration, num_samples, endpoint=False)
+    chirp_signal = signal.chirp(t, f0=500, f1=1500, t1=duration, method='quadratic')
+    pulse_positions = np.random.randint(0, num_samples, size=10)
+    pulse_train = np.zeros(num_samples)
+    pulse_train[pulse_positions] = np.random.uniform(-1, 1, size=10)  # Random pulsesx
+    noise = np.random.normal(0, 0.05, num_samples)  # Small Gaussian noise
+    return chirp_signal + pulse_train + noise
 
 def dummy_data(num_samples):
-    cls0 = np.array([generate_sine_wave(5, 100) for _ in range(num_samples)])
-    cls1 = np.array([generate_square_wave(5, 100) for _ in range(num_samples)])
+    cls0 = np.array([generate_class_0(5, 1000) for _ in range(num_samples)])
+    cls1 = np.array([generate_class_1(5, 1000) for _ in range(num_samples)])
     labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
     return np.vstack([cls0, cls1]), labels
