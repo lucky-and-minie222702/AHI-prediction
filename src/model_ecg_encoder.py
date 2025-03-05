@@ -15,9 +15,8 @@ def augment_ecg(signal):
         
 def create_model():
     inp = layers.Input(shape=(3000, 1))
-    en = layers.Normalization()(inp)
     
-    en = layers.Conv1D(filters=64, kernel_size=11, strides=2)(en)
+    en = layers.Conv1D(filters=64, kernel_size=11, strides=2)(inp)
     en = layers.BatchNormalization()(en)
     en = layers.Activation("relu")(en)
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
@@ -83,7 +82,7 @@ def create_model():
     de = SEBlock()(de)
 
     de = layers.Flatten()(de)
-    de = layers.Dense(3000, activation="sigmoid", name="ecg")(de)
+    de = layers.Dense(3000, name="ecg")(de)
     
     de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rpa = ResNetBlock(1, de_rpa, 64, 3)
@@ -96,7 +95,7 @@ def create_model():
     de_rpa = ResNetBlock(1, de_rpa, 256, 7)
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
-    de_rpa = layers.Dense(60, name="rpa")(de_rpa)
+    de_rpa = layers.Dense(90, name="rpa")(de_rpa)
     
     de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
@@ -109,7 +108,7 @@ def create_model():
     de_rri = ResNetBlock(1, de_rri, 256, 7)
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
-    de_rri = layers.Dense(60, name="rri")(de_rri)
+    de_rri = layers.Dense(90, name="rri")(de_rri)
     
     autoencoder = Model(
         inputs = inp,
@@ -139,7 +138,7 @@ def create_model():
     return autoencoder, encoder
 
 model, encoder = create_model() 
-show_params(model, "ecg_encoder + projection_head")
+show_params(model, "ecg_encoder")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 if "pre_save" in sys.argv:
     model.save_weights(weights_path)
