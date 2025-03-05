@@ -48,7 +48,7 @@ def create_model():
     )
     
     model.compile(
-        optimizer = "adam",
+        optimizer = optimizers.Adam(0.00025),
         loss = "binary_crossentropy",
         metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)]
     )
