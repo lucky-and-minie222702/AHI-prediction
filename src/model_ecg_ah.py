@@ -3,45 +3,35 @@ from data_functions import *
 from model_functions import *
 # import model_framework
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import matplotlib.pyplot as plt
 
 show_gpus()
 
-def augment_ecg(signal):
-    signal = time_warp(signal, sigma=0.075)
-    signal = add_noise(signal, noise_std=0.05)
-    signal = time_shift(signal, shift_max=20)
-    signal *= np.random.randint(80, 120) / 100
-    return signal
-
-        
 def create_model():
-    inp = layers.Input(shape=(188, 8))
+    inp = layers.Input(shape=(None, 1))
+
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(inp)
+    ds_conv = layers.BatchNormalization()(ds_conv)
+    ds_conv = layers.Activation("relu")(ds_conv)
+    ds_conv = layers.MaxPool1D(pool_size=3, strides=2)(ds_conv)
     
-    conv = layers.Conv1D(filters=64, kernel_size=3)(inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = layers.Conv1D(filters=128, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    conv = ResNetBlock(1, ds_conv, 64, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(filters=256, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(filters=512, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=2)(conv)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
@@ -67,16 +57,16 @@ def create_model():
     return model
 
 model = create_model() 
-show_params(model, "ecg_encoder + projection_head")
+show_params(model, "ecg_ah")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 50,
     patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
@@ -85,11 +75,13 @@ cb_checkpoint = cbk.ModelCheckpoint(
     save_weights_only = True,
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
-cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
-# cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=20, min_lr=1e-5)
+# cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
+cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
 
-ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-labels = np.load(path.join("gen_data", "merged_labels.npy"))
+# ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
+# labels = np.load(path.join("gen_data", "merged_labels.npy"))
+ecgs, labels = dummy_data(40000)
+
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
@@ -103,7 +95,7 @@ print(f"Train - Val: {len(train_indices)} - {len(val_indices)}")
 print(f"Test size: {len(test_indices)}")
 
 start_time = timer()
-model.fit(
+hist = model.fit(
     ecgs[train_indices],
     labels[train_indices],
     epochs = epochs,
@@ -111,6 +103,7 @@ model.fit(
     validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
+hist = hist.history
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
@@ -129,3 +122,17 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     print_classification_metrics(labels[test_indices], r_pred)
     	
 Tee.reset()
+
+plt.plot(hist["loss"], labels="loss")
+plt.plot(hist["val_loss"], labels="val_loss")
+plt.legend()
+plt.grid()
+plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
+plt.close()
+
+plt.plot(hist["t=0.5"], labels="accuracy")
+plt.plot(hist["val_t=0.5"], labels="val accuracy")
+plt.legend()
+plt.grid()
+plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
+plt.close()

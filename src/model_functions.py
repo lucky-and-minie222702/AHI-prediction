@@ -359,3 +359,22 @@ def online_augmen_generator(X, y_origin, augment_version, batch_size):
         tf.TensorSpec(shape=(None, *X.shape[1::]), dtype=tf.float32),
         tf.TensorSpec(shape=(None, *y_origin.shape[1::]), dtype=tf.float32)
     ))
+    
+def generate_sine_wave(duration, sample_rate, frequency_variation=10):
+    base_frequency = 400  # Base frequency for class 0
+    frequency = base_frequency + np.random.uniform(-frequency_variation, frequency_variation)
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    return 0.5 * np.sin(2 * np.pi * frequency * t)
+
+def generate_square_wave(duration, sample_rate, frequency_variation=10):
+    """Generate a square wave with slight frequency variation."""
+    base_frequency = 800  # Base frequency for class 1
+    frequency = base_frequency + np.random.uniform(-frequency_variation, frequency_variation)
+    t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+    return 0.5 * np.sign(np.sin(2 * np.pi * frequency * t))
+
+def dummy_data(num_samples):
+    cls0 = np.array([generate_sine_wave(5, 100)] for _ in num_samples)
+    cls1 = np.array([generate_square_wave(5, 100)] for _ in num_samples)
+    labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
+    return np.vstack([cls0, cls1]), labels
