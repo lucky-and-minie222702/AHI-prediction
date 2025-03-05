@@ -12,6 +12,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, m
 import sys
 import scipy.fftpack
 from sklearn.utils import resample
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score, f1_score,
+    roc_auc_score, confusion_matrix, classification_report
+)
 
 def count_ones_zeros(binary_seq):
     groups = ["".join(g) for _, g in groupby(binary_seq)]
@@ -511,3 +515,35 @@ def downsample_indices_manual(y):
 def shuffle_along_axis(a, axis):
     idx = np.random.rand(*a.shape).argsort(axis=axis)
     return np.take_along_axis(a,idx,axis=axis)
+
+def print_classification_metrics(y_true, y_pred):
+    """
+    Print all essential metrics for binary classification.
+    :param y_true: Ground truth labels (list or numpy array)
+    :param y_pred: Predicted labels (list or numpy array)
+    """
+    
+    # Convert to numpy array if not already
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    # Calculate metrics
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    roc_auc = roc_auc_score(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred)
+    report = classification_report(y_true, y_pred)
+    
+    # Print results
+    print("Binary Classification Metrics:")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"ROC-AUC Score: {roc_auc:.4f}")
+    print("Confusion Matrix:")
+    print(cm)
+    print("Classification Report:")
+    print(report)

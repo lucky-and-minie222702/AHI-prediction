@@ -1,3 +1,4 @@
+from numpy import indices
 from data_functions import *
 from model_functions import *
 # import model_framework
@@ -41,18 +42,13 @@ def create_model():
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, ds_conv, 1024, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 1024, 3)
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
     fc = SEBlock()(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(1024)(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
-    out = layers.Dense(1, activation="sigmodi")(fc)
+    out = layers.Dense(1, activation="sigmoid")(fc)
     
     model = Model(
         inputs = inp,
@@ -61,14 +57,14 @@ def create_model():
     
     return model
 
-model, encoder = create_model() 
+model = create_model() 
 show_params(model, "ecg_encoder + projection_head")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256 + 128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,
@@ -83,43 +79,44 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epochs=epochs, min_lr=1e-6)
 # cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=20, min_lr=1e-5)
 
-seg_len = 30
-step_size = 15
-
-ecgs = []
-labels = []
-
-p_list = good_p_list()
-
-scaler = StandardScaler()
-
-for idx, p in enumerate(p_list, start=1):
-    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
-    raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
-    
-    sig = clean_ecg(raw_sig)    
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
-    label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
-    ecgs.append(sig)
-    labels.append(label) 
- 
-ecgs = np.vstack(ecgs)
-ecgs = np.vstack([ecgs, [augment_ecg(e) for e in ecgs]])
-labels = np.vstack(labels)
-labels = np.vstack([labels, labels])
-labels = np.array([1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels])
-ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
+ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
+labels = np.load(path.join("gen_data", "merged_labels.npy"))
+indices = np.arange(len(labels))
+indices = downsample_indices_manual(labels)
+np.random.shuffle(indices)
+train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
 total_samples = len(labels)
 print(f"Total samples: {total_samples}\n")
 
+print(f"Train - Val: {len(train_indices)} - {len(val_indices)}")
+print(f"Test size: {len(test_indices)}")
+
 start_time = timer()
 model.fit(
-
+    ecgs[train_indices],
+    labels[test_indices],
     epochs = epochs,
     bacth_size = batch_size,
-    validation_split = 0.2,
+    validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
+
+pred = model.predict(ecgs[test_indices], batch_size=batch_size)
+
+res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
+sys.stdout = Tee(res_file)
+
+print(f"Train - Val: {len(train_indices)} - {len(val_indices)}")
+print(f"Test size: {len(test_indices)}")
+
+for t in np.linspace(0, 1, 11)[1:-1:]:
+    t = round(t, 3)
+    print(f"Threshold {t}:")
+    r_pred = round_bin(pred, threshold=t)
+    print_classification_metrics(labels[test_indices], r_pred)
+    	
+Tee.reset()
