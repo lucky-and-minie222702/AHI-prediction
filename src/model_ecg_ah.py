@@ -98,7 +98,7 @@ model.fit(
     ecgs[train_indices],
     labels[test_indices],
     epochs = epochs,
-    bacth_size = batch_size,
+    batch_size = batch_size,
     validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
