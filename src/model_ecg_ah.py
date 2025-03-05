@@ -61,13 +61,13 @@ show_params(model, "ecg_ah")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 50 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
-    patience = 10,
+    patience = 20,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
@@ -78,9 +78,9 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
 
-# ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-# labels = np.load(path.join("gen_data", "merged_labels.npy"))
-ecgs, labels = dummy_data(40000)
+ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
+labels = np.load(path.join("gen_data", "merged_labels.npy"))
+# ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
