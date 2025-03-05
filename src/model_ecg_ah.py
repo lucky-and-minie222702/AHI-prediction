@@ -77,9 +77,9 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
 
-ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-labels = np.load(path.join("gen_data", "merged_labels.npy"))
-# ecgs, labels = dummy_data(40000)
+# ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
+# labels = np.load(path.join("gen_data", "merged_labels.npy"))
+ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
@@ -122,15 +122,15 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     	
 Tee.reset()
 
-plt.plot(hist["loss"], labels="loss")
-plt.plot(hist["val_loss"], labels="val_loss")
+plt.plot(hist["loss"], label="loss")
+plt.plot(hist["val_loss"], label="val_loss")
 plt.legend()
 plt.grid()
 plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
 plt.close()
 
-plt.plot(hist["t=0.5"], labels="accuracy")
-plt.plot(hist["val_t=0.5"], labels="val accuracy")
+plt.plot(hist["t=0.5"], label="accuracy")
+plt.plot(hist["val_t=0.5"], label="val accuracy")
 plt.legend()
 plt.grid()
 plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
