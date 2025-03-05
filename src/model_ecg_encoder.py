@@ -191,4 +191,4 @@ if "encode" in sys.argv:
     encoder.load_weights(weights_path)
     encoded_ecg = encoder.predict(ecgs, batch_size=batch_size)
     np.save(path.join("gen_data", "merged_ecg.py"), encoded_ecg)
-    np.save(path.join("gen_data"))
+    np.save(path.join("gen_data", "merged_label"), labels)
