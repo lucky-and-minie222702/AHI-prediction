@@ -61,7 +61,7 @@ show_params(model, "ecg_ah")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 model.save_weights(weights_path)
 
-epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
+epochs = 50 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(

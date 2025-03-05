@@ -374,7 +374,7 @@ def generate_square_wave(duration, sample_rate, frequency_variation=10):
     return 0.5 * np.sign(np.sin(2 * np.pi * frequency * t))
 
 def dummy_data(num_samples):
-    cls0 = np.array([generate_sine_wave(5, 100)] for _ in num_samples)
-    cls1 = np.array([generate_square_wave(5, 100)] for _ in num_samples)
+    cls0 = np.array([generate_sine_wave(5, 100) for _ in range(num_samples)])
+    cls1 = np.array([generate_square_wave(5, 100) for _ in range(num_samples)])
     labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
     return np.vstack([cls0, cls1]), labels
