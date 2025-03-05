@@ -17,12 +17,13 @@ def augment_ecg(signal):
 def create_model():
     inp = layers.Input(shape=(188, 8))
     
-    conv = ResNetBlock(1, conv, 64, 3, change_sample=True)
+    conv = ResNetBlock(1, inp, 64, 3, change_sample=True)
     conv = ResNetBlock(1, conv, 64, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = layers.GaussianNoise(stddev=0.01)(conv)
     conv = ResNetBlock(1, conv, 128, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
