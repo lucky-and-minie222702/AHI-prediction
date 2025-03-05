@@ -33,14 +33,9 @@ def create_model():
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
     fc = SEBlock()(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512)(fc)
+    fc = layers.Dense(256)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
