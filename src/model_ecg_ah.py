@@ -17,25 +17,29 @@ def augment_ecg(signal):
 def create_model():
     inp = layers.Input(shape=(188, 8))
     
-    conv = ResNetBlock(1, inp, 64, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, inp, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = layers.GaussianNoise(stddev=0.01)(conv)
-    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     fc = SEBlock()(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(256)(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
