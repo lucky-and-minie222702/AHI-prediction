@@ -102,7 +102,7 @@ print(f"Test size: {len(test_indices)}")
 start_time = timer()
 model.fit(
     ecgs[train_indices],
-    labels[test_indices],
+    labels[train_indices],
     epochs = epochs,
     batch_size = batch_size,
     validation_data = (ecgs[val_indices], labels[val_indices]),
