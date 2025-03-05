@@ -142,7 +142,7 @@ cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epoc
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 30
-step_size = 15
+step_size = 5
 
 ecgs = []
 labels = []

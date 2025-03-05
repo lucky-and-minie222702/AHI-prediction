@@ -48,7 +48,7 @@ def create_model():
     )
     
     model.compile(
-        optimizer = optimizers.Adam(0.00025),
+        optimizer = optimizers.Adam(0.001),
         loss = "binary_crossentropy",
         metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)]
     )
@@ -77,9 +77,9 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
 
-# ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-# labels = np.load(path.join("gen_data", "merged_labels.npy"))
-ecgs, labels = dummy_data(40000)
+ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
+labels = np.load(path.join("gen_data", "merged_labels.npy"))
+# ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
