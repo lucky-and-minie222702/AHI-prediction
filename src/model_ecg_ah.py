@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 show_gpus()
 
 def create_model():
-    inp = layers.Input(shape=(None, 8))
+    inp = layers.Input(shape=(None, 1))
 
     ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
