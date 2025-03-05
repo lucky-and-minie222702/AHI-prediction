@@ -16,25 +16,32 @@ def augment_ecg(signal):
         
 def create_model():
     inp = layers.Input(shape=(188, 8))
-    norm_inp = layers.Normalization()(inp)
     
-    conv = ResNetBlock(1, norm_inp, 64, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.0001))
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = layers.Conv1D(filters=64, kernel_size=3)(inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = layers.Conv1D(filters=128, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.0001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.0001))
+    conv = layers.Conv1D(filters=256, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = layers.Conv1D(filters=512, kernel_size=3)(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=2)(conv)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
