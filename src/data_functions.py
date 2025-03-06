@@ -547,3 +547,7 @@ def print_classification_metrics(y_true, y_pred):
     print(cm)
     print("Classification Report:")
     print(report)
+    
+def print_class_counts(l):
+    c = np.unique(l, return_counts=True)[1]
+    print(f"Class 0: {c[0]} - Class 1: {c[1]}")

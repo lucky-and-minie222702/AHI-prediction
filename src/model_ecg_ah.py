@@ -10,27 +10,27 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 32))
 
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(inp)
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3)
-    conv = ResNetBlock(1, conv, 64, 3)
+    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 128, 3)
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 256, 3)
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
-    conv = ResNetBlock(1, conv, 512, 3)
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
@@ -50,7 +50,7 @@ def create_model():
     model.compile(
         optimizer = optimizers.Adam(0.001),
         loss = "binary_crossentropy",
-        metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)]
+        metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)] + ["binary_crossentropy"]
     )
     
     return model
@@ -66,17 +66,21 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 20,
+    start_from_epoch = 50,
     patience = 10,
+    monitor = "val_binary_crossentropy",
+    mode = "min",
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
     save_best_only = True,
     save_weights_only = True,
+    monitor = "val_binary_crossentropy",
+    mode = "min",
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
-cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
+cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
 labels = np.load(path.join("gen_data", "merged_labels.npy"))
@@ -93,6 +97,10 @@ print(f"Total samples: {total_samples}\n")
 
 print(f"Train - Val: {len(train_indices)} - {len(val_indices)}")
 print(f"Test size: {len(test_indices)}")
+print("Train - Test - Val")
+print_class_counts(labels[train_indices])
+print_class_counts(labels[test_indices])
+print_class_counts(labels[val_indices])
 
 start_time = timer()
 hist = model.fit(
