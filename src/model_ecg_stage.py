@@ -120,9 +120,9 @@ total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
 pred = model.predict(ecgs[test_indices], batch_size=batch_size)
-np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
+np.save(path.join("history", "ecg_stage_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
 
-res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
+res_file = open(path.join("history", "ecg_stage_res.txt"), "w")
 sys.stdout = Tee(res_file)
 
 print(f"Train - Val: {len(train_indices)} - {len(val_indices)}")
@@ -136,16 +136,16 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     	
 Tee.reset()
 
-plt.plot(hist["loss"], label="loss")
-plt.plot(hist["val_loss"], label="val_loss")
+plt.plot(hist["binary_crossentropy"], label="loss")
+plt.plot(hist["val_binary_crossentropy"], label="val_loss")
 plt.legend()
 plt.grid()
-plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
+plt.savefig(path.join("history", "ecg_stage_plot_loss.png"))
 plt.close()
 
 plt.plot(hist["t=0.5"], label="accuracy")
 plt.plot(hist["val_t=0.5"], label="val accuracy")
 plt.legend()
 plt.grid()
-plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
+plt.savefig(path.join("history", "ecg_stage_plot_acc.png"))
 plt.close()

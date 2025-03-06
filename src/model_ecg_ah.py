@@ -136,8 +136,8 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     	
 Tee.reset()
 
-plt.plot(hist["loss"], label="loss")
-plt.plot(hist["val_loss"], label="val_loss")
+plt.plot(hist["binary_crossentropy"], label="loss")
+plt.plot(hist["val_binary_crossentropy"], label="val_loss")
 plt.legend()
 plt.grid()
 plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
