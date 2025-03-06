@@ -16,96 +16,76 @@ def augment_ecg(signal):
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    en = layers.Conv1D(filters=64, kernel_size=11, strides=2)(inp)
+    en = layers.Conv1D(filters=64, kernel_size=7, strides=2)(inp)
     en = layers.BatchNormalization()(en)
     en = layers.Activation("relu")(en)
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
-    en = ResNetBlock(1, en, 64, 9, True)
-    en = ResNetBlock(1, en, 64, 9)
-    en = ResNetBlock(1, en, 64, 9) 
+    en = ResNetBlock(1, en, 64, 3)
+    en = ResNetBlock(1, en, 64, 3)
+    en = ResNetBlock(1, en, 64, 3)
        
-    en = ResNetBlock(1, en, 128, 7, True)
-    en = ResNetBlock(1, en, 128, 7)
-    en = ResNetBlock(1, en, 128, 7)
-    en = ResNetBlock(1, en, 128, 7)
-    en = ResNetBlock(1, en, 128, 7)
+    en = ResNetBlock(1, en, 128, 3, True)
+    en = ResNetBlock(1, en, 128, 3)
+    en = ResNetBlock(1, en, 128, 3)
     
-    en = ResNetBlock(1, en, 256, 5, True)
-    en = ResNetBlock(1, en, 256, 5)
-    en = ResNetBlock(1, en, 256, 5)
-    en = ResNetBlock(1, en, 256, 5)
-    en = ResNetBlock(1, en, 256, 5)
+    en = ResNetBlock(1, en, 256, 3, True)
+    en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3)
     
     en = ResNetBlock(1, en, 512, 3, True)
     en = ResNetBlock(1, en, 512, 3)
     en = ResNetBlock(1, en, 512, 3)
     
-    en = ResNetBlock(1, en, 1024, 3, True)
-    en = ResNetBlock(1, en, 1024, 3)
-    en = ResNetBlock(1, en, 1024, 3)
+    en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same")(en)
+    en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same")(en)
+    en = layers.Normalization()(en)
+    
+    # en shape (188, 32)
 
-    en = SEBlock()(en)
-    en = layers.GlobalAvgPool1D()(en)
-    en = layers.Dense(1504)(en)
+    de = ResNetBlock(1, en, 512, 3, True, transpose=True)
+    de = ResNetBlock(1, de, 512, 3, transpose=True)
+    de = ResNetBlock(1, de, 512, 3, transpose=True)
     
-    expanded_en = layers.Reshape((188, 8))(en)
-    de = ResNetBlock(1, expanded_en, 512, 3, True, True)
-    de = ResNetBlock(1, de, 512, 3, False, True)
-    de = ResNetBlock(1, de, 512, 3, False, True)
+    de = ResNetBlock(1, de, 256, 3, True, transpose=True)
+    de = ResNetBlock(1, de, 256, 3, transpose=True)
+    de = ResNetBlock(1, de, 256, 3, transpose=True)
     
-    de = ResNetBlock(1, de, 256, 5, True, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
-    de = ResNetBlock(1, de, 256, 5, False, True)
+    de = ResNetBlock(1, de, 128, 3, True, transpose=True)
+    de = ResNetBlock(1, de, 128, 3, transpose=True)
+    de = ResNetBlock(1, de, 128, 3, transpose=True)
     
-    de = ResNetBlock(1, de, 128, 7, True, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
-    de = ResNetBlock(1, de, 128, 7, False, True)
+    de = ResNetBlock(1, de, 64, 3, True, transpose=True)
+    de = ResNetBlock(1, de, 64, 3, transpose=True)
+    de = ResNetBlock(1, de, 64, 3, transpose=True)
     
-    de = ResNetBlock(1, de, 64, 9, True, True)
-    de = ResNetBlock(1, de, 64, 9, False, True)
-    de = ResNetBlock(1, de, 64, 9, False, True)
+    de = layers.Conv1D(filters=1, kernel_size=9)(de)
+    de = layers.Flatten(name="ecg")(de)
     
-    de = layers.Conv1D(filters=32, kernel_size=3)(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.Activation("relu")(de)
-    de = layers.Conv1D(filters=16, kernel_size=3)(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.Activation("relu")(de)
-    de = layers.Conv1D(filters=8, kernel_size=3)(de)
-    de = layers.BatchNormalization()(de)
-    de = layers.Activation("relu")(de)
-    de = SEBlock()(de)
+    de_rpa = ResNetBlock(1, en, 64, 3, True)
+    de_rpa = ResNetBlock(1, de_rpa, 64, 3)
 
-    de = layers.Flatten()(de)
-    de = layers.Dense(3000, name="ecg")(de)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3, True)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3)
+    de_rpa = ResNetBlock(1, de_rpa, 128, 3)
+
+    de_rpa = ResNetBlock(1, de_rpa, 256, 3, True)
+    de_rpa = ResNetBlock(1, de_rpa, 256, 3)
     
-    de_rpa = ResNetBlock(1, expanded_en, 64, 3, True)
-    de_rpa = ResNetBlock(1, de_rpa, 64, 3)
-    de_rpa = ResNetBlock(1, de_rpa, 64, 3)
-    de_rpa = ResNetBlock(1, de_rpa, 128, 5, True)
-    de_rpa = ResNetBlock(1, de_rpa, 128, 5)
-    de_rpa = ResNetBlock(1, de_rpa, 128, 5)
-    de_rpa = ResNetBlock(1, de_rpa, 256, 7, True)
-    de_rpa = ResNetBlock(1, de_rpa, 256, 7)
-    de_rpa = ResNetBlock(1, de_rpa, 256, 7)
     de_rpa = SEBlock()(de_rpa)
     de_rpa = layers.GlobalAvgPool1D()(de_rpa)
     de_rpa = layers.Dense(90, name="rpa")(de_rpa)
     
-    de_rri = ResNetBlock(1, expanded_en, 64, 3, True)
+    de_rri = ResNetBlock(1, en, 64, 3, True)
     de_rri = ResNetBlock(1, de_rri, 64, 3)
-    de_rri = ResNetBlock(1, de_rri, 64, 3)
-    de_rri = ResNetBlock(1, de_rri, 128, 5, True)
-    de_rri = ResNetBlock(1, de_rri, 128, 5)
-    de_rri = ResNetBlock(1, de_rri, 128, 5)
-    de_rri = ResNetBlock(1, de_rri, 256, 7, True)
-    de_rri = ResNetBlock(1, de_rri, 256, 7)
-    de_rri = ResNetBlock(1, de_rri, 256, 7)
+
+    de_rri = ResNetBlock(1, de_rri, 128, 3, True)
+    de_rri = ResNetBlock(1, de_rri, 128, 3)
+    de_rri = ResNetBlock(1, de_rri, 128, 3)
+
+    de_rri = ResNetBlock(1, de_rri, 256, 3, True)
+    de_rri = ResNetBlock(1, de_rri, 256, 3)
+
     de_rri = SEBlock()(de_rri)
     de_rri = layers.GlobalAvgPool1D()(de_rri)
     de_rri = layers.Dense(90, name="rri")(de_rri)
@@ -141,12 +121,12 @@ model, encoder = create_model()
 show_params(model, "ecg_encoder")
 weights_path = path.join("res", "ecg_encoder.weights.h5")
 if "pre_save" in sys.argv:
-    model.save_weights(weights_path)
+    encoder.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 epochs = 0 if "encode" in sys.argv else epochs
 
-batch_size = 128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 100,

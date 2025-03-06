@@ -57,8 +57,9 @@ def create_model():
 
 model = create_model() 
 show_params(model, "ecg_ah")
-weights_path = path.join("res", "ecg_encoder.weights.h5")
-model.save_weights(weights_path)
+weights_path = path.join("res", "ecg_ah.weights.h5")
+if "pre_save" in sys.argv:
+    model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
