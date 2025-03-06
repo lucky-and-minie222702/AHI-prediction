@@ -143,7 +143,7 @@ cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 30
-step_size = 15
+step_size = 5 if "encode" in sys.argv else 15
 
 ecgs = []
 labels = []

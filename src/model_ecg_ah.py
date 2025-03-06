@@ -48,7 +48,7 @@ def create_model():
     )
     
     model.compile(
-        optimizer = optimizers.Adam(0.0005),
+        optimizer = optimizers.Adam(0.001),
         loss = "binary_crossentropy",
         metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)]
     )
@@ -66,8 +66,8 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 256
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
-    patience = 20,
+    start_from_epoch = 20,
+    patience = 10,
 )
 cb_checkpoint = cbk.ModelCheckpoint(
     weights_path, 
