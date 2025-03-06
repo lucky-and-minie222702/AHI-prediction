@@ -147,6 +147,7 @@ step_size = 5 if "encode" in sys.argv else 15
 
 ecgs = []
 labels = []
+wakes = []
 
 p_list = good_p_list()
 
@@ -155,19 +156,21 @@ scaler = StandardScaler()
 for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
+    raw_wake = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::].flatten()
     
     sig = clean_ecg(raw_sig)    
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
     label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
+    wake = divide_signal(raw_wake, win_size=seg_len, step_size=step_size)
     
     ecgs.append(sig)
     labels.append(label) 
+    wakes.append(wake)
  
 ecgs = np.vstack(ecgs)
-# ecgs = np.vstack([ecgs, [augment_ecg(e) for e in ecgs]])
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 labels = np.vstack(labels)
-# labels = np.vstack([labels, labels])
+wakes = np.vstack(wakes)
 labels = np.array([
     1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
 ])
@@ -193,3 +196,4 @@ if "encode" in sys.argv:
     # ecgs = encoder.predict(ecgs, batch_size=batch_size)
     np.save(path.join("gen_data", "merged_ecgs"), ecgs)
     np.save(path.join("gen_data", "merged_labels"), labels)
+    np.save(path.join("gen_data", "merged_wakes"), wakes)

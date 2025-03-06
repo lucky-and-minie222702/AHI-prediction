@@ -60,8 +60,8 @@ def create_model():
     return model
 
 model = create_model() 
-show_params(model, "ecg_ah")
-weights_path = path.join("res", "ecg_ah.weights.h5")
+show_params(model, "ecg_stage")
+weights_path = path.join("res", "ecg_stage.weights.h5")
 if "pre_save" in sys.argv:
     model.save_weights(weights_path)
 
@@ -87,7 +87,7 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_stage"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-labels = np.load(path.join("gen_data", "merged_labels.npy"))
+labels = np.load(path.join("gen_data", "merged_wakes.npy"))
 # ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
