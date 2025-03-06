@@ -10,33 +10,33 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 32))
 
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(inp)
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.01))(inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.01))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.01))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.01))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.01))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock()(conv)
+    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512)(fc)
+    fc = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
@@ -80,7 +80,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_encoder"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
-cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
+cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
 labels = np.load(path.join("gen_data", "merged_labels.npy"))
@@ -116,6 +116,7 @@ total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
 pred = model.predict(ecgs[test_indices], batch_size=batch_size)
+np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred, labels[test_indices]], axis=1))
 
 res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 sys.stdout = Tee(res_file)
