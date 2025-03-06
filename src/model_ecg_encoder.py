@@ -189,7 +189,7 @@ total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
 if "encode" in sys.argv:
-    encoder.load_weights(weights_path)
-    encoded_ecg = encoder.predict(ecgs, batch_size=batch_size)
-    np.save(path.join("gen_data", "merged_ecgs"), encoded_ecg)
+    # encoder.load_weights(weights_path)
+    # ecgs = encoder.predict(ecgs, batch_size=batch_size)
+    np.save(path.join("gen_data", "merged_ecgs"), ecgs)
     np.save(path.join("gen_data", "merged_labels"), labels)

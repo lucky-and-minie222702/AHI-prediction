@@ -8,35 +8,39 @@ import matplotlib.pyplot as plt
 show_gpus()
 
 def create_model():
-    inp = layers.Input(shape=(None, 32))
+    inp = layers.Input(shape=(None, 1))
+    
+    encoder = get_encoder()
+    
+    encoded_inp = encoder(inp)
 
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.01))(inp)
+    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2)(encoded_inp)
     ds_conv = layers.BatchNormalization()(ds_conv)
     ds_conv = layers.Activation("relu")(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, ds_conv, 64, 3)
+    conv = ResNetBlock(1, conv, 64, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 128, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 128, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 256, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 256, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.01))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.01))
+    conv = ResNetBlock(1, conv, 512, 3, change_sample=True)
+    conv = ResNetBlock(1, conv, 512, 3)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     fc = SEBlock(kernel_regularizer=reg.l2(0.01))(conv)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512, kernel_regularizer=reg.l2(0.01))(fc)
+    fc = layers.Dense(512)(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
@@ -116,7 +120,7 @@ total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
 pred = model.predict(ecgs[test_indices], batch_size=batch_size)
-np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred, labels[test_indices]], axis=1))
+np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
 
 res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 sys.stdout = Tee(res_file)
