@@ -384,32 +384,32 @@ def dummy_data(num_samples):
     labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
     return np.vstack([cls0, cls1]), labels
 
-def get_encoder():
+def get_encoder(kernel_regularizer=None):
     inp = layers.Input(shape=(3000, 1))
     
-    en = layers.Conv1D(filters=64, kernel_size=7, strides=2)(inp)
+    en = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=kernel_regularizer)(inp)
     en = layers.BatchNormalization()(en)
     en = layers.Activation("relu")(en)
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
-    en = ResNetBlock(1, en, 64, 3)
-    en = ResNetBlock(1, en, 64, 3)
-    en = ResNetBlock(1, en, 64, 3)
+    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
        
-    en = ResNetBlock(1, en, 128, 3, True)
-    en = ResNetBlock(1, en, 128, 3)
-    en = ResNetBlock(1, en, 128, 3)
+    en = ResNetBlock(1, en, 128, 3, True, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 128, 3, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 128, 3, kernel_regularizer=kernel_regularizer)
     
-    en = ResNetBlock(1, en, 256, 3, True)
-    en = ResNetBlock(1, en, 256, 3)
-    en = ResNetBlock(1, en, 256, 3)
+    en = ResNetBlock(1, en, 256, 3, True, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 256, 3, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 256, 3, kernel_regularizer=kernel_regularizer)
     
-    en = ResNetBlock(1, en, 512, 3, True)
-    en = ResNetBlock(1, en, 512, 3)
-    en = ResNetBlock(1, en, 512, 3)
+    en = ResNetBlock(1, en, 512, 3, True, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
+    en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
     
-    en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same")(en)
-    en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same")(en)
+    en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same", kernel_regularizer=kernel_regularizer)(en)
+    en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(en)
     en = layers.Normalization()(en)
     
     encoder = Model(
