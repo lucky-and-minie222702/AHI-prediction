@@ -52,11 +52,11 @@ def create_model():
     
     return model
 
-model, encoder = create_model() 
+model = create_model() 
 show_params(model, "spo2_ah")
 weights_path = path.join("res", "spo2_ah.weights.h5")
 if "pre_save" in sys.argv:
-    encoder.save_weights(weights_path)
+    model.save_weights(weights_path)
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
