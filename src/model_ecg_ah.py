@@ -38,7 +38,7 @@ def create_model():
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock(kernel_regularizer=reg.l2(0.01))(conv)
+    fc = SEBlock(kernel_regularizer=reg.l2(0.0001))(conv)
     fc = layers.GlobalAvgPool1D()(fc)
     fc = layers.Dense(512, kernel_regularizer=reg.l2(0.0001))(fc)
     fc = layers.BatchNormalization()(fc)
