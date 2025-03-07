@@ -170,11 +170,11 @@ for idx, p in enumerate(p_list, start=1):
 ecgs = np.vstack(ecgs)
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 labels = np.vstack(labels)
-wakes = np.vstack(wakes)
-wakes = np.mean(wakes, axis=-1)
 labels = np.array([
     1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
 ])
+wakes = np.vstack(wakes)
+wakes = np.mean(wakes, axis=-1)
 rpa, rri = calc_ecg(ecgs, splr=100, duration=60, max_rpa=90, max_rri=90)
 
 total_samples = len(ecgs)
