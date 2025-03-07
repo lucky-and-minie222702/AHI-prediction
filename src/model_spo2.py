@@ -96,7 +96,7 @@ for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}spo2.npy"))
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
     
-    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
+    sig = divide_signal(raw_sig, win_size=seg_len, step_size=step_size)
     label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
     
     spo2s.append(sig)
