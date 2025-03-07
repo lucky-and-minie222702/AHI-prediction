@@ -67,7 +67,7 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 256 + 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
@@ -139,16 +139,16 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     	
 Tee.reset()
 
-plt.plot(hist["binary_crossentropy"], label="loss")
-plt.plot(hist["val_binary_crossentropy"], label="val_loss")
-plt.legend()
-plt.grid()
-plt.savefig(path.join("history", "ecg_stage_plot_loss.png"))
-plt.close()
+# plt.plot(hist["binary_crossentropy"], label="loss")
+# plt.plot(hist["val_binary_crossentropy"], label="val_loss")
+# plt.legend()
+# plt.grid()
+# plt.savefig(path.join("history", "ecg_stage_plot_loss.png"))
+# plt.close()
 
-plt.plot(hist["t=0.5"], label="accuracy")
-plt.plot(hist["val_t=0.5"], label="val accuracy")
-plt.legend()
-plt.grid()
-plt.savefig(path.join("history", "ecg_stage_plot_acc.png"))
-plt.close()
+# plt.plot(hist["t=0.5"], label="accuracy")
+# plt.plot(hist["val_t=0.5"], label="val accuracy")
+# plt.legend()
+# plt.grid()
+# plt.savefig(path.join("history", "ecg_stage_plot_acc.png"))
+# plt.close()

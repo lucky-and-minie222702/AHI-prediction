@@ -67,10 +67,10 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 256 + 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 35,
+    start_from_epoch = 50,
     patience = 10,
     monitor = "val_binary_crossentropy",
     mode = "min",
@@ -82,7 +82,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
     monitor = "val_binary_crossentropy",
     mode = "min",
 )
-cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_stage"))
+cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
@@ -140,16 +140,16 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     	
 Tee.reset()
 
-plt.plot(hist["binary_crossentropy"], label="loss")
-plt.plot(hist["val_binary_crossentropy"], label="val_loss")
-plt.legend()
-plt.grid()
-plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
-plt.close()
+# plt.plot(hist["binary_crossentropy"], label="loss")
+# plt.plot(hist["val_binary_crossentropy"], label="val_loss")
+# plt.legend()
+# plt.grid()
+# plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
+# plt.close()
 
-plt.plot(hist["t=0.5"], label="accuracy")
-plt.plot(hist["val_t=0.5"], label="val accuracy")
-plt.legend()
-plt.grid()
-plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
-plt.close()
+# plt.plot(hist["t=0.5"], label="accuracy")
+# plt.plot(hist["val_t=0.5"], label="val accuracy")
+# plt.legend()
+# plt.grid()
+# plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
+# plt.close()
