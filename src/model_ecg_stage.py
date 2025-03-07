@@ -87,7 +87,8 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_stage"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-sample_weights = np.load(path.join("gen_data", "merged_wakes.npy"))
+sample_weights = np.load(path.join("gen_data", "merged_wakes.npy")) 
+sample_weights += 1
 labels = np.round(sample_weights)
 # ecgs, labels = dummy_data(40000)
 
