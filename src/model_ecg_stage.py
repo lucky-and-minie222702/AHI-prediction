@@ -88,8 +88,8 @@ cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "v
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
 sample_weights = np.load(path.join("gen_data", "merged_wakes.npy")) 
-sample_weights += 1
 labels = np.round(sample_weights)
+sample_weights += 1
 # ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
