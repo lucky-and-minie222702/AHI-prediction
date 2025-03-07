@@ -38,7 +38,7 @@ def create_model():
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock(kernel_regularizer=reg.l2(0.0001))(conv)
+    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(conv)
     fc = layers.GlobalAvgPool1D()(fc)
     fc = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
@@ -89,6 +89,8 @@ cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "v
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
 sample_weights = np.load(path.join("gen_data", "merged_wakes.npy")) 
 sample_weights += 1
+print(sample_weights)
+exit()
 labels = np.round(sample_weights)
 # ecgs, labels = dummy_data(40000)
 
