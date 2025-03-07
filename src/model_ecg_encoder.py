@@ -129,7 +129,7 @@ epochs = 0 if "encode" in sys.argv else epochs
 batch_size = 256+128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 100,
+    start_from_epoch = 50,
     patience = 20,
 )
 # cb_checkpoint = cbk.ModelCheckpoint(
