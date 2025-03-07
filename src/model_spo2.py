@@ -6,7 +6,7 @@ import matplotlib as plt
 
 show_gpus()
 
-def augment_ecg(signal):
+def augment_spo2(signal):
     signal = time_warp(signal, sigma=0.075)
     signal = add_noise(signal, noise_std=0.05)
     signal = time_shift(signal, shift_max=20)
@@ -60,7 +60,7 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256+128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
@@ -89,7 +89,6 @@ for idx, p in enumerate(p_list, start=1):
     raw_sig = np.load(path.join("data", f"benhnhan{p}spo2.npy"))
     raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
     
-    sig = clean_ecg(raw_sig)    
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
     label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
     
@@ -109,7 +108,9 @@ print(f"Total samples: {total_samples}\n")
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
-train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+# train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+train_indices = np.load(path.join("history", "train_indices.npy"))
+test_indices = np.load(path.join("history", "test_indices.npy"))
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
 total_samples = len(labels)
@@ -136,9 +137,9 @@ total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
 pred = model.predict(spo2s[test_indices], batch_size=batch_size)
-np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
+np.save(path.join("history", "spo2_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
 
-res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
+res_file = open(path.join("history", "spo2_ah_res.txt"), "w")
 sys.stdout = Tee(res_file)
 
 print(f"Train - Val: {len(train_indices)} - {len(val_indices)}")
@@ -156,12 +157,12 @@ plt.plot(hist["binary_crossentropy"], label="loss")
 plt.plot(hist["val_binary_crossentropy"], label="val_loss")
 plt.legend()
 plt.grid()
-plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
+plt.savefig(path.join("history", "spo2_ah_plot_loss.png"))
 plt.close()
 
 plt.plot(hist["t=0.5"], label="accuracy")
 plt.plot(hist["val_t=0.5"], label="val accuracy")
 plt.legend()
 plt.grid()
-plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
+plt.savefig(path.join("history", "spo2_ah_plot_acc.png"))
 plt.close()

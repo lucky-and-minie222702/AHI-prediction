@@ -10,7 +10,7 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    encoder = get_encoder(kernel_regularizer=reg.l2(0.0001))
+    encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
     
     encoded_inp = encoder(inp)
 
@@ -67,10 +67,10 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256 + 128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 35,
     patience = 10,
     monitor = "val_binary_crossentropy",
     mode = "min",
@@ -94,6 +94,10 @@ indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
 train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+
+np.save(path.join("history", "train_indices"), train_indices)
+np.save(path.join("history", "test_indices"), test_indices)
+
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
 total_samples = len(labels)

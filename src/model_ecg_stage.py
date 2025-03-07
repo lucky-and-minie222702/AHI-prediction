@@ -10,7 +10,7 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    encoder = get_encoder(kernel_regularizer=reg.l2(0.0001))
+    encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
     
     encoded_inp = encoder(inp)
 
@@ -67,7 +67,7 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256 + 128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 50,
@@ -87,7 +87,8 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_stage"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-labels = np.load(path.join("gen_data", "merged_wakes.npy"))
+sample_weights = np.load(path.join("gen_data", "merged_wakes.npy"))
+labels = np.round(sample_weights)
 # ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
@@ -112,6 +113,7 @@ hist = model.fit(
     labels[train_indices],
     epochs = epochs,
     batch_size = batch_size,
+    sample_weight = sample_weights,
     validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )

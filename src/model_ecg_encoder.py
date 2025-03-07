@@ -172,7 +172,6 @@ ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs]
 labels = np.vstack(labels)
 wakes = np.vstack(wakes)
 wakes = np.mean(wakes, axis=-1)
-wakes = np.round(wakes)
 labels = np.array([
     1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
 ])
