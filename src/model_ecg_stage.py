@@ -113,7 +113,7 @@ hist = model.fit(
     labels[train_indices],
     epochs = epochs,
     batch_size = batch_size,
-    sample_weight = sample_weights,
+    sample_weight = sample_weights[train_indices],
     validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
