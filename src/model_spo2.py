@@ -17,7 +17,11 @@ def augment_spo2(signal):
 def create_model():
     inp = layers.Input(shape=(30, 1))
     
-    conv = layers.Conv1D(filters=64, kernel_size=3)(inp)
+    conv = layers.Conv1D(filters=32, kernel_size=3)(inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    
+    conv = layers.Conv1D(filters=64, kernel_size=3)(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
@@ -35,6 +39,9 @@ def create_model():
     
     fc = SEBlock()(conv)
     fc = layers.GlobalAvgPool1D()(fc)
+    fc = layers.Dense(512)(fc)
+    fc = layers.BatchNormalization()(fc)
+    fc = layers.Activation("relu")(fc)
     out = layers.Dense(1, activation="sigmoid")(fc)
     
     
