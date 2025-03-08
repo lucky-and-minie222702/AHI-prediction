@@ -112,10 +112,14 @@ labels = np.array([
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
-train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
 
-np.save(path.join("history", "train_indices"), train_indices)
-np.save(path.join("history", "test_indices"), test_indices)
+train_indices = np.load(path.join("history", "train_indices.npy"))
+test_indices = np.load(path.join("history", "test_indices.npy"))
+
+# train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+
+# np.save(path.join("history", "train_indices"), train_indices)
+# np.save(path.join("history", "test_indices"), test_indices)
 
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
@@ -141,6 +145,8 @@ hist = model.fit(
 hist = hist.history
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
+
+model.load_weights(weights_path)
 
 pred = model.predict(ecgs[test_indices], batch_size=batch_size)
 np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
