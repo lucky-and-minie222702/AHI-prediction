@@ -95,7 +95,7 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 seg_len = 30
-step_size = 10
+step_size = 15
 
 ecgs = []
 labels = []
