@@ -56,10 +56,10 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 256 + 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 40,
     patience = 10,
     monitor = "val_binary_crossentropy",
     mode = "min",
