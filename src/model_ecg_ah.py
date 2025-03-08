@@ -19,17 +19,17 @@ def create_model():
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
     fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
+    fc = layers.Dense(32, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
