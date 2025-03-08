@@ -32,7 +32,7 @@ def create_model():
     fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Activation("relu")(fc)
-    out = layers.Dense(1, activation="sigmoid")(fc)
+    out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
     
     model = Model(
