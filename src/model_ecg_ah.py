@@ -133,18 +133,19 @@ print_class_counts(labels[train_indices])
 print_class_counts(labels[test_indices])
 print_class_counts(labels[val_indices])
 
-start_time = timer()
-hist = model.fit(
-    ecgs[train_indices],
-    labels[train_indices],
-    epochs = epochs,
-    batch_size = batch_size,
-    validation_data = (ecgs[val_indices], labels[val_indices]),
-    callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
-)
-hist = hist.history
-total_time = timer() - start_time
-print(f"Training time {convert_seconds(total_time)}")
+if "train" in sys.argv:
+    start_time = timer()
+    hist = model.fit(
+        ecgs[train_indices],
+        labels[train_indices],
+        epochs = epochs,
+        batch_size = batch_size,
+        validation_data = (ecgs[val_indices], labels[val_indices]),
+        callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
+    )
+    hist = hist.history
+    total_time = timer() - start_time
+    print(f"Training time {convert_seconds(total_time)}")
 
 model.load_weights(weights_path)
 
