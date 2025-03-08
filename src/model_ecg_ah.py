@@ -56,7 +56,7 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 512
+batch_size = 256 + 128s
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 40,
@@ -112,14 +112,10 @@ labels = np.array([
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
+train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
 
-train_indices = np.load(path.join("history", "train_indices.npy"))
-test_indices = np.load(path.join("history", "test_indices.npy"))
-
-# train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
-
-# np.save(path.join("history", "train_indices"), train_indices)
-# np.save(path.join("history", "test_indices"), test_indices)
+np.save(path.join("history", "train_indices"), train_indices)
+np.save(path.join("history", "test_indices"), test_indices)
 
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
@@ -133,23 +129,18 @@ print_class_counts(labels[train_indices])
 print_class_counts(labels[test_indices])
 print_class_counts(labels[val_indices])
 
-if "train" in sys.argv:
-    start_time = timer()
-    hist = model.fit(
-        ecgs[train_indices],
-        labels[train_indices],
-        epochs = epochs,
-        batch_size = batch_size,
-        validation_data = (ecgs[val_indices], labels[val_indices]),
-        callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
-    )
-    hist = hist.history
-    total_time = timer() - start_time
-    print(f"Training time {convert_seconds(total_time)}")
-
-a = input("enter: ")
-
-model.load_weights(weights_path)
+start_time = timer()
+hist = model.fit(
+    ecgs[train_indices],
+    labels[train_indices],
+    epochs = epochs,
+    batch_size = batch_size,
+    validation_data = (ecgs[val_indices], labels[val_indices]),
+    callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
+)
+hist = hist.history
+total_time = timer() - start_time
+print(f"Training time {convert_seconds(total_time)}")
 
 pred = model.predict(ecgs[test_indices], batch_size=batch_size)
 np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
