@@ -16,29 +16,35 @@ def create_model():
     
     # bi lstm features extraction
     rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(encoded_inp)
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
-
+    
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, rnn, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, rnn, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(conv)
+    # conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    # conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    # conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
+    
+    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(fc)
+    fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
