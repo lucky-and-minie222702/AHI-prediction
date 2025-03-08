@@ -27,21 +27,6 @@ def create_model():
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    # conv = ResNetBlock(1, rnn, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    # conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
-    
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    # conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    # conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
-    
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    # conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    # conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
-    
-    # conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
     fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
     fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
