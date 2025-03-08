@@ -14,7 +14,7 @@ def create_model():
     
     encoded_inp = encoder(inp)
     
-    # bi lstm extraction
+    # bi lstm features extraction
     rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(encoded_inp)
     rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
