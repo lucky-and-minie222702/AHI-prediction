@@ -147,6 +147,8 @@ if "train" in sys.argv:
     total_time = timer() - start_time
     print(f"Training time {convert_seconds(total_time)}")
 
+a = input("enter: ")
+
 model.load_weights(weights_path)
 
 pred = model.predict(ecgs[test_indices], batch_size=batch_size)
