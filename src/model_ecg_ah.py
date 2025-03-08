@@ -112,12 +112,16 @@ labels = np.array([
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
-train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+# train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
 
-np.save(path.join("history", "train_indices"), train_indices)
-np.save(path.join("history", "test_indices"), test_indices)
+# np.save(path.join("history", "train_indices"), train_indices)
+# np.save(path.join("history", "test_indices"), test_indices)
+
+train_indices = np.load(path.join("history", "train_indices.npy"))
+test_indices = np.load(path.join("history", "test_indices.npy"))
 
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
+
 
 total_samples = len(labels)
 print(f"Total samples: {total_samples}\n")
