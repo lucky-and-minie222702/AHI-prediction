@@ -74,7 +74,7 @@ cb_checkpoint = cbk.ModelCheckpoint(
 )
 cb_his = HistoryAutosaver(save_path=path.join("history", "spo2_ah"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=10, total_epochs=epochs, min_lr=1e-6)
-cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
+cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6)
 
 seg_len = 30
 step_size = 5 
