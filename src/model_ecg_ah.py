@@ -90,17 +90,52 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
-ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-labels = np.load(path.join("gen_data", "merged_labels.npy"))
+seg_len = 30
+step_size = 15
+
+ecgs = []
+labels = []
+
+p_list = good_p_list()
+
+scaler = StandardScaler()
+
+last_p = 0
+
+for idx, p in enumerate(p_list, start=1):
+    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
+    raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, :1:].flatten()
+    
+    sig = clean_ecg(raw_sig)    
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
+    
+    if idx == 25:
+        last_p = sum([len(e) for e in ecgs])
+    
+    ecgs.append(sig)
+    labels.append(label) 
+ 
+ecgs = np.vstack(ecgs)
+ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
+labels = np.vstack(labels)
+labels = np.array([
+    1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
+])
+
 # ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
-indices = downsample_indices_manual(labels)
-np.random.shuffle(indices)
-train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+# indices = downsample_indices_manual(labels)
+# np.random.shuffle(indices)
+# train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+train_indices = indices[:last_p:]
+test_indices = indices[last_p::]
 
 np.save(path.join("history", "train_indices"), train_indices)
 np.save(path.join("history", "test_indices"), test_indices)
+
+train_indices =downsample_indices_manual(labels[:last_p:])
 
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 

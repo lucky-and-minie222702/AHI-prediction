@@ -143,7 +143,7 @@ cb_lr = cbk.ReduceLROnPlateau(factor=0.2, patience=10, min_lr=1e-6)
 cb_save_encoder = SaveEncoderCallback(encoder, weights_path)
 
 seg_len = 30
-step_size = 5 if "encode" in sys.argv else 15
+step_size = 15
 
 ecgs = []
 labels = []
@@ -192,9 +192,9 @@ model.fit(
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
-if "encode" in sys.argv:
-    # encoder.load_weights(weights_path)
-    # ecgs = encoder.predict(ecgs, batch_size=batch_size)
-    np.save(path.join("gen_data", "merged_ecgs"), ecgs)
-    np.save(path.join("gen_data", "merged_labels"), labels)
-    np.save(path.join("gen_data", "merged_wakes"), wakes)
+# if "encode" in sys.argv:
+#     encoder.load_weights(weights_path)
+#     ecgs = encoder.predict(ecgs, batch_size=batch_size)
+#     np.save(path.join("gen_data", "merged_ecgs"), ecgs)
+#     np.save(path.join("gen_data", "merged_labels"), labels)
+#     np.save(path.join("gen_data", "merged_wakes"), wakes)
