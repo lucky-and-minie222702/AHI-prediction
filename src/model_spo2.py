@@ -29,13 +29,7 @@ def create_model():
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
-    conv = layers.Conv1D(filters=256, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    
-    conv = layers.Conv1D(filters=512, kernel_size=3)(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
+    conv = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(conv)
     
     fc = SEBlock()(conv)
     fc = layers.GlobalAvgPool1D()(fc)

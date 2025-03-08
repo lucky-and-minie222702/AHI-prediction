@@ -19,17 +19,17 @@ def create_model():
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
     fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(32, kernel_regularizer=reg.l2(0.001))(fc)
+    fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
@@ -159,17 +159,3 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     print_classification_metrics(labels[test_indices], r_pred)
     	
 Tee.reset()
-
-# plt.plot(hist["binary_crossentropy"], label="loss")
-# plt.plot(hist["val_binary_crossentropy"], label="val_loss")
-# plt.legend()
-# plt.grid()
-# plt.savefig(path.join("history", "ecg_ah_plot_loss.png"))
-# plt.close()
-
-# plt.plot(hist["t=0.5"], label="accuracy")
-# plt.plot(hist["val_t=0.5"], label="val accuracy")
-# plt.legend()
-# plt.grid()
-# plt.savefig(path.join("history", "ecg_ah_plot_acc.png"))
-# plt.close()

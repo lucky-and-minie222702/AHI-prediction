@@ -13,34 +13,23 @@ def create_model():
     encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
     
     encoded_inp = encoder(inp)
-
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(encoded_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    # bi lstm features extraction
+    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(encoded_inp)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, conv, 256, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
     
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, conv, 512, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001))
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(conv)
+    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(512, kernel_regularizer=reg.l2(0.001))(fc)
+    fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
@@ -70,7 +59,7 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 256 + 128
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 60,
     patience = 10,
     monitor = "val_binary_crossentropy",
     mode = "min",
@@ -86,16 +75,48 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_stage"))
 # cb_lr = WarmupCosineDecayScheduler(target_lr=0.001, warmup_epochs=5, total_epochs=epochs, min_lr=1e-6)
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
-ecgs = np.load(path.join("gen_data", "merged_ecgs.npy"))
-sample_weights = np.load(path.join("gen_data", "merged_wakes.npy")) 
-labels = np.round(sample_weights)
+seg_len = 30
+step_size = 5
+
+ecgs = []
+labels = []
+
+p_list = good_p_list()
+
+scaler = StandardScaler()
+
+last_p = 0
+
+for idx, p in enumerate(p_list, start=1):
+    raw_sig = np.load(path.join("data", f"benhnhan{p}ecg.npy"))
+    raw_label = np.load(path.join("data", f"benhnhan{p}label.npy"))[::, 1::].flatten()
+    
+    sig = clean_ecg(raw_sig)    
+    sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
+    label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
+
+    ecgs.append(sig)
+    labels.append(label) 
+ 
+ecgs = np.vstack(ecgs)
+ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
+labels = np.vstack(labels)
+sample_weights = np.mean(labels, axis=-1)
 sample_weights += 1
+labels = np.array([
+    1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
+])
+
 # ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
 np.random.shuffle(indices)
 train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
+
+np.save(path.join("history", "train_indices"), train_indices)
+np.save(path.join("history", "test_indices"), test_indices)
+
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
 total_samples = len(labels)
@@ -138,17 +159,3 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     print_classification_metrics(labels[test_indices], r_pred)
     	
 Tee.reset()
-
-# plt.plot(hist["binary_crossentropy"], label="loss")
-# plt.plot(hist["val_binary_crossentropy"], label="val_loss")
-# plt.legend()
-# plt.grid()
-# plt.savefig(path.join("history", "ecg_stage_plot_loss.png"))
-# plt.close()
-
-# plt.plot(hist["t=0.5"], label="accuracy")
-# plt.plot(hist["val_t=0.5"], label="val accuracy")
-# plt.legend()
-# plt.grid()
-# plt.savefig(path.join("history", "ecg_stage_plot_acc.png"))
-# plt.close()
