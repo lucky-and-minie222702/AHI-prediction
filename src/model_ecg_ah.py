@@ -23,14 +23,6 @@ def create_model():
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
-    
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    
-    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
-    
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    
     # conv = ResNetBlock(1, rnn, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
     # conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     
@@ -48,7 +40,7 @@ def create_model():
     
     fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(256, kernel_regularizer=reg.l2(0.001))(fc)
+    fc = layers.Dense(64, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
@@ -95,7 +87,7 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 seg_len = 30
-step_size = 15
+step_size = 10
 
 ecgs = []
 labels = []
@@ -120,6 +112,8 @@ for idx, p in enumerate(p_list, start=1):
 ecgs = np.vstack(ecgs)
 ecgs = np.array([scaler.fit_transform(e.reshape(-1, 1)).flatten() for e in ecgs])
 labels = np.vstack(labels)
+sample_weights = np.mean(labels, axis=-1)
+sample_weights += 1
 labels = np.array([
     1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
 ])
@@ -152,6 +146,7 @@ hist = model.fit(
     labels[train_indices],
     epochs = epochs,
     batch_size = batch_size,
+    sample_weight = sample_weights
     validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
