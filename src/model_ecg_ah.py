@@ -27,6 +27,10 @@ def create_model():
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
+    rnn = layers.Bidirectional(layers.LSTM(128, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
+    
     # conv = ResNetBlock(1, rnn, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
     # conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     
@@ -44,7 +48,7 @@ def create_model():
     
     fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
+    fc = layers.Dense(256, kernel_regularizer=reg.l2(0.001))(fc)
     fc = layers.BatchNormalization()(fc)
     fc = layers.Dropout(rate=0.1)(fc)
     fc = layers.Activation("relu")(fc)
@@ -91,7 +95,7 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 seg_len = 30
-step_size = 15
+step_size = 20
 
 ecgs = []
 labels = []
@@ -109,10 +113,7 @@ for idx, p in enumerate(p_list, start=1):
     sig = clean_ecg(raw_sig)    
     sig = divide_signal(raw_sig, win_size=seg_len*100, step_size=step_size*100)
     label = divide_signal(raw_label, win_size=seg_len, step_size=step_size)
-    
-    if idx == 25:
-        last_p = sum([len(e) for e in ecgs])
-    
+
     ecgs.append(sig)
     labels.append(label) 
  
@@ -126,11 +127,9 @@ labels = np.array([
 # ecgs, labels = dummy_data(40000)
 
 indices = np.arange(len(labels))
-# indices = downsample_indices_manual(labels)
-# np.random.shuffle(indices)
-# train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
-train_indices = indices[:last_p:]
-test_indices = indices[last_p::]
+indices = downsample_indices_manual(labels)
+np.random.shuffle(indices)
+train_indices, test_indices = train_test_split(indices, test_size=0.2, random_state=np.random.randint(22022009))
 
 np.save(path.join("history", "train_indices"), train_indices)
 np.save(path.join("history", "test_indices"), test_indices)
