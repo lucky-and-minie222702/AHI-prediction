@@ -13,17 +13,15 @@ def create_model():
     encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
     
     encoded_inp = encoder(inp)
+    
+    # bi lstm extraction
+    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(encoded_inp)
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
 
-    ds_conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(encoded_inp)
-    ds_conv = layers.BatchNormalization()(ds_conv)
-    ds_conv = layers.Activation("relu")(ds_conv)
+    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
-    conv = ResNetBlock(1, ds_conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, rnn, 128, 3, change_sample=True, kernel_regularizer=reg.l2(0.001))
     conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)

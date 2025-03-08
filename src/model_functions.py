@@ -412,6 +412,8 @@ def get_encoder(kernel_regularizer=None):
     en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(en)
     en = layers.Normalization()(en)
     
+    # shape = 188, 32
+    
     encoder = Model(
         inputs = inp,
         outputs = en,
