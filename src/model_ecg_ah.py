@@ -56,7 +56,7 @@ if "pre_save" in sys.argv:
 
 epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epochs")+1])
 
-batch_size = 256 + 128
+batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
     start_from_epoch = 40,
@@ -135,7 +135,6 @@ hist = model.fit(
     labels[train_indices],
     epochs = epochs,
     batch_size = batch_size,
-    sample_weight = sample_weights[train_indices],
     validation_data = (ecgs[val_indices], labels[val_indices]),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
