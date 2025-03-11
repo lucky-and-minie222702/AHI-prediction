@@ -555,4 +555,4 @@ def print_class_counts(l):
 def augment_data(data, funcs, label):
     augmented = [data]
     augmented.extend([[f(x) for x in data] for f in funcs])
-    return np.vstack(augmented), np.vstack([label for _ in range(len(funcs) + 1)])
+    return np.vstack(augmented), np.concatenate([label for _ in range(len(funcs) + 1)])
