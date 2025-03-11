@@ -384,7 +384,7 @@ def dummy_data(num_samples):
     labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
     return np.vstack([cls0, cls1]), labels
 
-def get_encoder(kernel_regularizer=None):
+def get_encoder(kernel_regularizer=None, pre_trained = True):
     inp = layers.Input(shape=(3000, 1))
     
     en = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=kernel_regularizer)(inp)
@@ -419,6 +419,7 @@ def get_encoder(kernel_regularizer=None):
         outputs = en,
     ) 
     
-    encoder.load_weights(path.join("res", "ecg_encoder.weights.h5"))
+    if pre_trained:
+        encoder.load_weights(path.join("res", "ecg_encoder.weights.h5"))
     
     return encoder

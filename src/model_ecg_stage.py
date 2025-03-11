@@ -10,7 +10,7 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
+    encoder = get_encoder(kernel_regularizer=reg.l2(0.001), pre_trained=False)
     
     encoded_inp = encoder(inp)
     
