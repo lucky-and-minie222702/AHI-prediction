@@ -1,4 +1,3 @@
-from numpy import indices
 from data_functions import *
 from model_functions import *
 # import model_framework
@@ -10,31 +9,12 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    en = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(inp)
-    en = layers.BatchNormalization()(en)
-    en = layers.Activation("relu")(en)
-    en = layers.MaxPool1D(pool_size=3, strides=2)(en)
-
-    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=reg.l2(0.001))
-    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=reg.l2(0.001))
-       
-    en = ResNetBlock(1, en, 128, 3, True, kernel_regularizer=reg.l2(0.001))
-    en = ResNetBlock(1, en, 128, 3, kernel_regularizer=reg.l2(0.001))
+    encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
     
-    en = ResNetBlock(1, en, 256, 3, True, kernel_regularizer=reg.l2(0.001))
-    en = ResNetBlock(1, en, 256, 3, kernel_regularizer=reg.l2(0.001))
-    
-    en = ResNetBlock(1, en, 512, 3, True, kernel_regularizer=reg.l2(0.001))
-    en = ResNetBlock(1, en, 512, 3, kernel_regularizer=reg.l2(0.001))
-    
-    en = layers.Conv1D(filters=128, kernel_size=3, padding="same", kernel_regularizer=reg.l2(0.001))(en)
-    en = layers.BatchNormalization()(en)
-    en = layers.Activation("relu")(en)
-    en = layers.Conv1D(filters=32, kernel_size=3, padding="same", kernel_regularizer=reg.l2(0.001))(en)
-    en = layers.Normalization()(en)
+    encoded_inp = encoder(inp)
     
     # bi lstm features extraction
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(en)
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(encoded_inp)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
