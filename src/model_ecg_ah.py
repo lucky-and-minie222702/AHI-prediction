@@ -10,16 +10,31 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    encoder = get_encoder(kernel_regularizer=reg.l2(0.001), pre_trained=False)
+    en = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(inp)
+    en = layers.BatchNormalization()(en)
+    en = layers.Activation("relu")(en)
+    en = layers.MaxPool1D(pool_size=3, strides=2)(en)
+
+    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=reg.l2(0.001))
+    en = ResNetBlock(1, en, 64, 3, kernel_regularizer=reg.l2(0.001))
+       
+    en = ResNetBlock(1, en, 128, 3, True, kernel_regularizer=reg.l2(0.001))
+    en = ResNetBlock(1, en, 128, 3, kernel_regularizer=reg.l2(0.001))
     
-    encoded_inp = encoder(inp)
+    en = ResNetBlock(1, en, 256, 3, True, kernel_regularizer=reg.l2(0.001))
+    en = ResNetBlock(1, en, 256, 3, kernel_regularizer=reg.l2(0.001))
+    
+    en = ResNetBlock(1, en, 512, 3, True, kernel_regularizer=reg.l2(0.001))
+    en = ResNetBlock(1, en, 512, 3, kernel_regularizer=reg.l2(0.001))
+    
+    en = layers.Conv1D(filters=128, kernel_size=3, padding="same", kernel_regularizer=reg.l2(0.001))(en)
+    en = layers.BatchNormalization()(en)
+    en = layers.Activation("relu")(en)
+    en = layers.Conv1D(filters=32, kernel_size=3, padding="same", kernel_regularizer=reg.l2(0.001))(en)
+    en = layers.Normalization()(en)
     
     # bi lstm features extraction
-    rnn = layers.Bidirectional(layers.LSTM(16, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(encoded_inp)
-    
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    
-    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(en)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
@@ -76,7 +91,7 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 seg_len = 30
-step_size = 5
+step_size = 15
 
 ecgs = []
 labels = []
@@ -119,7 +134,6 @@ np.save(path.join("history", "test_indices"), test_indices)
 
 train_indices, val_indices = train_test_split(train_indices, test_size=0.15, random_state=np.random.randint(22022009))
 
-
 total_samples = len(labels)
 print(f"Total samples: {total_samples}\n")
 
@@ -130,21 +144,45 @@ print_class_counts(labels[train_indices])
 print_class_counts(labels[test_indices])
 print_class_counts(labels[val_indices])
 
+train_ecgs, train_labels = ecgs[train_indices], labels[train_indices]
+test_ecgs, test_labels = ecgs[test_indices], labels[test_indices]
+val_ecgs, val_labels = ecgs[val_indices], labels[val_indices]
+
+augment_funcs = [lambda x: add_noise(x, noise_std=0.8)]
+
+train_ecgs, train_labels = augment_data(
+    train_ecgs, 
+    augment_funcs,
+    train_labels
+)
+
+test_ecgs, test_labels = augment_data(
+    test_ecgs, 
+    augment_funcs,
+    test_labels
+)
+
+val_ecgs, val_labels = augment_data(
+    train_ecgs, 
+    augment_funcs,
+    val_labels
+)
+
 start_time = timer()
 hist = model.fit(
-    ecgs[train_indices],
-    labels[train_indices],
+    train_ecgs,
+    train_labels,
     epochs = epochs,
     batch_size = batch_size,
-    validation_data = (ecgs[val_indices], labels[val_indices]),
+    validation_data = (train_ecgs, train_labels),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
 hist = hist.history
 total_time = timer() - start_time
 print(f"Training time {convert_seconds(total_time)}")
 
-pred = model.predict(ecgs[test_indices], batch_size=batch_size)
-np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), labels[test_indices].flatten()], axis=1))
+pred = model.predict(test_ecgs, batch_size=batch_size)
+np.save(path.join("history", "ecg_ah_predontest"), np.stack([pred.flatten(), test_labels.flatten()], axis=1))
 
 res_file = open(path.join("history", "ecg_ah_res.txt"), "w")
 sys.stdout = Tee(res_file)
@@ -156,6 +194,6 @@ for t in np.linspace(0, 1, 11)[1:-1:]:
     t = round(t, 3)
     print(f"Threshold {t}:")
     r_pred = round_bin(pred, threshold=t)
-    print_classification_metrics(labels[test_indices], r_pred)
+    print_classification_metrics(test_labels, r_pred)
     	
 Tee.reset()

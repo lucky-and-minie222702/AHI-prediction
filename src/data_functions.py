@@ -551,3 +551,8 @@ def print_classification_metrics(y_true, y_pred):
 def print_class_counts(l):
     c = np.unique(l, return_counts=True)[1]
     print(f"Class 0: {c[0]} - Class 1: {c[1]}")
+
+def augment_data(data, funcs, label):
+    augmented = [data]
+    augmented.extend([[f(x) for x in data] for f in funcs])
+    return np.vstack(augmented), np.vstack([label for _ in range(len(funcs) + 1)])
