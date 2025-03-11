@@ -163,7 +163,7 @@ test_ecgs, test_labels = augment_data(
 )
 
 val_ecgs, val_labels = augment_data(
-    train_ecgs, 
+    val_ecgs, 
     augment_funcs,
     val_labels
 )
@@ -174,7 +174,7 @@ hist = model.fit(
     train_labels,
     epochs = epochs,
     batch_size = batch_size,
-    validation_data = (train_ecgs, train_labels),
+    validation_data = (val_ecgs, val_labels),
     callbacks = [cb_early_stopping, cb_his, cb_lr, cb_checkpoint],
 )
 hist = hist.history
