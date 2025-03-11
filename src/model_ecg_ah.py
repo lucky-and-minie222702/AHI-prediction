@@ -9,7 +9,7 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    encoder = get_encoder(kernel_regularizer=reg.l2(0.001))
+    encoder = get_encoder()
     
     encoded_inp = encoder(inp)
     
@@ -71,7 +71,7 @@ cb_his = HistoryAutosaver(save_path=path.join("history", "ecg_ah"))
 cb_lr = cbk.ReduceLROnPlateau(factor=0.1, patience=10, min_lr=1e-6, monitor = "val_binary_crossentropy", mode = "min")
 
 seg_len = 30
-step_size = 15
+step_size = 5
 
 ecgs = []
 labels = []

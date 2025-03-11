@@ -408,9 +408,11 @@ def get_encoder(kernel_regularizer=None, pre_trained = True):
     en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
     en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
     
-    en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same", kernel_regularizer=kernel_regularizer)(en)
-    en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(en)
-    en = layers.Normalization()(en)
+    f_en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same", kernel_regularizer=kernel_regularizer)(en)
+    f_en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(f_en)
+    f_en = layers.Normalization()(f_en)
+    
+    en.trainable = False
     
     # shape = 188, 32
     
