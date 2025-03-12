@@ -15,7 +15,7 @@ def create_model():
     
     fc = layers.Flatten()(encoded_inp)
     fc = layers.Dropout(rate=0.5)(fc)
-    out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
+    out = layers.Dense(1, activation="sigmoid")(fc)
     
     model = Model(
         inputs = inp,
