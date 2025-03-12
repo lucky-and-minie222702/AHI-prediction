@@ -12,24 +12,26 @@ def create_model():
     conv = ResNetBlock(1, inp, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
     
-    conv = ResNetBlock(1, inp, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, inp, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.Conv1D(filters=128, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
     
     # attention
-    att = MyAtt(depth=32, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(conv, conv, conv)
+    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(conv)
     
     # fc
-    fc = SEBlock()(att)
+    fc = SEBlock()(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
