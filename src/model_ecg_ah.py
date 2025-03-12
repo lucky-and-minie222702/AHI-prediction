@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 show_gpus()
 
 def create_model():
-    inp = layers.Input(shape=(188, 32))
+    inp = layers.Input(shape=(None, 1))
     
     encoder = get_encoder(freeze=True)
     
