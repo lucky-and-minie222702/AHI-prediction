@@ -31,7 +31,7 @@ def create_model():
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     # bottle neck
-    btn_conv = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
+    btn_conv = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv, conv, conv)
     btn_conv = layers.BatchNormalization()(btn_conv)
     btn_conv = layers.Activation("relu")(btn_conv)
     
