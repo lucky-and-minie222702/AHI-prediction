@@ -11,7 +11,7 @@ def create_model():
     
     encoder = get_encoder()
     
-    encoded_inp = encoder(inp, training=False)
+    encoded_inp = encoder(inp)
     
     fc = layers.Flatten()(encoded_inp)
     fc = layers.Dropout(rate=0.5)(fc)
