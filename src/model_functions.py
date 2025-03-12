@@ -413,8 +413,6 @@ def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     f_en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(f_en)
     f_en = layers.Normalization()(f_en)
     
-    en.trainable = not freeze
-    
     # shape = 188, 32
     
     encoder = Model(
@@ -424,5 +422,7 @@ def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     
     if pre_trained:
         encoder.load_weights(path.join("res", "ecg_encoder.weights.h5"))
+        
+    en.trainable = not freeze
     
     return encoder
