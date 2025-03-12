@@ -18,7 +18,7 @@ def create_model():
     conv = layers.LeakyReLU(0.3)(conv)
     
     # attention
-    att = MyAtt(depth=32, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(conv)
+    att = MyAtt(depth=32, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(conv, conv, conv)
     
     # fc
     fc = SEBlock()(att)
