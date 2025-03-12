@@ -9,9 +9,9 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(188, 32))
     
-    # encoder = get_encoder(freeze=True)
+    encoder = get_encoder(freeze=True)
     
-    # encoded_inp = encoder(inp)
+    encoded_inp = encoder(inp)
     
     fc = layers.Flatten()(inp)
     fc = layers.Dropout(rate=0.5)(fc)
@@ -91,8 +91,6 @@ labels = np.array([
 
 augment_funcs = [lambda x: add_noise(x, noise_std=0.8)]
 ecgs, labels = augment_data(ecgs, augment_funcs, labels)
-encoder = get_encoder()
-ecgs = encoder.predict(ecgs, batch_size=16)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
