@@ -393,24 +393,36 @@ def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
     en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
        
     en = ResNetBlock(1, en, 128, 3, True, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 128, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 128, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     
     en = ResNetBlock(1, en, 256, 3, True, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 256, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 256, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     
     en = ResNetBlock(1, en, 512, 3, True, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
+    en = layers.SpatialDropout1D(rate=0.1)(en)
     
     # last en
-    f_en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same", kernel_regularizer=reg.l2(0.001))(en)
-    f_en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=reg.l2(0.001))(f_en)
+    f_en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same", kernel_regularizer=kernel_regularizer)(en)
+    f_en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(f_en)
     f_en = layers.Normalization()(f_en)
     
     # shape = 188, 32
