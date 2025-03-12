@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 show_gpus()
 
 def create_model():
-    inp = layers.Input(shape=(None, 1))
+    inp = layers.Input(shape=(188, 32))
     
     # encoder = get_encoder(freeze=True)
     
     # encoded_inp = encoder(inp)
     
-    fc = layers.GlobalAvgPool1D()(inp)
+    fc = layers.Flatten()(inp)
     fc = layers.Dropout(rate=0.5)(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
