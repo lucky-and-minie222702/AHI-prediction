@@ -31,12 +31,22 @@ def create_model():
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     # bottle neck
-    btn_conv = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv, conv, conv)
-    btn_conv = layers.BatchNormalization()(btn_conv)
-    btn_conv = layers.Activation("relu")(btn_conv)
+    btn_conv1 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
+    btn_conv1 = layers.BatchNormalization()(btn_conv1)
+    btn_conv1 = layers.Activation("relu")(btn_conv1)
+    
+    # bottle neck
+    btn_conv2 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
+    btn_conv2 = layers.BatchNormalization()(btn_conv2)
+    btn_conv2 = layers.Activation("relu")(btn_conv2)
+    
+    # bottle neck
+    btn_conv3 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
+    btn_conv3 = layers.BatchNormalization()(btn_conv3)
+    btn_conv3 = layers.Activation("relu")(btn_conv3)
     
     # attention
-    att = MyAtt(depth=64, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(btn_conv)
+    att = MyAtt(depth=64, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(btn_conv1, btn_conv2, btn_conv3)
     
     # fc
     fc = SEBlock()(att)
