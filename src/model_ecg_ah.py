@@ -9,44 +9,16 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(inp)
+    conv = layers.Conv1D(filters=64, kernel_size=1, kernel_regularizer=reg.l2(0.001))(inp)
     conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
-
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-       
-    conv = ResNetBlock(1, conv, 128, 3, True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    conv = layers.LeakyReLU(0.3)(conv)
     
-    conv = ResNetBlock(1, conv, 256, 3, True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 512, 3, True, kernel_regularizer=reg.l2(0.001))
-    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001)) 
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    # bottle neck
-    btn_conv1 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
-    btn_conv1 = layers.BatchNormalization()(btn_conv1)
-    btn_conv1 = layers.Activation("relu")(btn_conv1)
-    
-    # bottle neck
-    btn_conv2 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
-    btn_conv2 = layers.BatchNormalization()(btn_conv2)
-    btn_conv2 = layers.Activation("relu")(btn_conv2)
-    
-    # bottle neck
-    btn_conv3 = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
-    btn_conv3 = layers.BatchNormalization()(btn_conv3)
-    btn_conv3 = layers.Activation("relu")(btn_conv3)
+    conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.LeakyReLU(0.3)(conv)
     
     # attention
-    att = MyAtt(depth=64, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(btn_conv1, btn_conv2, btn_conv3)
+    att = MyAtt(depth=32, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(conv)
     
     # fc
     fc = SEBlock()(att)
