@@ -9,9 +9,17 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    conv = layers.Conv1D(filters=64, kernel_size=1, kernel_regularizer=reg.l2(0.001))(inp)
+    conv = ResNetBlock(1, inp, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    
+    conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
+    
+    conv = ResNetBlock(1, inp, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     
     conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
