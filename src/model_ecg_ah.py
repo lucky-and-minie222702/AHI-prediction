@@ -9,31 +9,19 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    conv = ResNetBlock(1, inp, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, inp, 64, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 64, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = ResNetBlock(1, inp, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.LeakyReLU(0.3)(conv)
+    
+    conv = ResNetBlock(1, inp, 128, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 128, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     conv = layers.Conv1D(filters=128, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.LeakyReLU(0.3)(conv)
-    
-    conv = ResNetBlock(1, inp, 10, 256, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 256, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = ResNetBlock(1, conv, 10, 512, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 512, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = layers.SpatialDropout1D(rate=0.1)(conv)
-    
-    conv = layers.Conv1D(filters=512, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.LeakyReLU(0.3)(conv)
-    
-    conv = layers.Conv1D(filters=128, kernel_size=1, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
     
@@ -43,7 +31,7 @@ def create_model():
     att = MyAtt(depth=64, num_heads=8, dropout_rate=0.1)(conv, conv, conv)
     
     # fc
-    fc = SEBlock()(att)
+    fc = SEBlock()(att  )
     fc = layers.GlobalAvgPool1D()(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
