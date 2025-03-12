@@ -384,7 +384,7 @@ def dummy_data(num_samples):
     labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
     return np.vstack([cls0, cls1]), labels
 
-def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
+def get_encoder(kernel_regularizer=None, pre_trained = True):
     inp = layers.Input(shape=(3000, 1))
     
     en = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=kernel_regularizer)(inp)
@@ -393,32 +393,20 @@ def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     en = layers.MaxPool1D(pool_size=3, strides=2)(en)
 
     en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 64, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
        
     en = ResNetBlock(1, en, 128, 3, True, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 128, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 128, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     
     en = ResNetBlock(1, en, 256, 3, True, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 256, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 256, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     
     en = ResNetBlock(1, en, 512, 3, True, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     en = ResNetBlock(1, en, 512, 3, kernel_regularizer=kernel_regularizer)
-    en = layers.SpatialDropout1D(rate=0.1)(en)
     
     # last en
     f_en = layers.Conv1DTranspose(filters=128, kernel_size=3, strides=2, padding="same", kernel_regularizer=kernel_regularizer)(en)
@@ -429,12 +417,10 @@ def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     
     encoder = Model(
         inputs = inp,
-        outputs = en,
+        outputs = f_en,
     ) 
     
     if pre_trained:
         encoder.load_weights(path.join("res", "ecg_encoder.weights.h5"))
-        
-    en.trainable = not freeze
     
     return encoder

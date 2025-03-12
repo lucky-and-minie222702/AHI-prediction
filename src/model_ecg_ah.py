@@ -11,11 +11,11 @@ def create_model():
     
     encoder = get_encoder()
     
-    encoded_inp = encoder(inp)
+    encoded_inp = encoder(inp, training=False)
     
     fc = layers.Flatten()(encoded_inp)
     fc = layers.Dropout(rate=0.5)(fc)
-    out = layers.Dense(1, activation="sigmoid")(fc)
+    out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
     model = Model(
         inputs = inp,
@@ -23,7 +23,7 @@ def create_model():
     )
     
     model.compile(
-        optimizer = optimizers.Adam(0.0005),
+        optimizer = optimizers.Adam(0.001),
         loss = "binary_crossentropy",
         metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)] + ["binary_crossentropy"]
     )
