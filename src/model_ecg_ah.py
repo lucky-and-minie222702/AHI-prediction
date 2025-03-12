@@ -15,25 +15,17 @@ def create_model():
     
     # bottle neck
     
-    conv = layers.Conv1D(filters=128, kernel_size=1, padding="same", kernel_regularizer=reg.l2(0.001))(encoded_inp)
+    conv = layers.Conv1D(filters=64, kernel_size=1, padding="same", kernel_regularizer=reg.l2(0.001))(encoded_inp)
     conv = layers.BatchNormalization()(conv)
     conv = layers.Activation("relu")(conv)
     
     # bi lstm features extraction
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(conv)
-    
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(rnn)
+    rnn = layers.Bidirectional(layers.LSTM(32, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(conv)
     
     rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
     
     fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
     fc = layers.GlobalAvgPool1D()(fc)
-    fc = layers.Dense(128, kernel_regularizer=reg.l2(0.001))(fc)
-    fc = layers.BatchNormalization()(fc)
-    fc = layers.Dropout(rate=0.1)(fc)
-    fc = layers.Activation("relu")(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
     model = Model(
@@ -60,7 +52,7 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 50,
+    start_from_epoch = 30,
     patience = 10,
     monitor = "val_binary_crossentropy",
     mode = "min",
