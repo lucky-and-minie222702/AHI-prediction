@@ -384,7 +384,7 @@ def dummy_data(num_samples):
     labels = np.concatenate([np.full(len(cls0), 0), np.full(len(cls1), 1)])
     return np.vstack([cls0, cls1]), labels
 
-def get_encoder(kernel_regularizer=None, pre_trained = True):
+def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     inp = layers.Input(shape=(3000, 1))
     
     en = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=kernel_regularizer)(inp)
@@ -412,7 +412,7 @@ def get_encoder(kernel_regularizer=None, pre_trained = True):
     f_en = layers.Conv1DTranspose(filters=32, kernel_size=3, padding="same", kernel_regularizer=kernel_regularizer)(f_en)
     f_en = layers.Normalization()(f_en)
     
-    en.trainable = False
+    en.trainable = not freeze
     
     # shape = 188, 32
     
