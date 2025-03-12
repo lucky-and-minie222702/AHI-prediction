@@ -9,26 +9,26 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    conv = ResNetBlock(1, inp, 64, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 64, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, inp, 8, 20, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 8, 20, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.Conv1D(filters=8, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
     
-    conv = ResNetBlock(1, inp, 128, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 128, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, inp, 16, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 16, 10, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(filters=128, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.Conv1D(filters=16, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
     
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
     # attention
-    att = MyAtt(depth=64, num_heads=8, dropout_rate=0.1)(conv, conv, conv)
+    att = MyAtt(depth=8, num_heads=8, dropout_rate=0.1)(conv, conv, conv)
     
     # fc
     fc = SEBlock()(att  )
