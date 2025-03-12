@@ -125,23 +125,23 @@ class SEBlock(layers.Layer):
    
 
 class MyAtt(layers.Layer):
-    def __init__(self, depth, num_heads, dropout_rate=0.0):
+    def __init__(self, depth, num_heads, dropout_rate=0.0, kernel_regularizer = None):
         super(MyAtt, self).__init__()
         self.num_heads = num_heads
         self.depth = depth
         self.d_model = depth * num_heads
         
         # Query, Key, Value projections
-        self.Wq = layers.Dense(self.d_model)
-        self.Wk = layers.Dense(self.d_model)
-        self.Wv = layers.Dense(self.d_model)
+        self.Wq = layers.Dense(self.d_model, kernel_regularizer=kernel_regularizer)
+        self.Wk = layers.Dense(self.d_model, kernel_regularizer=kernel_regularizer)
+        self.Wv = layers.Dense(self.d_model, kernel_regularizer=kernel_regularizer)
         
         # Output projection
-        self.dense = layers.Dense(self.d_model)
+        self.dense = layers.Dense(self.d_model, kernel_regularizer=kernel_regularizer)
         
         # Normalization and dropout
-        self.dropout = layers.Dropout(dropout_rate)
-        self.norm = layers.LayerNormalization()
+        self.dropout = layers.SpatialDropout1D(dropout_rate)
+        self.norm = layers.Normalization()
     
     def split_heads(self, x, batch_size):
         """Split into multiple heads and reshape."""

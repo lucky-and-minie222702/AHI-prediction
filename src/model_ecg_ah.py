@@ -9,12 +9,38 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    encoder = get_encoder()
+    conv = layers.Conv1D(filters=64, kernel_size=7, strides=2, kernel_regularizer=reg.l2(0.001))(inp)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.Activation("relu")(conv)
+    conv = layers.MaxPool1D(pool_size=3, strides=2)(conv)
+
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 64, 3, kernel_regularizer=reg.l2(0.001))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+       
+    conv = ResNetBlock(1, conv, 128, 3, True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 128, 3, kernel_regularizer=reg.l2(0.001))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    encoded_inp = encoder(inp, training=False)
+    conv = ResNetBlock(1, conv, 256, 3, True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 256, 3, kernel_regularizer=reg.l2(0.001))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    fc = layers.Flatten()(encoded_inp)
-    fc = layers.Dropout(rate=0.5)(fc)
+    conv = ResNetBlock(1, conv, 512, 3, True, kernel_regularizer=reg.l2(0.001))
+    conv = ResNetBlock(1, conv, 512, 3, kernel_regularizer=reg.l2(0.001)) 
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    # bottle neck
+    btn_conv = layers.Conv1D(filters=128, kernel_size=1, padding="same")(conv)
+    btn_conv = layers.BatchNormalization()(btn_conv)
+    btn_conv = layers.Activation("relu")(btn_conv)
+    
+    # attention
+    att = MyAtt(depth=64, num_heads=4, dropout_rate=0.1, kernel_regularizer=reg.l2(0.001))(btn_conv)
+    
+    # fc
+    fc = SEBlock()(att)
+    fc = layers.GlobalAvgPool1D()(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
     model = Model(
