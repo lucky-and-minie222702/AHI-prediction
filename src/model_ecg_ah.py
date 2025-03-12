@@ -89,7 +89,8 @@ labels = np.array([
     1 if np.count_nonzero(l == 1) >= 10 else 0 for l in labels
 ])
 
-# ecgs, labels = dummy_data(40000)
+augment_funcs = [lambda x: add_noise(x, noise_std=0.8)]
+ecgs, labels = augment_data(ecgs, augment_funcs, labels)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
@@ -115,25 +116,23 @@ train_ecgs, train_labels = ecgs[train_indices], labels[train_indices]
 test_ecgs, test_labels = ecgs[test_indices], labels[test_indices]
 val_ecgs, val_labels = ecgs[val_indices], labels[val_indices]
 
-augment_funcs = [lambda x: add_noise(x, noise_std=0.8)]
+# train_ecgs, train_labels = augment_data(
+#     train_ecgs, 
+#     augment_funcs,
+#     train_labels
+# )
 
-train_ecgs, train_labels = augment_data(
-    train_ecgs, 
-    augment_funcs,
-    train_labels
-)
+# test_ecgs, test_labels = augment_data(
+#     test_ecgs, 
+#     augment_funcs,
+#     test_labels
+# )
 
-test_ecgs, test_labels = augment_data(
-    test_ecgs, 
-    augment_funcs,
-    test_labels
-)
-
-val_ecgs, val_labels = augment_data(
-    val_ecgs, 
-    augment_funcs,
-    val_labels
-)
+# val_ecgs, val_labels = augment_data(
+#     val_ecgs, 
+#     augment_funcs,
+#     val_labels
+# )
 
 start_time = timer()
 hist = model.fit(
