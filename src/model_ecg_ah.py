@@ -11,15 +11,9 @@ def create_model():
     
     conv = ResNetBlock(1, inp, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 64, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
-    conv = layers.Conv1D(filters=64, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.LeakyReLU(0.3)(conv)
-    
     conv = ResNetBlock(1, inp, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
-    conv = ResNetBlock(1, conv, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = ResNetBlock(1, conv, 10, 128, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
     conv = layers.SpatialDropout1D(rate=0.1)(conv)
     
@@ -27,11 +21,29 @@ def create_model():
     conv = layers.BatchNormalization()(conv)
     conv = layers.LeakyReLU(0.3)(conv)
     
+    conv = ResNetBlock(1, inp, 10, 256, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 256, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = ResNetBlock(1, conv, 10, 512, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = ResNetBlock(1, conv, 10, 512, kernel_regularizer=reg.l2(0.001), activation=layers.LeakyReLU(0.3))
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
+    conv = layers.Conv1D(filters=512, kernel_size=10, strides=10, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.LeakyReLU(0.3)(conv)
+    
+    conv = layers.Conv1D(filters=128, kernel_size=1, kernel_regularizer=reg.l2(0.001))(conv)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.LeakyReLU(0.3)(conv)
+    
+    conv = layers.SpatialDropout1D(rate=0.1)(conv)
+    
     # attention
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True))(conv)
+    att = MyAtt(depth=64, num_heads=8, dropout_rate=0.1)(conv, conv, conv)
     
     # fc
-    fc = SEBlock()(rnn)
+    fc = SEBlock()(att)
     fc = layers.GlobalAvgPool1D()(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
@@ -59,7 +71,7 @@ epochs = 200 if not "epochs" in sys.argv else int(sys.argv[sys.argv.index("epoch
 batch_size = 512
 cb_early_stopping = cbk.EarlyStopping(
     restore_best_weights = True,
-    start_from_epoch = 30,
+    start_from_epoch = 50,
     patience = 10,
     monitor = "val_binary_crossentropy",
     mode = "min",

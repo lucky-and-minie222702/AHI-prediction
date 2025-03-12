@@ -399,7 +399,7 @@ def bandpass(signal_noisy, fs, low_cutoff_hz, high_cutoff_hz, order):
     return signal.filtfilt(b_bp, a_bp, signal_noisy)
 
 def clean_ecg(sig):
-    return bandpass(sig, 100, 5, 30, 2)
+    return bandpass(sig, 100, 5, 25, 2)
 
 
 class Tee:
