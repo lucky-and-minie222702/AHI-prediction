@@ -9,11 +9,11 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(None, 1))
     
-    encoder = get_encoder(freeze=True)
+    # encoder = get_encoder(freeze=True)
     
-    encoded_inp = encoder(inp)
+    # encoded_inp = encoder(inp)
     
-    fc = layers.GlobalAvgPool1D()(encoded_inp)
+    fc = layers.GlobalAvgPool1D()(inp)
     fc = layers.Dropout(rate=0.5)(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
@@ -91,6 +91,8 @@ labels = np.array([
 
 augment_funcs = [lambda x: add_noise(x, noise_std=0.8)]
 ecgs, labels = augment_data(ecgs, augment_funcs, labels)
+encoder = get_encoder()
+ecgs = encoder.predict(ecgs)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
