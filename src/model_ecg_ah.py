@@ -92,7 +92,7 @@ labels = np.array([
 augment_funcs = [lambda x: add_noise(x, noise_std=0.8)]
 ecgs, labels = augment_data(ecgs, augment_funcs, labels)
 encoder = get_encoder()
-ecgs = encoder.predict(ecgs)
+ecgs = encoder.predict(ecgs, batch_size=128)
 
 indices = np.arange(len(labels))
 indices = downsample_indices_manual(labels)
