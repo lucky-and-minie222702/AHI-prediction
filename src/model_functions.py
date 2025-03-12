@@ -417,7 +417,7 @@ def get_encoder(kernel_regularizer=None, pre_trained = True, freeze = False):
     
     encoder = Model(
         inputs = inp,
-        outputs = f_en,
+        outputs = en,
     ) 
     
     if pre_trained:

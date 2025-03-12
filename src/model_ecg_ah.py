@@ -9,9 +9,9 @@ show_gpus()
 def create_model():
     inp = layers.Input(shape=(3000, 1))
     
-    encoder = get_encoder(freeze=True)
+    encoder = get_encoder()
     
-    encoded_inp = encoder(inp)
+    encoded_inp = encoder(inp, training=False)
     
     fc = layers.Flatten()(encoded_inp)
     fc = layers.Dropout(rate=0.5)(fc)
