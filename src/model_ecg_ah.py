@@ -13,19 +13,10 @@ def create_model():
     
     encoded_inp = encoder(inp)
     
-    # bottle neck
-    
-    conv = layers.Conv1D(filters=128, kernel_size=1, padding="same", kernel_regularizer=reg.l2(0.001))(encoded_inp)
-    conv = layers.BatchNormalization()(conv)
-    conv = layers.Activation("relu")(conv)
-    
-    # bi lstm features extraction
-    rnn = layers.Bidirectional(layers.LSTM(64, return_sequences=True, kernel_regularizer=reg.l2(0.001)))(conv)
-    
-    rnn = layers.SpatialDropout1D(rate=0.1)(rnn)
-    
-    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(rnn)
+    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(encoded_inp)
+    fc = layers.SpatialDropout1D(rate=0.1)(fc)
     fc = layers.GlobalAvgPool1D()(fc)
+    fc = layers.Dropout(rate=0.1)(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
     model = Model(
