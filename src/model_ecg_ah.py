@@ -13,9 +13,7 @@ def create_model():
     
     encoded_inp = encoder(inp)
     
-    fc = SEBlock(kernel_regularizer=reg.l2(0.001))(encoded_inp)
-    fc = layers.SpatialDropout1D(rate=0.1)(fc)
-    fc = layers.GlobalAvgPool1D()(fc)
+    fc = layers.GlobalAvgPool1D()(encoded_inp)
     fc = layers.Dropout(rate=0.1)(fc)
     out = layers.Dense(1, activation="sigmoid", kernel_regularizer=reg.l2(0.001))(fc)
     
@@ -25,7 +23,7 @@ def create_model():
     )
     
     model.compile(
-        optimizer = optimizers.Adam(0.001),
+        optimizer = optimizers.Adam(0.0005),
         loss = "binary_crossentropy",
         metrics = [metrics.BinaryAccuracy(name=f"t=0.{t}", threshold=t/10) for t in range(1, 10)] + ["binary_crossentropy"]
     )
